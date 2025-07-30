@@ -19,6 +19,8 @@ import {
   type InsertAgentWorkload,
   type SmartRecommendation,
   type InsertSmartRecommendation,
+  type AiQuestion,
+  type InsertAiQuestion,
   agents,
   conflicts,
   strategicObjectives,
@@ -28,7 +30,8 @@ import {
   performanceHistory,
   conflictPredictions,
   agentWorkloads,
-  smartRecommendations
+  smartRecommendations,
+  aiQuestions
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -87,6 +90,11 @@ export interface IStorage {
   getSmartRecommendations(status?: string): Promise<SmartRecommendation[]>;
   createSmartRecommendation(recommendation: InsertSmartRecommendation): Promise<SmartRecommendation>;
   updateSmartRecommendation(id: string, recommendation: Partial<SmartRecommendation>): Promise<SmartRecommendation>;
+  
+  // AI Questions
+  getRecentAiQuestions(limit: number): Promise<AiQuestion[]>;
+  getAiQuestionsByCategory(category: string): Promise<AiQuestion[]>;
+  createAiQuestion(question: InsertAiQuestion): Promise<AiQuestion>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -502,6 +510,28 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`Smart recommendation with id ${id} not found`);
     }
     return updated;
+  }
+
+  // AI Questions
+  async getRecentAiQuestions(limit: number): Promise<AiQuestion[]> {
+    return await db.select().from(aiQuestions).orderBy(desc(aiQuestions.askedAt)).limit(limit);
+  }
+
+  async getAiQuestionsByCategory(category: string): Promise<AiQuestion[]> {
+    return await db.select().from(aiQuestions)
+      .where(eq(aiQuestions.category, category))
+      .orderBy(desc(aiQuestions.askedAt));
+  }
+
+  async createAiQuestion(question: InsertAiQuestion): Promise<AiQuestion> {
+    const [newQuestion] = await db
+      .insert(aiQuestions)
+      .values({
+        ...question,
+        relatedData: question.relatedData as string[]
+      })
+      .returning();
+    return newQuestion;
   }
 }
 

@@ -129,6 +129,19 @@ export const insertConflictPredictionSchema = createInsertSchema(conflictPredict
 export const insertAgentWorkloadSchema = createInsertSchema(agentWorkloads).omit({ id: true, lastUpdated: true });
 export const insertSmartRecommendationSchema = createInsertSchema(smartRecommendations).omit({ id: true, createdAt: true });
 
+export const aiQuestions = pgTable("ai_questions", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  question: text("question").notNull(),
+  context: text("context"), // relevant context like agent names, objectives, etc.
+  response: text("response").notNull(),
+  confidence: integer("confidence").notNull(), // 1-100
+  relatedData: text("related_data").array(), // IDs of related entities
+  category: text("category").notNull(), // 'agent_status', 'conflicts', 'performance', 'strategy', 'general'
+  askedAt: timestamp("asked_at").defaultNow().notNull()
+});
+
+export const insertAiQuestionSchema = createInsertSchema(aiQuestions).omit({ id: true, askedAt: true });
+
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Conflict = typeof conflicts.$inferSelect;
@@ -151,3 +164,5 @@ export type AgentWorkload = typeof agentWorkloads.$inferSelect;
 export type InsertAgentWorkload = z.infer<typeof insertAgentWorkloadSchema>;
 export type SmartRecommendation = typeof smartRecommendations.$inferSelect;
 export type InsertSmartRecommendation = z.infer<typeof insertSmartRecommendationSchema>;
+export type AiQuestion = typeof aiQuestions.$inferSelect;
+export type InsertAiQuestion = z.infer<typeof insertAiQuestionSchema>;

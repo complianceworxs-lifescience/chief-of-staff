@@ -8,6 +8,7 @@ import { communicationTracker } from "./services/communication-tracker";
 import { predictiveAnalytics } from "./services/predictive-analytics";
 import { smartRecommendationsEngine } from "./services/smart-recommendations";
 import { workloadBalancer } from "./services/workload-balancer";
+import { aiQuestionService } from "./services/ai-question-service";
 import { insertConflictSchema, insertStrategicObjectiveSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -411,6 +412,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to sync strategy" });
+    }
+  });
+
+  // AI Questions endpoints
+  app.post('/api/questions', async (req, res) => {
+    try {
+      const { question, context } = req.body;
+      if (!question) {
+        return res.status(400).json({ error: 'Question is required' });
+      }
+      
+      const aiQuestion = await aiQuestionService.askQuestion(question, context);
+      res.json(aiQuestion);
+    } catch (error) {
+      console.error('Error processing question:', error);
+      res.status(500).json({ error: 'Failed to process question' });
+    }
+  });
+
+  app.get('/api/questions', async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const questions = await aiQuestionService.getQuestionHistory(limit);
+      res.json(questions);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      res.status(500).json({ error: 'Failed to fetch questions' });
+    }
+  });
+
+  app.get('/api/questions/category/:category', async (req, res) => {
+    try {
+      const category = req.params.category;
+      const questions = await aiQuestionService.getQuestionsByCategory(category);
+      res.json(questions);
+    } catch (error) {
+      console.error('Error fetching questions by category:', error);
+      res.status(500).json({ error: 'Failed to fetch questions by category' });
     }
   });
 

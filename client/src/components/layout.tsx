@@ -27,7 +27,8 @@ export function Layout({ children }: LayoutProps) {
     { path: "/communications", label: "Communications", icon: MessageSquare },
     { path: "/analytics", label: "Analytics", icon: TrendingUp },
     { path: "/recommendations", label: "Recommendations", icon: Lightbulb },
-    { path: "/workloads", label: "Workloads", icon: Users }
+    { path: "/workloads", label: "Workloads", icon: Users },
+    { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
   ];
 
   const isActive = (path: string) => {

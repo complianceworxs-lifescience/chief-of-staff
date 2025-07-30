@@ -9,6 +9,7 @@ import CommunicationsPage from "@/pages/communications";
 import AnalyticsPage from "@/pages/analytics";
 import RecommendationsPage from "@/pages/recommendations";
 import WorkloadsPage from "@/pages/workloads";
+import AiAssistant from "@/pages/ai-assistant";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
         <Route path="/analytics" component={AnalyticsPage} />
         <Route path="/recommendations" component={RecommendationsPage} />
         <Route path="/workloads" component={WorkloadsPage} />
+        <Route path="/ai-assistant" component={AiAssistant} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
