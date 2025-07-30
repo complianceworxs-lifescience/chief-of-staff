@@ -44,30 +44,33 @@ export function WeeklyReports() {
     return "text-red-600";
   };
 
-  const downloadReport = async (reportId: string, period: string) => {
+  const downloadReport = (reportId: string, period: string) => {
     try {
-      const response = await fetch(`/api/reports/${reportId}/download`);
-      if (!response.ok) throw new Error('Download failed');
+      console.log('Starting download for report:', reportId);
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Create a direct download link
+      const downloadUrl = `/api/reports/${reportId}/download`;
+      const fileName = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      
+      // Create a temporary link element and trigger download
       const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileName;
       a.style.display = 'none';
-      a.href = url;
-      a.download = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
+      console.log('Download triggered successfully');
       toast({
         title: "Download Started",
-        description: "Report downloaded successfully.",
+        description: "Report download initiated.",
       });
     } catch (error) {
+      console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: "Failed to download report. Please try again.",
+        description: `Failed to download report: ${error.message}`,
         variant: "destructive",
       });
     }
