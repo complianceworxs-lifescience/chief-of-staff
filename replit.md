@@ -18,6 +18,8 @@ Preferred communication style: Simple, everyday language.
 - Added PostgreSQL database integration replacing in-memory storage
 - All data now persists in database with proper schema and relations
 - Successfully deployed to production - user confirmed "works beautifully"
+- Fixed weekly report download functionality with proper React async handling and blob-based downloads
+- Download buttons now work correctly for exporting complete JSON intelligence reports
 
 ## System Architecture
 
