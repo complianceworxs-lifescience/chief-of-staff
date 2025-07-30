@@ -141,7 +141,10 @@ export function WeeklyReports() {
                 <Button 
                   className="w-full" 
                   variant="outline"
-                  onClick={() => downloadReport(latestReport.id, latestReport.period)}
+                  onClick={() => {
+                    console.log('Button clicked!', latestReport);
+                    downloadReport(latestReport.id, latestReport.period);
+                  }}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Download Full Report
@@ -191,7 +194,10 @@ export function WeeklyReports() {
                       size="sm" 
                       variant="ghost" 
                       className="h-8 w-8 p-0"
-                      onClick={() => downloadReport(report.id, report.period)}
+                      onClick={() => {
+                        console.log('Small download button clicked!', report);
+                        downloadReport(report.id, report.period);
+                      }}
                     >
                       <Download className="h-3 w-3" />
                     </Button>
