@@ -27,20 +27,29 @@ export default function AiAssistant() {
   const [question, setQuestion] = useState("");
   const [context, setContext] = useState("");
 
-  const { data: questions = [], isLoading: questionsLoading } = useQuery({
+  const { data: questions = [], isLoading: questionsLoading, refetch: refetchQuestions } = useQuery({
     queryKey: ['/api/questions'],
     queryFn: () => fetch('/api/questions?limit=50').then(res => res.json()) as Promise<AiQuestion[]>
   });
 
   const askQuestion = useMutation({
     mutationFn: async (data: { question: string; context?: string }) => {
+      console.log('Asking question:', data);
       const response = await apiRequest('POST', '/api/questions', data);
-      return response.json();
+      const result = await response.json();
+      console.log('Question response:', result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Question successfully processed:', data);
+      // Force refetch to ensure we get the latest data
+      refetchQuestions();
       queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
       setQuestion("");
       setContext("");
+    },
+    onError: (error) => {
+      console.error('Error asking question:', error);
     }
   });
 
@@ -144,12 +153,19 @@ export default function AiAssistant() {
               {askQuestion.isPending ? 'Processing...' : 'Ask Question'}
             </Button>
             
-            {askQuestion.isSuccess && (
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                <CheckCircle className="h-4 w-4" />
-                <span className="text-sm">Question answered!</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {askQuestion.isSuccess && (
+                <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm">Question answered!</span>
+                </div>
+              )}
+              {askQuestion.isError && (
+                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                  <span className="text-sm">Error: {askQuestion.error?.message || 'Failed to process question'}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Suggested Questions */}
