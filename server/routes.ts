@@ -179,6 +179,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/reports/:id/download", async (req, res) => {
+    try {
+      const report = await storage.getWeeklyReport(req.params.id);
+      if (!report) {
+        return res.status(404).json({ message: "Report not found" });
+      }
+
+      // Create a comprehensive report object with all details
+      const fullReport = {
+        id: report.id,
+        period: report.period,
+        generatedAt: report.generatedAt,
+        overallScore: report.overallScore,
+        grade: report.grade,
+        agentStatuses: report.agentStatuses,
+        conflictsDetected: report.conflictsDetected,
+        conflictsResolved: report.conflictsResolved,
+        strategicAlignment: report.strategicAlignment,
+        recommendations: report.recommendations,
+        highlights: report.highlights,
+        metadata: {
+          systemVersion: "1.0.0",
+          reportType: "Weekly Intelligence Report",
+          exportedAt: new Date().toISOString(),
+          format: "JSON"
+        }
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="Weekly_Intelligence_Report_${report.period.replace(/[^a-zA-Z0-9]/g, '_')}.json"`);
+      res.json(fullReport);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to download report" });
+    }
+  });
+
   // System control routes
   app.post("/api/system/trigger-agents", async (req, res) => {
     try {

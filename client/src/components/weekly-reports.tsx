@@ -44,6 +44,35 @@ export function WeeklyReports() {
     return "text-red-600";
   };
 
+  const downloadReport = async (reportId: string, period: string) => {
+    try {
+      const response = await fetch(`/api/reports/${reportId}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download Started",
+        description: "Report downloaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download report. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Latest Report Preview */}
@@ -87,7 +116,11 @@ export function WeeklyReports() {
               </div>
               
               <div className="pt-3">
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => downloadReport(latestReport.id, latestReport.period)}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download Full Report
                 </Button>
@@ -132,7 +165,12 @@ export function WeeklyReports() {
                     <span className={`text-xs font-medium ${getGradeColor(report.grade)}`}>
                       {report.grade}
                     </span>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => downloadReport(report.id, report.period)}
+                    >
                       <Download className="h-3 w-3" />
                     </Button>
                   </div>
