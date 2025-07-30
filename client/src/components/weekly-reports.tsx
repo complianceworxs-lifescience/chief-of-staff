@@ -45,32 +45,51 @@ export function WeeklyReports() {
   };
 
   const downloadReport = (reportId: string, period: string) => {
+    console.log('Download function called with:', { reportId, period });
+    
+    // Show immediate feedback that button was clicked
+    toast({
+      title: "Download Starting",
+      description: "Preparing your report download...",
+    });
+
     try {
-      console.log('Starting download for report:', reportId);
+      console.log('Creating download URL...');
       
       // Create a direct download link
       const downloadUrl = `/api/reports/${reportId}/download`;
       const fileName = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      
+      console.log('Download URL:', downloadUrl);
+      console.log('File name:', fileName);
       
       // Create a temporary link element and trigger download
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = fileName;
       a.style.display = 'none';
+      a.target = '_blank'; // Add target blank to help with download
+      
       document.body.appendChild(a);
+      console.log('Triggering click...');
       a.click();
       document.body.removeChild(a);
       
       console.log('Download triggered successfully');
-      toast({
-        title: "Download Started",
-        description: "Report download initiated.",
-      });
+      
+      // Show success message after a short delay
+      setTimeout(() => {
+        toast({
+          title: "Download Started",
+          description: "Check your Downloads folder for the report file.",
+        });
+      }, 500);
+      
     } catch (error) {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: `Failed to download report: ${error.message}`,
+        description: `Failed to download report: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     }
