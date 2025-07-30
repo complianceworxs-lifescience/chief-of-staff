@@ -44,7 +44,7 @@ export function WeeklyReports() {
     return "text-red-600";
   };
 
-  const downloadReport = (reportId: string, period: string) => {
+  const downloadReport = async (reportId: string, period: string) => {
     console.log('Download function called with:', { reportId, period });
     
     // Show immediate feedback that button was clicked
@@ -54,36 +54,40 @@ export function WeeklyReports() {
     });
 
     try {
-      console.log('Creating download URL...');
+      console.log('Fetching report data...');
       
-      // Create a direct download link
-      const downloadUrl = `/api/reports/${reportId}/download`;
+      const response = await fetch(`/api/reports/${reportId}/download`);
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log('Blob created, size:', blob.size);
+      
       const fileName = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
-      
-      console.log('Download URL:', downloadUrl);
-      console.log('File name:', fileName);
+      const url = window.URL.createObjectURL(blob);
       
       // Create a temporary link element and trigger download
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      a.href = url;
       a.download = fileName;
       a.style.display = 'none';
-      a.target = '_blank'; // Add target blank to help with download
       
       document.body.appendChild(a);
-      console.log('Triggering click...');
+      console.log('Triggering download for file:', fileName);
       a.click();
       document.body.removeChild(a);
       
-      console.log('Download triggered successfully');
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
       
-      // Show success message after a short delay
-      setTimeout(() => {
-        toast({
-          title: "Download Started",
-          description: "Check your Downloads folder for the report file.",
-        });
-      }, 500);
+      console.log('Download triggered successfully');
+      toast({
+        title: "Download Complete",
+        description: `${fileName} has been downloaded.`,
+      });
       
     } catch (error) {
       console.error('Download error:', error);
@@ -141,9 +145,11 @@ export function WeeklyReports() {
                 <Button 
                   className="w-full" 
                   variant="outline"
-                  onClick={() => {
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     console.log('Button clicked!', latestReport);
-                    downloadReport(latestReport.id, latestReport.period);
+                    await downloadReport(latestReport.id, latestReport.period);
                   }}
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -194,9 +200,11 @@ export function WeeklyReports() {
                       size="sm" 
                       variant="ghost" 
                       className="h-8 w-8 p-0"
-                      onClick={() => {
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         console.log('Small download button clicked!', report);
-                        downloadReport(report.id, report.period);
+                        await downloadReport(report.id, report.period);
                       }}
                     >
                       <Download className="h-3 w-3" />
