@@ -214,7 +214,10 @@ export class MemStorage implements IStorage {
   async createAgent(agent: InsertAgent): Promise<Agent> {
     const newAgent: Agent = {
       ...agent,
-      lastActive: new Date()
+      lastActive: new Date(),
+      lastReport: agent.lastReport || null,
+      successRate: agent.successRate || 0,
+      strategicAlignment: agent.strategicAlignment || 0
     };
     this.agents.set(agent.id, newAgent);
     return newAgent;
@@ -248,6 +251,7 @@ export class MemStorage implements IStorage {
     const newConflict: Conflict = {
       id,
       ...conflict,
+      status: conflict.status || "active",
       createdAt: new Date(),
       resolvedAt: null,
       resolution: null
@@ -280,6 +284,7 @@ export class MemStorage implements IStorage {
     const newObjective: StrategicObjective = {
       id,
       ...objective,
+      progress: objective.progress || 0,
       lastUpdate: new Date()
     };
     this.strategicObjectives.set(id, newObjective);
@@ -312,6 +317,7 @@ export class MemStorage implements IStorage {
     const newReport: WeeklyReport = {
       id,
       ...report,
+      strategicAlignment: report.strategicAlignment as Record<string, string[]>,
       generatedAt: new Date()
     };
     this.weeklyReports.set(id, newReport);
