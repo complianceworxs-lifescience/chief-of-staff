@@ -23,44 +23,8 @@ export default function Dashboard() {
     queryKey: ["/api/system/metrics"]
   });
 
-  const notificationCount = activeConflicts.length;
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <i className="fas fa-robot text-2xl text-primary"></i>
-                <h1 className="text-xl font-bold text-gray-900">Meta-Agent Orchestrator</h1>
-              </div>
-              <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                ComplianceWorxs
-              </Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-600 hover:text-primary transition-colors">
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
-              </button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">SA</span>
-                </div>
-                <span className="text-sm text-gray-700">System Admin</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-8">
         {/* System Overview */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -195,7 +159,6 @@ export default function Dashboard() {
         <div className="mb-8">
           <SystemControls />
         </div>
-      </div>
     </div>
   );
 }

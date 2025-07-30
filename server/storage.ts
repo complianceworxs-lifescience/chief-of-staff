@@ -9,11 +9,26 @@ import {
   type InsertWeeklyReport,
   type SystemMetrics,
   type InsertSystemMetrics,
+  type AgentCommunication,
+  type InsertAgentCommunication,
+  type PerformanceHistory,
+  type InsertPerformanceHistory,
+  type ConflictPrediction,
+  type InsertConflictPrediction,
+  type AgentWorkload,
+  type InsertAgentWorkload,
+  type SmartRecommendation,
+  type InsertSmartRecommendation,
   agents,
   conflicts,
   strategicObjectives,
   weeklyReports,
-  systemMetrics
+  systemMetrics,
+  agentCommunications,
+  performanceHistory,
+  conflictPredictions,
+  agentWorkloads,
+  smartRecommendations
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -47,6 +62,31 @@ export interface IStorage {
   // System Metrics
   getLatestSystemMetrics(): Promise<SystemMetrics | undefined>;
   createSystemMetrics(metrics: InsertSystemMetrics): Promise<SystemMetrics>;
+  
+  // Agent Communications
+  getRecentAgentCommunications(limit: number): Promise<AgentCommunication[]>;
+  getAgentCommunications(agentId: string, limit: number): Promise<AgentCommunication[]>;
+  createAgentCommunication(communication: InsertAgentCommunication): Promise<AgentCommunication>;
+  
+  // Performance History
+  getPerformanceHistory(agentId: string, days: number): Promise<PerformanceHistory[]>;
+  createPerformanceHistory(history: InsertPerformanceHistory): Promise<PerformanceHistory>;
+  
+  // Conflict Predictions
+  getConflictPredictions(): Promise<ConflictPrediction[]>;
+  createConflictPrediction(prediction: InsertConflictPrediction): Promise<ConflictPrediction>;
+  updateConflictPrediction(id: string, prediction: Partial<ConflictPrediction>): Promise<ConflictPrediction>;
+  
+  // Agent Workloads
+  getAgentWorkloads(): Promise<AgentWorkload[]>;
+  getAgentWorkload(agentId: string): Promise<AgentWorkload | undefined>;
+  createAgentWorkload(workload: InsertAgentWorkload): Promise<AgentWorkload>;
+  updateAgentWorkload(agentId: string, workload: Partial<AgentWorkload>): Promise<AgentWorkload>;
+  
+  // Smart Recommendations
+  getSmartRecommendations(status?: string): Promise<SmartRecommendation[]>;
+  createSmartRecommendation(recommendation: InsertSmartRecommendation): Promise<SmartRecommendation>;
+  updateSmartRecommendation(id: string, recommendation: Partial<SmartRecommendation>): Promise<SmartRecommendation>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -334,6 +374,134 @@ export class DatabaseStorage implements IStorage {
       .values(metrics)
       .returning();
     return newMetrics;
+  }
+
+  // Agent Communications
+  async getRecentAgentCommunications(limit: number): Promise<AgentCommunication[]> {
+    return await db.select().from(agentCommunications).orderBy(desc(agentCommunications.timestamp)).limit(limit);
+  }
+
+  async getAgentCommunications(agentId: string, limit: number): Promise<AgentCommunication[]> {
+    return await db.select().from(agentCommunications)
+      .where(eq(agentCommunications.fromAgent, agentId))
+      .orderBy(desc(agentCommunications.timestamp))
+      .limit(limit);
+  }
+
+  async createAgentCommunication(communication: InsertAgentCommunication): Promise<AgentCommunication> {
+    const [newCommunication] = await db
+      .insert(agentCommunications)
+      .values(communication)
+      .returning();
+    return newCommunication;
+  }
+
+  // Performance History
+  async getPerformanceHistory(agentId: string, days: number): Promise<PerformanceHistory[]> {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    return await db.select().from(performanceHistory)
+      .where(eq(performanceHistory.agentId, agentId))
+      .orderBy(desc(performanceHistory.date));
+  }
+
+  async createPerformanceHistory(history: InsertPerformanceHistory): Promise<PerformanceHistory> {
+    const [newHistory] = await db
+      .insert(performanceHistory)
+      .values(history)
+      .returning();
+    return newHistory;
+  }
+
+  // Conflict Predictions
+  async getConflictPredictions(): Promise<ConflictPrediction[]> {
+    return await db.select().from(conflictPredictions).orderBy(desc(conflictPredictions.createdAt));
+  }
+
+  async createConflictPrediction(prediction: InsertConflictPrediction): Promise<ConflictPrediction> {
+    const [newPrediction] = await db
+      .insert(conflictPredictions)
+      .values({
+        ...prediction,
+        agents: prediction.agents as string[],
+        suggestedActions: prediction.suggestedActions as string[]
+      })
+      .returning();
+    return newPrediction;
+  }
+
+  async updateConflictPrediction(id: string, prediction: Partial<ConflictPrediction>): Promise<ConflictPrediction> {
+    const [updated] = await db
+      .update(conflictPredictions)
+      .set(prediction)
+      .where(eq(conflictPredictions.id, id))
+      .returning();
+    if (!updated) {
+      throw new Error(`Conflict prediction with id ${id} not found`);
+    }
+    return updated;
+  }
+
+  // Agent Workloads
+  async getAgentWorkloads(): Promise<AgentWorkload[]> {
+    return await db.select().from(agentWorkloads).orderBy(desc(agentWorkloads.lastUpdated));
+  }
+
+  async getAgentWorkload(agentId: string): Promise<AgentWorkload | undefined> {
+    const [workload] = await db.select().from(agentWorkloads).where(eq(agentWorkloads.agentId, agentId));
+    return workload || undefined;
+  }
+
+  async createAgentWorkload(workload: InsertAgentWorkload): Promise<AgentWorkload> {
+    const [newWorkload] = await db
+      .insert(agentWorkloads)
+      .values(workload)
+      .returning();
+    return newWorkload;
+  }
+
+  async updateAgentWorkload(agentId: string, workload: Partial<AgentWorkload>): Promise<AgentWorkload> {
+    const [updated] = await db
+      .update(agentWorkloads)
+      .set(workload)
+      .where(eq(agentWorkloads.agentId, agentId))
+      .returning();
+    if (!updated) {
+      throw new Error(`Agent workload for ${agentId} not found`);
+    }
+    return updated;
+  }
+
+  // Smart Recommendations
+  async getSmartRecommendations(status?: string): Promise<SmartRecommendation[]> {
+    if (status) {
+      return await db.select().from(smartRecommendations)
+        .where(eq(smartRecommendations.status, status))
+        .orderBy(desc(smartRecommendations.createdAt));
+    }
+    return await db.select().from(smartRecommendations).orderBy(desc(smartRecommendations.createdAt));
+  }
+
+  async createSmartRecommendation(recommendation: InsertSmartRecommendation): Promise<SmartRecommendation> {
+    const [newRecommendation] = await db
+      .insert(smartRecommendations)
+      .values({
+        ...recommendation,
+        affectedAgents: recommendation.affectedAgents as string[]
+      })
+      .returning();
+    return newRecommendation;
+  }
+
+  async updateSmartRecommendation(id: string, recommendation: Partial<SmartRecommendation>): Promise<SmartRecommendation> {
+    const [updated] = await db
+      .update(smartRecommendations)
+      .set(recommendation)
+      .where(eq(smartRecommendations.id, id))
+      .returning();
+    if (!updated) {
+      throw new Error(`Smart recommendation with id ${id} not found`);
+    }
+    return updated;
   }
 }
 

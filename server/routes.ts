@@ -4,6 +4,10 @@ import { storage } from "./storage";
 import { agentMonitor } from "./services/agent-monitor";
 import { conflictResolver } from "./services/conflict-resolver";
 import { reportGenerator } from "./services/report-generator";
+import { communicationTracker } from "./services/communication-tracker";
+import { predictiveAnalytics } from "./services/predictive-analytics";
+import { smartRecommendationsEngine } from "./services/smart-recommendations";
+import { workloadBalancer } from "./services/workload-balancer";
 import { insertConflictSchema, insertStrategicObjectiveSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -176,6 +180,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(summary);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch report summary" });
+    }
+  });
+
+  // Communication tracking routes
+  app.get("/api/communications", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const communications = await communicationTracker.getRecentCommunications(limit);
+      res.json(communications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch communications" });
+    }
+  });
+
+  app.get("/api/communications/agent/:id", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const communications = await communicationTracker.getCommunicationsByAgent(req.params.id, limit);
+      res.json(communications);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch agent communications" });
+    }
+  });
+
+  app.get("/api/communications/patterns", async (req, res) => {
+    try {
+      const patterns = await communicationTracker.getCollaborationPatterns();
+      res.json(patterns);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch collaboration patterns" });
+    }
+  });
+
+  app.post("/api/communications/simulate", async (req, res) => {
+    try {
+      await communicationTracker.simulateAgentActivity();
+      res.json({ message: "Agent activity simulated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to simulate agent activity" });
+    }
+  });
+
+  // Predictive analytics routes
+  app.get("/api/analytics/predictions", async (req, res) => {
+    try {
+      const predictions = await predictiveAnalytics.generateConflictPredictions();
+      res.json(predictions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate predictions" });
+    }
+  });
+
+  app.get("/api/analytics/performance/:agentId", async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const trends = await predictiveAnalytics.getPerformanceTrends(req.params.agentId, days);
+      res.json(trends);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch performance trends" });
+    }
+  });
+
+  app.post("/api/analytics/update-history", async (req, res) => {
+    try {
+      await predictiveAnalytics.updatePerformanceHistory();
+      res.json({ message: "Performance history updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update performance history" });
+    }
+  });
+
+  // Smart recommendations routes
+  app.get("/api/recommendations", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const recommendations = status 
+        ? await storage.getSmartRecommendations(status)
+        : await smartRecommendationsEngine.generateRecommendations();
+      res.json(recommendations);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+
+  app.post("/api/recommendations/:id/implement", async (req, res) => {
+    try {
+      const recommendation = await smartRecommendationsEngine.implementRecommendation(req.params.id);
+      res.json(recommendation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to implement recommendation" });
+    }
+  });
+
+  app.post("/api/recommendations/:id/dismiss", async (req, res) => {
+    try {
+      const recommendation = await smartRecommendationsEngine.dismissRecommendation(req.params.id);
+      res.json(recommendation);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to dismiss recommendation" });
+    }
+  });
+
+  // Workload management routes
+  app.get("/api/workloads", async (req, res) => {
+    try {
+      const workloads = await storage.getAgentWorkloads();
+      res.json(workloads);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch workloads" });
+    }
+  });
+
+  app.get("/api/workloads/distribution", async (req, res) => {
+    try {
+      const distribution = await workloadBalancer.getWorkloadDistribution();
+      res.json(distribution);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch workload distribution" });
+    }
+  });
+
+  app.get("/api/workloads/rebalancing", async (req, res) => {
+    try {
+      const suggestions = await workloadBalancer.suggestRebalancing();
+      res.json(suggestions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate rebalancing suggestions" });
+    }
+  });
+
+  app.get("/api/workloads/capacity", async (req, res) => {
+    try {
+      const capacity = await workloadBalancer.getCapacityPlanning();
+      res.json(capacity);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch capacity planning" });
+    }
+  });
+
+  app.post("/api/workloads/initialize", async (req, res) => {
+    try {
+      await workloadBalancer.initializeWorkloads();
+      res.json({ message: "Workloads initialized successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to initialize workloads" });
+    }
+  });
+
+  app.post("/api/workloads/update", async (req, res) => {
+    try {
+      await workloadBalancer.updateWorkloads();
+      res.json({ message: "Workloads updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update workloads" });
     }
   });
 
