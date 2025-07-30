@@ -8,8 +8,15 @@ import {
   type WeeklyReport,
   type InsertWeeklyReport,
   type SystemMetrics,
-  type InsertSystemMetrics
+  type InsertSystemMetrics,
+  agents,
+  conflicts,
+  strategicObjectives,
+  weeklyReports,
+  systemMetrics
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -42,20 +49,20 @@ export interface IStorage {
   createSystemMetrics(metrics: InsertSystemMetrics): Promise<SystemMetrics>;
 }
 
-export class MemStorage implements IStorage {
-  private agents: Map<string, Agent> = new Map();
-  private conflicts: Map<string, Conflict> = new Map();
-  private strategicObjectives: Map<string, StrategicObjective> = new Map();
-  private weeklyReports: Map<string, WeeklyReport> = new Map();
-  private systemMetrics: SystemMetrics[] = [];
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.initializeData();
+    // Database storage doesn't need initialization
   }
 
-  private initializeData() {
+  private async initializeData() {
+    // Check if data already exists
+    const existingAgents = await db.select().from(agents);
+    if (existingAgents.length > 0) {
+      return; // Data already initialized
+    }
+
     // Initialize default agents
-    const defaultAgents: Agent[] = [
+    const defaultAgents: InsertAgent[] = [
       {
         id: "ceo",
         name: "CEO Agent",
@@ -124,12 +131,11 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    defaultAgents.forEach(agent => this.agents.set(agent.id, agent));
+    await db.insert(agents).values(defaultAgents);
 
     // Initialize default conflicts
-    const defaultConflicts: Conflict[] = [
+    const defaultConflicts: InsertConflict[] = [
       {
-        id: randomUUID(),
         title: "Pricing Strategy Conflict - Tier 2",
         area: "Pricing Tier 2",
         agents: ["cro", "cmo"],
@@ -137,13 +143,9 @@ export class MemStorage implements IStorage {
           "cro": "Increase Tier 2 pricing by 15% to improve margins",
           "cmo": "Price sensitivity analysis suggests maintaining current pricing"
         },
-        status: "active",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        resolvedAt: null,
-        resolution: null
+        status: "active"
       },
       {
-        id: randomUUID(),
         title: "Resource Allocation Dispute",
         area: "Budget Allocation",
         agents: ["coo", "content"],
@@ -151,49 +153,42 @@ export class MemStorage implements IStorage {
           "coo": "Allocate 60% of Q3 budget to compliance automation",
           "content": "Requires 40% budget allocation for content strategy expansion"
         },
-        status: "active",
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        resolvedAt: null,
-        resolution: null
+        status: "active"
       }
     ];
 
-    defaultConflicts.forEach(conflict => this.conflicts.set(conflict.id, conflict));
+    for (const conflict of defaultConflicts) {
+      await db.insert(conflicts).values(conflict);
+    }
 
     // Initialize strategic objectives
-    const defaultObjectives: StrategicObjective[] = [
+    const defaultObjectives: InsertStrategicObjective[] = [
       {
-        id: randomUUID(),
         title: "Increase Tier 3 MRR by 20%",
         progress: 78,
         contributingAgents: ["ceo", "cro"],
-        lastUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000),
         quarter: "Q3 2025"
       },
       {
-        id: randomUUID(),
         title: "Improve Customer Retention by 15%",
         progress: 65,
         contributingAgents: ["coo", "content", "lexi"],
-        lastUpdate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         quarter: "Q3 2025"
       },
       {
-        id: randomUUID(),
         title: "Expand Content Marketing Reach by 40%",
         progress: 45,
         contributingAgents: ["cmo", "content"],
-        lastUpdate: new Date(Date.now() - 3 * 60 * 60 * 1000),
         quarter: "Q3 2025"
       }
     ];
 
-    defaultObjectives.forEach(objective => this.strategicObjectives.set(objective.id, objective));
+    for (const objective of defaultObjectives) {
+      await db.insert(strategicObjectives).values(objective);
+    }
 
     // Initialize system metrics
-    this.systemMetrics.push({
-      id: randomUUID(),
-      timestamp: new Date(),
+    await db.insert(systemMetrics).values({
       systemHealth: 92,
       activeAgents: 6,
       totalAgents: 6,
@@ -204,140 +199,142 @@ export class MemStorage implements IStorage {
 
   // Agents
   async getAgents(): Promise<Agent[]> {
-    return Array.from(this.agents.values());
+    await this.initializeData();
+    return await db.select().from(agents);
   }
 
   async getAgent(id: string): Promise<Agent | undefined> {
-    return this.agents.get(id);
+    const [agent] = await db.select().from(agents).where(eq(agents.id, id));
+    return agent || undefined;
   }
 
   async createAgent(agent: InsertAgent): Promise<Agent> {
-    const newAgent: Agent = {
-      ...agent,
-      lastActive: new Date(),
-      lastReport: agent.lastReport || null,
-      successRate: agent.successRate || 0,
-      strategicAlignment: agent.strategicAlignment || 0
-    };
-    this.agents.set(agent.id, newAgent);
+    const [newAgent] = await db
+      .insert(agents)
+      .values(agent)
+      .returning();
     return newAgent;
   }
 
   async updateAgent(id: string, agent: Partial<Agent>): Promise<Agent> {
-    const existing = this.agents.get(id);
-    if (!existing) {
+    const [updated] = await db
+      .update(agents)
+      .set(agent)
+      .where(eq(agents.id, id))
+      .returning();
+    if (!updated) {
       throw new Error(`Agent with id ${id} not found`);
     }
-    const updated = { ...existing, ...agent };
-    this.agents.set(id, updated);
     return updated;
   }
 
   // Conflicts
   async getConflicts(): Promise<Conflict[]> {
-    return Array.from(this.conflicts.values());
+    return await db.select().from(conflicts).orderBy(desc(conflicts.createdAt));
   }
 
   async getActiveConflicts(): Promise<Conflict[]> {
-    return Array.from(this.conflicts.values()).filter(c => c.status === "active");
+    return await db.select().from(conflicts).where(eq(conflicts.status, "active"));
   }
 
   async getConflict(id: string): Promise<Conflict | undefined> {
-    return this.conflicts.get(id);
+    const [conflict] = await db.select().from(conflicts).where(eq(conflicts.id, id));
+    return conflict || undefined;
   }
 
   async createConflict(conflict: InsertConflict): Promise<Conflict> {
-    const id = randomUUID();
-    const newConflict: Conflict = {
-      id,
-      ...conflict,
-      status: conflict.status || "active",
-      createdAt: new Date(),
-      resolvedAt: null,
-      resolution: null
-    };
-    this.conflicts.set(id, newConflict);
+    const [newConflict] = await db
+      .insert(conflicts)
+      .values({
+        ...conflict,
+        agents: conflict.agents as string[]
+      })
+      .returning();
     return newConflict;
   }
 
   async updateConflict(id: string, conflict: Partial<Conflict>): Promise<Conflict> {
-    const existing = this.conflicts.get(id);
-    if (!existing) {
+    const [updated] = await db
+      .update(conflicts)
+      .set(conflict)
+      .where(eq(conflicts.id, id))
+      .returning();
+    if (!updated) {
       throw new Error(`Conflict with id ${id} not found`);
     }
-    const updated = { ...existing, ...conflict };
-    this.conflicts.set(id, updated);
     return updated;
   }
 
   // Strategic Objectives
   async getStrategicObjectives(): Promise<StrategicObjective[]> {
-    return Array.from(this.strategicObjectives.values());
+    return await db.select().from(strategicObjectives).orderBy(desc(strategicObjectives.lastUpdate));
   }
 
   async getStrategicObjective(id: string): Promise<StrategicObjective | undefined> {
-    return this.strategicObjectives.get(id);
+    const [objective] = await db.select().from(strategicObjectives).where(eq(strategicObjectives.id, id));
+    return objective || undefined;
   }
 
   async createStrategicObjective(objective: InsertStrategicObjective): Promise<StrategicObjective> {
-    const id = randomUUID();
-    const newObjective: StrategicObjective = {
-      id,
-      ...objective,
-      progress: objective.progress || 0,
-      lastUpdate: new Date()
-    };
-    this.strategicObjectives.set(id, newObjective);
+    const [newObjective] = await db
+      .insert(strategicObjectives)
+      .values({
+        ...objective,
+        contributingAgents: objective.contributingAgents as string[]
+      })
+      .returning();
     return newObjective;
   }
 
   async updateStrategicObjective(id: string, objective: Partial<StrategicObjective>): Promise<StrategicObjective> {
-    const existing = this.strategicObjectives.get(id);
-    if (!existing) {
+    const [updated] = await db
+      .update(strategicObjectives)
+      .set(objective)
+      .where(eq(strategicObjectives.id, id))
+      .returning();
+    if (!updated) {
       throw new Error(`Strategic objective with id ${id} not found`);
     }
-    const updated = { ...existing, ...objective };
-    this.strategicObjectives.set(id, updated);
     return updated;
   }
 
   // Weekly Reports
   async getWeeklyReports(): Promise<WeeklyReport[]> {
-    return Array.from(this.weeklyReports.values()).sort((a, b) => 
-      b.generatedAt.getTime() - a.generatedAt.getTime()
-    );
+    return await db.select().from(weeklyReports).orderBy(desc(weeklyReports.generatedAt));
   }
 
   async getWeeklyReport(id: string): Promise<WeeklyReport | undefined> {
-    return this.weeklyReports.get(id);
+    const [report] = await db.select().from(weeklyReports).where(eq(weeklyReports.id, id));
+    return report || undefined;
   }
 
   async createWeeklyReport(report: InsertWeeklyReport): Promise<WeeklyReport> {
-    const id = randomUUID();
-    const newReport: WeeklyReport = {
-      id,
-      ...report,
-      strategicAlignment: report.strategicAlignment as Record<string, string[]>,
-      generatedAt: new Date()
-    };
-    this.weeklyReports.set(id, newReport);
+    const [newReport] = await db
+      .insert(weeklyReports)
+      .values({
+        ...report,
+        strategicAlignment: report.strategicAlignment as Record<string, string[]>,
+        recommendations: report.recommendations as string[],
+        highlights: report.highlights as string[],
+        agentStatuses: report.agentStatuses as Record<string, string>
+      })
+      .returning();
     return newReport;
   }
 
   // System Metrics
   async getLatestSystemMetrics(): Promise<SystemMetrics | undefined> {
-    return this.systemMetrics[this.systemMetrics.length - 1];
+    const [metrics] = await db.select().from(systemMetrics).orderBy(desc(systemMetrics.timestamp)).limit(1);
+    return metrics || undefined;
   }
 
   async createSystemMetrics(metrics: InsertSystemMetrics): Promise<SystemMetrics> {
-    const newMetrics: SystemMetrics = {
-      id: randomUUID(),
-      ...metrics,
-      timestamp: new Date()
-    };
-    this.systemMetrics.push(newMetrics);
+    const [newMetrics] = await db
+      .insert(systemMetrics)
+      .values(metrics)
+      .returning();
     return newMetrics;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
