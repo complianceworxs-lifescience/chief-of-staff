@@ -56,7 +56,7 @@ export class CommunicationTracker {
 
   // Simulate agent communications for demo purposes
   async simulateAgentActivity(): Promise<void> {
-    const agents = ['CEO Agent', 'CRO Agent', 'CMO Agent', 'COO Agent', 'Content Agent', 'Lexi Agent'];
+    const agents = ['CEO Agent', 'CRO Agent', 'CMO Agent', 'COO Agent', 'Content Manager'];
     const objectives = ['Increase Tier 3 MRR by 20%', 'Improve Customer Retention by 15%', 'Expand Content Marketing Reach by 40%'];
     const actions = [
       'Updated quarterly strategy',

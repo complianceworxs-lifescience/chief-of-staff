@@ -38,13 +38,21 @@ export function CommunicationDashboard() {
   });
 
   const simulateActivity = useMutation({
-    mutationFn: () => apiRequest('/api/communications/simulate', 'POST'),
+    mutationFn: () => apiRequest('POST', '/api/communications/simulate'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/communications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/communications/patterns'] });
       toast({
         title: "Activity Simulated",
         description: "New agent communications generated successfully"
+      });
+    },
+    onError: (error) => {
+      console.error('Simulate activity error:', error);
+      toast({
+        title: "Simulation Failed",
+        description: "Failed to simulate agent activity. Please try again.",
+        variant: "destructive"
       });
     }
   });
