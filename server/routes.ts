@@ -10,16 +10,23 @@ import { smartRecommendationsEngine } from "./services/smart-recommendations";
 import { workloadBalancer } from "./services/workload-balancer";
 import { aiQuestionService } from "./services/ai-question-service";
 import { chiefOfStaff } from "./services/chief-of-staff";
+import { ContentManager } from "./services/content-manager";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
   insertBusinessGoalSchema,
   insertBusinessMetricSchema,
   insertInitiativeSchema,
-  insertAgentDirectiveSchema
+  insertAgentDirectiveSchema,
+  insertCampaignBriefSchema,
+  insertBrandAssetSchema,
+  insertContentAssetSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize Content Manager
+  const contentManager = new ContentManager(storage);
+  await contentManager.initializeBrandAssets();
   
   // Agent routes
   app.get("/api/agents", async (req, res) => {
@@ -576,6 +583,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/chief-of-staff/strategic-briefs/generate", async (req, res) => {
+    try {
+      const brief = await chiefOfStaff.generateWeeklyStrategicBrief();
+      res.json(brief);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate strategic brief", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Content Manager API Routes
+  app.get("/api/content/briefs", async (req, res) => {
+    try {
+      const briefs = await storage.getCampaignBriefs();
+      res.json(briefs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch campaign briefs" });
+    }
+  });
+
+  app.post("/api/content/briefs", async (req, res) => {
+    try {
+      const briefData = insertCampaignBriefSchema.parse(req.body);
+      const brief = await contentManager.processStrategicBrief(briefData);
+      res.status(201).json(brief);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid campaign brief data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get("/api/content/briefs/:id", async (req, res) => {
+    try {
+      const brief = await storage.getCampaignBrief(req.params.id);
+      if (!brief) {
+        return res.status(404).json({ message: "Campaign brief not found" });
+      }
+      res.json(brief);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch campaign brief" });
+    }
+  });
+
+  app.get("/api/content/briefs/:id/assets", async (req, res) => {
+    try {
+      const assets = await contentManager.getContentAssetsByBrief(req.params.id);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch content assets" });
+    }
+  });
+
+  app.get("/api/content/assets", async (req, res) => {
+    try {
+      const briefId = req.query.briefId as string;
+      const assets = await storage.getContentAssets(briefId);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch content assets" });
+    }
+  });
+
+  app.post("/api/content/assets", async (req, res) => {
+    try {
+      const assetData = insertContentAssetSchema.parse(req.body);
+      const asset = await storage.createContentAsset(assetData);
+      res.status(201).json(asset);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid content asset data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.put("/api/content/assets/:id/approve", async (req, res) => {
+    try {
+      const asset = await contentManager.approveContentAsset(req.params.id);
+      if (!asset) {
+        return res.status(404).json({ message: "Content asset not found" });
+      }
+      res.json(asset);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve content asset" });
+    }
+  });
+
+  app.get("/api/content/brand-assets", async (req, res) => {
+    try {
+      const type = req.query.type as string;
+      const assets = await storage.getBrandAssets(type);
+      res.json(assets);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch brand assets" });
+    }
+  });
+
+  app.post("/api/content/brand-assets", async (req, res) => {
+    try {
+      const assetData = insertBrandAssetSchema.parse(req.body);
+      const asset = await storage.createBrandAsset(assetData);
+      res.status(201).json(asset);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid brand asset data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Content Manager Integration with Chief of Staff
+  app.post("/api/content/generate-from-directive", async (req, res) => {
     try {
       const brief = await chiefOfStaff.generateStrategicBrief();
       res.json(brief);

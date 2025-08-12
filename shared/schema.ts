@@ -216,12 +216,60 @@ export const strategicBriefs = pgTable("strategic_briefs", {
   generatedAt: timestamp("generated_at").defaultNow().notNull()
 });
 
+// 6. Content Synthesis & Generation Agent (CSGA) Tables
+export const campaignBriefs = pgTable("campaign_briefs", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  objective: text("objective").notNull(), // "Generate 30 trial signups"
+  targetPersona: text("target_persona").notNull(), // "Validation Strategist"
+  coreMessage: text("core_message").notNull(),
+  painPoints: text("pain_points").array().notNull(),
+  valueProposition: text("value_proposition").notNull(),
+  targetChannels: text("target_channels").array().notNull(), // ["LinkedIn", "Email"]
+  briefingAgent: text("briefing_agent").notNull(), // "chief-of-staff"
+  assignedAgent: text("assigned_agent").notNull().default("content"), // Content Manager
+  status: text("status").notNull().default("pending"), // 'pending', 'in_progress', 'completed'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const brandAssets = pgTable("brand_assets", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull(), // 'voice_tone', 'product_info', 'case_study', 'proof_point'
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: text("category"), // 'agents', 'compliance', 'automation'
+  tags: text("tags").array(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const contentAssets = pgTable("content_assets", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  briefId: text("brief_id").references(() => campaignBriefs.id).notNull(),
+  type: text("type").notNull(), // 'social_post', 'email_sequence', 'ad_copy', 'landing_page', 'blog_outline'
+  channel: text("channel"), // 'linkedin', 'email', 'paid_ads', 'website'
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  visualSuggestions: text("visual_suggestions").array(),
+  variations: json("variations").$type<string[]>().default([]),
+  status: text("status").notNull().default("draft"), // 'draft', 'review', 'approved', 'published'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 // Chief of Staff Insert Schemas
 export const insertBusinessGoalSchema = createInsertSchema(businessGoals).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertBusinessMetricSchema = createInsertSchema(businessMetrics).omit({ id: true, timestamp: true });
 export const insertInitiativeSchema = createInsertSchema(initiatives).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertAgentDirectiveSchema = createInsertSchema(agentDirectives).omit({ id: true, createdAt: true });
 export const insertStrategicBriefSchema = createInsertSchema(strategicBriefs).omit({ id: true, generatedAt: true });
+
+// Content Manager Insert Schemas
+export const insertCampaignBriefSchema = createInsertSchema(campaignBriefs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBrandAssetSchema = createInsertSchema(brandAssets).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertContentAssetSchema = createInsertSchema(contentAssets).omit({ id: true, createdAt: true, updatedAt: true });
 
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
@@ -259,3 +307,11 @@ export type AgentDirective = typeof agentDirectives.$inferSelect;
 export type InsertAgentDirective = z.infer<typeof insertAgentDirectiveSchema>;
 export type StrategicBrief = typeof strategicBriefs.$inferSelect;
 export type InsertStrategicBrief = z.infer<typeof insertStrategicBriefSchema>;
+
+// Content Manager Types
+export type CampaignBrief = typeof campaignBriefs.$inferSelect;
+export type InsertCampaignBrief = z.infer<typeof insertCampaignBriefSchema>;
+export type BrandAsset = typeof brandAssets.$inferSelect;
+export type InsertBrandAsset = z.infer<typeof insertBrandAssetSchema>;
+export type ContentAsset = typeof contentAssets.$inferSelect;
+export type InsertContentAsset = z.infer<typeof insertContentAssetSchema>;

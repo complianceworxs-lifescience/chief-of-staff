@@ -31,6 +31,12 @@ import {
   type InsertAgentDirective,
   type StrategicBrief,
   type InsertStrategicBrief,
+  type CampaignBrief,
+  type InsertCampaignBrief,
+  type BrandAsset,
+  type InsertBrandAsset,
+  type ContentAsset,
+  type InsertContentAsset,
   agents,
   conflicts,
   strategicObjectives,
@@ -46,7 +52,10 @@ import {
   businessMetrics,
   initiatives,
   agentDirectives,
-  strategicBriefs
+  strategicBriefs,
+  campaignBriefs,
+  brandAssets,
+  contentAssets
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -134,6 +143,22 @@ export interface IStorage {
   createStrategicBrief(brief: InsertStrategicBrief): Promise<StrategicBrief>;
   getLatestStrategicBrief(): Promise<StrategicBrief | undefined>;
   getStrategicBriefs(): Promise<StrategicBrief[]>;
+
+  // Content Manager Storage Methods
+  createCampaignBrief(brief: InsertCampaignBrief): Promise<CampaignBrief>;
+  getCampaignBriefs(): Promise<CampaignBrief[]>;
+  getCampaignBrief(id: string): Promise<CampaignBrief | undefined>;
+  updateCampaignBrief(id: string, updates: Partial<InsertCampaignBrief>): Promise<CampaignBrief | undefined>;
+  
+  createBrandAsset(asset: InsertBrandAsset): Promise<BrandAsset>;
+  getBrandAssets(type?: string): Promise<BrandAsset[]>;
+  getBrandAsset(id: string): Promise<BrandAsset | undefined>;
+  updateBrandAsset(id: string, updates: Partial<InsertBrandAsset>): Promise<BrandAsset | undefined>;
+  
+  createContentAsset(asset: InsertContentAsset): Promise<ContentAsset>;
+  getContentAssets(briefId?: string): Promise<ContentAsset[]>;
+  getContentAsset(id: string): Promise<ContentAsset | undefined>;
+  updateContentAsset(id: string, updates: Partial<InsertContentAsset>): Promise<ContentAsset | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -196,12 +221,12 @@ export class DatabaseStorage implements IStorage {
       },
       {
         id: "content",
-        name: "Content Agent",
-        status: "delayed",
-        lastActive: new Date(Date.now() - 20 * 60 * 1000),
-        lastReport: "Content Calendar",
-        successRate: 89,
-        strategicAlignment: 78,
+        name: "Content Manager",
+        status: "healthy",
+        lastActive: new Date(Date.now() - 10 * 60 * 1000),
+        lastReport: "Content Strategy Brief",
+        successRate: 92,
+        strategicAlignment: 85,
         icon: "fas fa-pen-fancy",
         color: "bg-teal-600"
       }
@@ -674,6 +699,89 @@ export class DatabaseStorage implements IStorage {
   async getStrategicBriefs(): Promise<StrategicBrief[]> {
     return await db.select().from(strategicBriefs)
       .orderBy(desc(strategicBriefs.generatedAt));
+  }
+
+  // Content Manager Implementation
+  async createCampaignBrief(brief: InsertCampaignBrief): Promise<CampaignBrief> {
+    const [result] = await db.insert(campaignBriefs).values(brief).returning();
+    return result;
+  }
+
+  async getCampaignBriefs(): Promise<CampaignBrief[]> {
+    return await db.select().from(campaignBriefs)
+      .orderBy(desc(campaignBriefs.createdAt));
+  }
+
+  async getCampaignBrief(id: string): Promise<CampaignBrief | undefined> {
+    const [result] = await db.select().from(campaignBriefs)
+      .where(eq(campaignBriefs.id, id));
+    return result;
+  }
+
+  async updateCampaignBrief(id: string, updates: Partial<InsertCampaignBrief>): Promise<CampaignBrief | undefined> {
+    const [result] = await db.update(campaignBriefs)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(campaignBriefs.id, id))
+      .returning();
+    return result;
+  }
+
+  async createBrandAsset(asset: InsertBrandAsset): Promise<BrandAsset> {
+    const [result] = await db.insert(brandAssets).values(asset).returning();
+    return result;
+  }
+
+  async getBrandAssets(type?: string): Promise<BrandAsset[]> {
+    if (type) {
+      return await db.select().from(brandAssets)
+        .where(eq(brandAssets.type, type))
+        .orderBy(desc(brandAssets.createdAt));
+    }
+    return await db.select().from(brandAssets)
+      .orderBy(desc(brandAssets.createdAt));
+  }
+
+  async getBrandAsset(id: string): Promise<BrandAsset | undefined> {
+    const [result] = await db.select().from(brandAssets)
+      .where(eq(brandAssets.id, id));
+    return result;
+  }
+
+  async updateBrandAsset(id: string, updates: Partial<InsertBrandAsset>): Promise<BrandAsset | undefined> {
+    const [result] = await db.update(brandAssets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(brandAssets.id, id))
+      .returning();
+    return result;
+  }
+
+  async createContentAsset(asset: InsertContentAsset): Promise<ContentAsset> {
+    const [result] = await db.insert(contentAssets).values(asset).returning();
+    return result;
+  }
+
+  async getContentAssets(briefId?: string): Promise<ContentAsset[]> {
+    if (briefId) {
+      return await db.select().from(contentAssets)
+        .where(eq(contentAssets.briefId, briefId))
+        .orderBy(desc(contentAssets.createdAt));
+    }
+    return await db.select().from(contentAssets)
+      .orderBy(desc(contentAssets.createdAt));
+  }
+
+  async getContentAsset(id: string): Promise<ContentAsset | undefined> {
+    const [result] = await db.select().from(contentAssets)
+      .where(eq(contentAssets.id, id));
+    return result;
+  }
+
+  async updateContentAsset(id: string, updates: Partial<InsertContentAsset>): Promise<ContentAsset | undefined> {
+    const [result] = await db.update(contentAssets)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(contentAssets.id, id))
+      .returning();
+    return result;
   }
 }
 
