@@ -142,6 +142,87 @@ export const aiQuestions = pgTable("ai_questions", {
 
 export const insertAiQuestionSchema = createInsertSchema(aiQuestions).omit({ id: true, askedAt: true });
 
+// Chief of Staff Core Functions Tables
+
+// 1. High-Level Goals (User Input)
+export const businessGoals = pgTable("business_goals", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  targetValue: text("target_value").notNull(), // e.g., "$100,000", "30 signups", "2 partners"
+  currentValue: text("current_value").notNull().default("0"),
+  deadline: timestamp("deadline").notNull(),
+  priority: text("priority").notNull().default("medium"), // 'high', 'medium', 'low'
+  status: text("status").notNull().default("active"), // 'active', 'completed', 'paused'
+  category: text("category").notNull(), // 'revenue', 'growth', 'partnerships', 'operations'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// 2. Real-time Business Data (Agent Inputs)
+export const businessMetrics = pgTable("business_metrics", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceAgent: text("source_agent").notNull(), // 'cro', 'cfo', 'coo', 'cco'
+  metricType: text("metric_type").notNull(), // 'leads', 'trials', 'revenue', 'capacity', 'compliance'
+  metricName: text("metric_name").notNull(),
+  value: text("value").notNull(),
+  unit: text("unit").notNull(), // 'count', 'dollars', 'percentage', 'hours'
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  goalId: text("goal_id").references(() => businessGoals.id),
+  metadata: text("metadata") // JSON string for additional context
+});
+
+// 3. Prioritized Initiatives (Analysis Output)
+export const initiatives = pgTable("initiatives", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  goalId: text("goal_id").references(() => businessGoals.id).notNull(),
+  impactScore: integer("impact_score").notNull(), // 1-100
+  effortScore: integer("effort_score").notNull(), // 1-100
+  priorityRank: integer("priority_rank").notNull(),
+  estimatedImpact: text("estimated_impact").notNull(),
+  requiredResources: text("required_resources").array().notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'active', 'completed', 'cancelled'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// 4. Agent Directives (Delegation Output)
+export const agentDirectives = pgTable("agent_directives", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  initiativeId: text("initiative_id").references(() => initiatives.id).notNull(),
+  targetAgent: text("target_agent").notNull(), // 'cro', 'cfo', 'coo', 'cco'
+  action: text("action").notNull(),
+  goal: text("goal").notNull(),
+  deadline: timestamp("deadline").notNull(),
+  priority: text("priority").notNull(), // 'p1', 'p2', 'p3'
+  status: text("status").notNull().default("assigned"), // 'assigned', 'in_progress', 'completed', 'blocked'
+  result: text("result"), // outcome or status update
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at")
+});
+
+// 5. Strategic Briefs (Weekly Reports)
+export const strategicBriefs = pgTable("strategic_briefs", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  weekOf: timestamp("week_of").notNull(),
+  executiveSummary: text("executive_summary").notNull(),
+  goalProgress: text("goal_progress").notNull(), // JSON string of goal statuses
+  topPriorities: text("top_priorities").array().notNull(),
+  keyInsights: text("key_insights").array().notNull(),
+  nextWeekFocus: text("next_week_focus").notNull(),
+  riskFactors: text("risk_factors").array(),
+  generatedAt: timestamp("generated_at").defaultNow().notNull()
+});
+
+// Chief of Staff Insert Schemas
+export const insertBusinessGoalSchema = createInsertSchema(businessGoals).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBusinessMetricSchema = createInsertSchema(businessMetrics).omit({ id: true, timestamp: true });
+export const insertInitiativeSchema = createInsertSchema(initiatives).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAgentDirectiveSchema = createInsertSchema(agentDirectives).omit({ id: true, createdAt: true });
+export const insertStrategicBriefSchema = createInsertSchema(strategicBriefs).omit({ id: true, generatedAt: true });
+
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Conflict = typeof conflicts.$inferSelect;
@@ -166,3 +247,15 @@ export type SmartRecommendation = typeof smartRecommendations.$inferSelect;
 export type InsertSmartRecommendation = z.infer<typeof insertSmartRecommendationSchema>;
 export type AiQuestion = typeof aiQuestions.$inferSelect;
 export type InsertAiQuestion = z.infer<typeof insertAiQuestionSchema>;
+
+// Chief of Staff Types
+export type BusinessGoal = typeof businessGoals.$inferSelect;
+export type InsertBusinessGoal = z.infer<typeof insertBusinessGoalSchema>;
+export type BusinessMetric = typeof businessMetrics.$inferSelect;
+export type InsertBusinessMetric = z.infer<typeof insertBusinessMetricSchema>;
+export type Initiative = typeof initiatives.$inferSelect;
+export type InsertInitiative = z.infer<typeof insertInitiativeSchema>;
+export type AgentDirective = typeof agentDirectives.$inferSelect;
+export type InsertAgentDirective = z.infer<typeof insertAgentDirectiveSchema>;
+export type StrategicBrief = typeof strategicBriefs.$inferSelect;
+export type InsertStrategicBrief = z.infer<typeof insertStrategicBriefSchema>;

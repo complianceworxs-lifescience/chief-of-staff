@@ -9,7 +9,15 @@ import { predictiveAnalytics } from "./services/predictive-analytics";
 import { smartRecommendationsEngine } from "./services/smart-recommendations";
 import { workloadBalancer } from "./services/workload-balancer";
 import { aiQuestionService } from "./services/ai-question-service";
-import { insertConflictSchema, insertStrategicObjectiveSchema } from "@shared/schema";
+import { chiefOfStaff } from "./services/chief-of-staff";
+import { 
+  insertConflictSchema, 
+  insertStrategicObjectiveSchema,
+  insertBusinessGoalSchema,
+  insertBusinessMetricSchema,
+  insertInitiativeSchema,
+  insertAgentDirectiveSchema
+} from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
@@ -450,6 +458,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching questions by category:', error);
       res.status(500).json({ error: 'Failed to fetch questions by category' });
+    }
+  });
+
+  // =====================================
+  // CHIEF OF STAFF ROUTES
+  // =====================================
+
+  // Business Goals
+  app.get("/api/chief-of-staff/goals", async (req, res) => {
+    try {
+      const goals = await storage.getBusinessGoals();
+      res.json(goals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch business goals" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/goals", async (req, res) => {
+    try {
+      const goalData = insertBusinessGoalSchema.parse(req.body);
+      const goal = await chiefOfStaff.setBusinessGoal(goalData);
+      res.json(goal);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid goal data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Business Metrics (Data Ingestion)
+  app.get("/api/chief-of-staff/metrics", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const metrics = await storage.getRecentBusinessMetrics(limit);
+      res.json(metrics);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch business metrics" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/metrics", async (req, res) => {
+    try {
+      const metricData = insertBusinessMetricSchema.parse(req.body);
+      const metric = await chiefOfStaff.recordBusinessMetric(metricData);
+      res.json(metric);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid metric data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Business Snapshot (Complete Data Picture)
+  app.get("/api/chief-of-staff/snapshot", async (req, res) => {
+    try {
+      const snapshot = await chiefOfStaff.getBusinessSnapshot();
+      res.json(snapshot);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch business snapshot" });
+    }
+  });
+
+  // Prioritized Initiatives (Analysis Output)
+  app.get("/api/chief-of-staff/initiatives", async (req, res) => {
+    try {
+      const initiatives = await storage.getActiveInitiatives();
+      res.json(initiatives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch initiatives" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/initiatives/generate", async (req, res) => {
+    try {
+      const initiatives = await chiefOfStaff.generatePrioritizedInitiatives();
+      res.json(initiatives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate initiatives", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Agent Directives (Delegation Output)
+  app.get("/api/chief-of-staff/directives", async (req, res) => {
+    try {
+      const directives = await storage.getActiveDirectives();
+      res.json(directives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch directives" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/directives/delegate", async (req, res) => {
+    try {
+      const { initiativeIds } = req.body;
+      const directives = await chiefOfStaff.delegateToAgents(initiativeIds);
+      res.json(directives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delegate to agents", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Strategic Briefs (Weekly Reports)
+  app.get("/api/chief-of-staff/strategic-briefs", async (req, res) => {
+    try {
+      const briefs = await storage.getStrategicBriefs();
+      res.json(briefs);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch strategic briefs" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/strategic-briefs/generate", async (req, res) => {
+    try {
+      const brief = await chiefOfStaff.generateStrategicBrief();
+      res.json(brief);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate strategic brief", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Simulate Agent Data Ingestion (for demo purposes)
+  app.post("/api/chief-of-staff/simulate-data", async (req, res) => {
+    try {
+      await chiefOfStaff.simulateAgentDataIngestion();
+      res.json({ message: "Agent data simulation completed" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to simulate agent data", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

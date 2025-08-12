@@ -21,6 +21,16 @@ import {
   type InsertSmartRecommendation,
   type AiQuestion,
   type InsertAiQuestion,
+  type BusinessGoal,
+  type InsertBusinessGoal,
+  type BusinessMetric,
+  type InsertBusinessMetric,
+  type Initiative,
+  type InsertInitiative,
+  type AgentDirective,
+  type InsertAgentDirective,
+  type StrategicBrief,
+  type InsertStrategicBrief,
   agents,
   conflicts,
   strategicObjectives,
@@ -31,7 +41,12 @@ import {
   conflictPredictions,
   agentWorkloads,
   smartRecommendations,
-  aiQuestions
+  aiQuestions,
+  businessGoals,
+  businessMetrics,
+  initiatives,
+  agentDirectives,
+  strategicBriefs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -95,6 +110,30 @@ export interface IStorage {
   getRecentAiQuestions(limit: number): Promise<AiQuestion[]>;
   getAiQuestionsByCategory(category: string): Promise<AiQuestion[]>;
   createAiQuestion(question: InsertAiQuestion): Promise<AiQuestion>;
+
+  // Chief of Staff Storage Methods
+  createBusinessGoal(goal: InsertBusinessGoal): Promise<BusinessGoal>;
+  getBusinessGoals(): Promise<BusinessGoal[]>;
+  getBusinessGoal(id: string): Promise<BusinessGoal | undefined>;
+  updateBusinessGoal(id: string, updates: Partial<InsertBusinessGoal>): Promise<BusinessGoal | undefined>;
+  
+  createBusinessMetric(metric: InsertBusinessMetric): Promise<BusinessMetric>;
+  getRecentBusinessMetrics(limit: number): Promise<BusinessMetric[]>;
+  getBusinessMetricsForGoal(goalId: string): Promise<BusinessMetric[]>;
+  
+  createInitiative(initiative: InsertInitiative): Promise<Initiative>;
+  getActiveInitiatives(): Promise<Initiative[]>;
+  getInitiative(id: string): Promise<Initiative | undefined>;
+  updateInitiative(id: string, updates: Partial<InsertInitiative>): Promise<Initiative | undefined>;
+  
+  createAgentDirective(directive: InsertAgentDirective): Promise<AgentDirective>;
+  getActiveDirectives(): Promise<AgentDirective[]>;
+  getDirectivesForAgent(agentId: string): Promise<AgentDirective[]>;
+  updateDirective(id: string, updates: Partial<InsertAgentDirective>): Promise<AgentDirective | undefined>;
+  
+  createStrategicBrief(brief: InsertStrategicBrief): Promise<StrategicBrief>;
+  getLatestStrategicBrief(): Promise<StrategicBrief | undefined>;
+  getStrategicBriefs(): Promise<StrategicBrief[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -532,6 +571,120 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return newQuestion;
+  }
+
+  // =====================================
+  // CHIEF OF STAFF STORAGE IMPLEMENTATIONS
+  // =====================================
+
+  // Business Goals
+  async createBusinessGoal(goal: InsertBusinessGoal): Promise<BusinessGoal> {
+    const [result] = await db.insert(businessGoals).values(goal).returning();
+    return result;
+  }
+
+  async getBusinessGoals(): Promise<BusinessGoal[]> {
+    return await db.select().from(businessGoals).orderBy(desc(businessGoals.createdAt));
+  }
+
+  async getBusinessGoal(id: string): Promise<BusinessGoal | undefined> {
+    const [result] = await db.select().from(businessGoals).where(eq(businessGoals.id, id));
+    return result;
+  }
+
+  async updateBusinessGoal(id: string, updates: Partial<InsertBusinessGoal>): Promise<BusinessGoal | undefined> {
+    const [result] = await db.update(businessGoals)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(businessGoals.id, id))
+      .returning();
+    return result;
+  }
+
+  // Business Metrics
+  async createBusinessMetric(metric: InsertBusinessMetric): Promise<BusinessMetric> {
+    const [result] = await db.insert(businessMetrics).values(metric).returning();
+    return result;
+  }
+
+  async getRecentBusinessMetrics(limit: number): Promise<BusinessMetric[]> {
+    return await db.select().from(businessMetrics)
+      .orderBy(desc(businessMetrics.timestamp))
+      .limit(limit);
+  }
+
+  async getBusinessMetricsForGoal(goalId: string): Promise<BusinessMetric[]> {
+    return await db.select().from(businessMetrics)
+      .where(eq(businessMetrics.goalId, goalId))
+      .orderBy(desc(businessMetrics.timestamp));
+  }
+
+  // Initiatives
+  async createInitiative(initiative: InsertInitiative): Promise<Initiative> {
+    const [result] = await db.insert(initiatives).values(initiative).returning();
+    return result;
+  }
+
+  async getActiveInitiatives(): Promise<Initiative[]> {
+    return await db.select().from(initiatives)
+      .where(eq(initiatives.status, 'active'))
+      .orderBy(initiatives.priorityRank);
+  }
+
+  async getInitiative(id: string): Promise<Initiative | undefined> {
+    const [result] = await db.select().from(initiatives).where(eq(initiatives.id, id));
+    return result;
+  }
+
+  async updateInitiative(id: string, updates: Partial<InsertInitiative>): Promise<Initiative | undefined> {
+    const [result] = await db.update(initiatives)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(initiatives.id, id))
+      .returning();
+    return result;
+  }
+
+  // Agent Directives
+  async createAgentDirective(directive: InsertAgentDirective): Promise<AgentDirective> {
+    const [result] = await db.insert(agentDirectives).values(directive).returning();
+    return result;
+  }
+
+  async getActiveDirectives(): Promise<AgentDirective[]> {
+    return await db.select().from(agentDirectives)
+      .where(eq(agentDirectives.status, 'assigned'))
+      .orderBy(agentDirectives.priority);
+  }
+
+  async getDirectivesForAgent(agentId: string): Promise<AgentDirective[]> {
+    return await db.select().from(agentDirectives)
+      .where(eq(agentDirectives.targetAgent, agentId))
+      .orderBy(desc(agentDirectives.createdAt));
+  }
+
+  async updateDirective(id: string, updates: Partial<InsertAgentDirective>): Promise<AgentDirective | undefined> {
+    const [result] = await db.update(agentDirectives)
+      .set(updates)
+      .where(eq(agentDirectives.id, id))
+      .returning();
+    return result;
+  }
+
+  // Strategic Briefs
+  async createStrategicBrief(brief: InsertStrategicBrief): Promise<StrategicBrief> {
+    const [result] = await db.insert(strategicBriefs).values(brief).returning();
+    return result;
+  }
+
+  async getLatestStrategicBrief(): Promise<StrategicBrief | undefined> {
+    const [result] = await db.select().from(strategicBriefs)
+      .orderBy(desc(strategicBriefs.generatedAt))
+      .limit(1);
+    return result;
+  }
+
+  async getStrategicBriefs(): Promise<StrategicBrief[]> {
+    return await db.select().from(strategicBriefs)
+      .orderBy(desc(strategicBriefs.generatedAt));
   }
 }
 

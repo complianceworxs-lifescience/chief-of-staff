@@ -1,8 +1,10 @@
-# Meta-Agent Orchestrator Application
+# Chief of Staff AI Agent
 
 ## Overview
 
-This is a full-stack web application built to monitor, audit, and coordinate autonomous business agents (CEO, CRO, CMO, COO, Content Agent, etc.). The system provides real-time oversight of agent performance, conflict detection and resolution, strategic alignment tracking, and comprehensive reporting.
+This is a sophisticated Chief of Staff AI system that acts as the strategic orchestrator for an entire team of AI business agents. The system ingests high-level business goals, analyzes real-time data from executive agents (CRO, CFO, COO, CCO), and generates prioritized directives to ensure the AI team always works on the most impactful initiatives.
+
+**Core Purpose**: Solve the "what to work on" problem by determining priorities through data analysis and delegating clear, actionable directives to specialized AI agents.
 
 ## User Preferences
 
@@ -25,6 +27,9 @@ Preferred communication style: Simple, everyday language.
 - Built contextual AI that analyzes system data to provide intelligent responses about agent status, conflicts, performance, strategy, and workload
 - Added AI Assistant page with question input, suggested questions, and conversation history
 - User confirmed AI Assistant "works beautifully" - system now supports interactive questioning
+- **Renamed system to "Chief of Staff" with enhanced strategic capabilities**
+- Expanding functionality to include: data ingestion, priority analysis, and task delegation
+- System will analyze high-level goals against real-time business data and generate prioritized directives
 
 ## System Architecture
 

@@ -5,10 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
-import CommunicationsPage from "@/pages/communications";
+import Goals from "@/pages/goals";
+import Initiatives from "@/pages/initiatives";
+import Directives from "@/pages/directives";
 import AnalyticsPage from "@/pages/analytics";
-import RecommendationsPage from "@/pages/recommendations";
-import WorkloadsPage from "@/pages/workloads";
 import AiAssistant from "@/pages/ai-assistant";
 import NotFound from "@/pages/not-found";
 
@@ -17,10 +17,10 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/communications" component={CommunicationsPage} />
+        <Route path="/goals" component={Goals} />
+        <Route path="/initiatives" component={Initiatives} />
+        <Route path="/directives" component={Directives} />
         <Route path="/analytics" component={AnalyticsPage} />
-        <Route path="/recommendations" component={RecommendationsPage} />
-        <Route path="/workloads" component={WorkloadsPage} />
         <Route path="/ai-assistant" component={AiAssistant} />
         <Route component={NotFound} />
       </Switch>

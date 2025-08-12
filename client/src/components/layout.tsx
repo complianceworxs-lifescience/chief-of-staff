@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3 } from "lucide-react";
+import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface Conflict {
@@ -24,10 +24,10 @@ export function Layout({ children }: LayoutProps) {
 
   const navigationItems = [
     { path: "/", label: "Dashboard", icon: BarChart3 },
-    { path: "/communications", label: "Communications", icon: MessageSquare },
-    { path: "/analytics", label: "Analytics", icon: TrendingUp },
-    { path: "/recommendations", label: "Recommendations", icon: Lightbulb },
-    { path: "/workloads", label: "Workloads", icon: Users },
+    { path: "/goals", label: "Goals & Priorities", icon: TrendingUp },
+    { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
+    { path: "/directives", label: "Directives", icon: Users },
+    { path: "/analytics", label: "Analytics", icon: MessageSquare },
     { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
   ];
 
@@ -47,11 +47,11 @@ export function Layout({ children }: LayoutProps) {
               <Link href="/">
                 <div className="flex items-center space-x-2 cursor-pointer">
                   <Brain className="h-8 w-8 text-primary" />
-                  <h1 className="text-xl font-bold text-gray-900">Meta-Agent Orchestrator</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Chief of Staff</h1>
                 </div>
               </Link>
-              <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                ComplianceWorxs
+              <Badge variant="secondary" className="bg-blue-100 text-blue-600">
+                Strategic AI Orchestrator
               </Badge>
             </div>
             
