@@ -204,17 +204,6 @@ export class DatabaseStorage implements IStorage {
         strategicAlignment: 78,
         icon: "fas fa-pen-fancy",
         color: "bg-teal-600"
-      },
-      {
-        id: "lexi",
-        name: "Lexi Agent",
-        status: "healthy",
-        lastActive: new Date(Date.now() - 3 * 60 * 1000),
-        lastReport: "FAQ Update",
-        successRate: 93,
-        strategicAlignment: 85,
-        icon: "fas fa-comments",
-        color: "bg-pink-600"
       }
     ];
 
@@ -259,7 +248,7 @@ export class DatabaseStorage implements IStorage {
       {
         title: "Improve Customer Retention by 15%",
         progress: 65,
-        contributingAgents: ["coo", "content", "lexi"],
+        contributingAgents: ["coo", "content"],
         quarter: "Q3 2025"
       },
       {

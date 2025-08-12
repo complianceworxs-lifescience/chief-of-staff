@@ -38,8 +38,7 @@ export class WorkloadBalancer {
       'CRO Agent': 15,
       'CMO Agent': 14,
       'COO Agent': 16,
-      'Content Agent': 18,
-      'Lexi Agent': 13
+      'Content Agent': 18
     };
     return capacities[agentName as keyof typeof capacities] || 12;
   }
@@ -50,8 +49,7 @@ export class WorkloadBalancer {
       'CRO Agent': 'high',
       'CMO Agent': 'high', 
       'COO Agent': 'high',
-      'Content Agent': 'medium',
-      'Lexi Agent': 'medium'
+      'Content Agent': 'medium'
     };
     return priorities[agentName as keyof typeof priorities] || 'medium';
   }

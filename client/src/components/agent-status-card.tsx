@@ -44,8 +44,7 @@ export function AgentStatusCard({ agent }: AgentStatusCardProps) {
       "bg-success-green": "text-green-600",
       "bg-purple-600": "text-purple-600",
       "bg-indigo-600": "text-indigo-600",
-      "bg-teal-600": "text-teal-600",
-      "bg-pink-600": "text-pink-600"
+      "bg-teal-600": "text-teal-600"
     };
     return colorMap[color] || "text-gray-600";
   };
