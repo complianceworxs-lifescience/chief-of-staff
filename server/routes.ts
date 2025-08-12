@@ -360,30 +360,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Report not found" });
       }
 
-      // Create a comprehensive report object with all details
-      const fullReport = {
-        id: report.id,
-        period: report.period,
-        generatedAt: report.generatedAt,
-        overallScore: report.overallScore,
-        grade: report.grade,
-        agentStatuses: report.agentStatuses,
-        conflictsDetected: report.conflictsDetected,
-        conflictsResolved: report.conflictsResolved,
-        strategicAlignment: report.strategicAlignment,
-        recommendations: report.recommendations,
-        highlights: report.highlights,
-        metadata: {
-          systemVersion: "1.0.0",
-          reportType: "Weekly Intelligence Report",
-          exportedAt: new Date().toISOString(),
-          format: "JSON"
-        }
-      };
-
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="Weekly_Intelligence_Report_${report.period.replace(/[^a-zA-Z0-9]/g, '_')}.json"`);
-      res.json(fullReport);
+      // Format the report as a readable text document
+      const formattedReport = reportGenerator.formatReportForDownload(report);
+      
+      // Set headers for text file download
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="Weekly_Intelligence_Report_${report.period.replace(/[^a-zA-Z0-9]/g, '_')}.txt"`);
+      
+      // Send the formatted report
+      res.send(formattedReport);
     } catch (error) {
       res.status(500).json({ message: "Failed to download report" });
     }

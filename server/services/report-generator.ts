@@ -3,6 +3,68 @@ import { type InsertWeeklyReport, type WeeklyReport } from "@shared/schema";
 
 export class ReportGenerator {
 
+  // Format report for download
+  formatReportForDownload(report: WeeklyReport): string {
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    };
+
+    return `CHIEF OF STAFF - WEEKLY INTELLIGENCE REPORT
+${'='.repeat(60)}
+
+REPORT PERIOD: ${report.period}
+GENERATED: ${formatDate(new Date(report.generatedAt))}
+OVERALL PERFORMANCE: ${report.grade} (${report.overallScore}%)
+
+EXECUTIVE SUMMARY
+${'-'.repeat(20)}
+This weekly intelligence report provides a comprehensive analysis of agent performance, 
+conflict resolution, and strategic alignment within the ComplianceWorxs AI executive team.
+
+AGENT STATUS OVERVIEW
+${'-'.repeat(25)}
+${Object.entries(report.agentStatuses).map(([agent, status]) => 
+  `• ${agent.padEnd(20)} ${status.toUpperCase()}`
+).join('\n')}
+
+CONFLICT MANAGEMENT
+${'-'.repeat(20)}
+• Conflicts Detected: ${report.conflictsDetected}
+• Conflicts Resolved: ${report.conflictsResolved}
+• Resolution Rate: ${report.conflictsDetected > 0 ? Math.round((report.conflictsResolved / report.conflictsDetected) * 100) : 100}%
+
+STRATEGIC ALIGNMENT TRACKING
+${'-'.repeat(30)}
+${Object.entries(report.strategicAlignment).map(([objective, agents]) => 
+  `• ${objective}\n  Contributing Agents: ${agents.join(', ')}`
+).join('\n\n')}
+
+KEY HIGHLIGHTS
+${'-'.repeat(15)}
+${report.highlights.map(highlight => `• ${highlight}`).join('\n')}
+
+RECOMMENDATIONS
+${'-'.repeat(17)}
+${report.recommendations.map(rec => `• ${rec}`).join('\n')}
+
+SYSTEM HEALTH METRICS
+${'-'.repeat(22)}
+• Strategic Alignment Score: ${report.overallScore}%
+• Active Conflicts: ${report.conflictsDetected - report.conflictsResolved}
+• System Grade: ${report.grade}
+
+${'='.repeat(60)}
+ComplianceWorxs Chief of Staff System
+Report Generated: ${formatDate(new Date(report.generatedAt))}
+System Version: 2.0.0 - Strategic Execution Loop
+${'='.repeat(60)}`;
+  }
+
   async generateWeeklyReport(): Promise<WeeklyReport> {
     const agents = await storage.getAgents();
     const conflicts = await storage.getConflicts();

@@ -66,7 +66,7 @@ export function WeeklyReports() {
       const blob = await response.blob();
       console.log('Blob created, size:', blob.size);
       
-      const fileName = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      const fileName = `Weekly_Intelligence_Report_${period.replace(/[^a-zA-Z0-9]/g, '_')}.txt`;
       const url = window.URL.createObjectURL(blob);
       
       // Create a temporary link element and trigger download
