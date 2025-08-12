@@ -67,24 +67,43 @@ export function WorkloadManagement() {
   });
 
   const initializeWorkloads = useMutation({
-    mutationFn: () => apiRequest('/api/workloads/initialize', 'POST'),
+    mutationFn: () => apiRequest('POST', '/api/workloads/initialize'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workloads'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workloads/distribution'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workloads/capacity'] });
       toast({
         title: "Workloads Initialized",
         description: "Agent workloads have been set up successfully"
+      });
+    },
+    onError: (error: any) => {
+      console.error('Initialize error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize workloads. Please try again.",
+        variant: "destructive"
       });
     }
   });
 
   const updateWorkloads = useMutation({
-    mutationFn: () => apiRequest('/api/workloads/update', 'POST'),
+    mutationFn: () => apiRequest('POST', '/api/workloads/update'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workloads'] });
       queryClient.invalidateQueries({ queryKey: ['/api/workloads/distribution'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workloads/capacity'] });
       toast({
         title: "Workloads Updated",
         description: "Agent workloads have been refreshed"
+      });
+    },
+    onError: (error: any) => {
+      console.error('Update error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update workloads. Please try again.",
+        variant: "destructive"
       });
     }
   });
