@@ -335,6 +335,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/workloads/capacity", async (req, res) => {
+    try {
+      const capacity = await workloadBalancer.getCapacityPlanning();
+      res.json(capacity);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch capacity planning" });
+    }
+  });
+
   app.post("/api/workloads/initialize", async (req, res) => {
     try {
       await workloadBalancer.initializeWorkloads();
