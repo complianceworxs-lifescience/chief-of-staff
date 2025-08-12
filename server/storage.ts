@@ -37,6 +37,16 @@ import {
   type InsertBrandAsset,
   type ContentAsset,
   type InsertContentAsset,
+  type MarketSignal,
+  type InsertMarketSignal,
+  type StrategicPlan,
+  type InsertStrategicPlan,
+  type Partner,
+  type InsertPartner,
+  type Project,
+  type InsertProject,
+  type AbTest,
+  type InsertAbTest,
   agents,
   conflicts,
   strategicObjectives,
@@ -55,7 +65,12 @@ import {
   strategicBriefs,
   campaignBriefs,
   brandAssets,
-  contentAssets
+  contentAssets,
+  marketSignals,
+  strategicPlans,
+  partners,
+  projects,
+  abTests
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -159,6 +174,38 @@ export interface IStorage {
   getContentAssets(briefId?: string): Promise<ContentAsset[]>;
   getContentAsset(id: string): Promise<ContentAsset | undefined>;
   updateContentAsset(id: string, updates: Partial<InsertContentAsset>): Promise<ContentAsset | undefined>;
+
+  // Market Intelligence
+  createMarketSignal(signal: InsertMarketSignal): Promise<MarketSignal>;
+  getMarketSignals(): Promise<MarketSignal[]>;
+  getMarketSignalsByImpact(impact: string): Promise<MarketSignal[]>;
+  getMarketSignalsByCategory(category: string): Promise<MarketSignal[]>;
+  updateMarketSignal(id: string, updates: Partial<MarketSignal>): Promise<MarketSignal>;
+
+  // Strategic Plans
+  createStrategicPlan(plan: InsertStrategicPlan): Promise<StrategicPlan>;
+  getStrategicPlans(): Promise<StrategicPlan[]>;
+  getActiveStrategicPlans(): Promise<StrategicPlan[]>;
+  updateStrategicPlan(id: string, updates: Partial<StrategicPlan>): Promise<StrategicPlan>;
+
+  // Partners
+  createPartner(partner: InsertPartner): Promise<Partner>;
+  getPartners(): Promise<Partner[]>;
+  getAvailablePartners(): Promise<Partner[]>;
+  getPartnersBySkills(skills: string[]): Promise<Partner[]>;
+  updatePartner(id: string, updates: Partial<Partner>): Promise<Partner>;
+
+  // Projects
+  createProject(project: InsertProject): Promise<Project>;
+  getProjects(): Promise<Project[]>;
+  getProjectsByStatus(status: string): Promise<Project[]>;
+  updateProject(id: string, updates: Partial<Project>): Promise<Project>;
+
+  // A/B Tests
+  createAbTest(test: InsertAbTest): Promise<AbTest>;
+  getAbTests(): Promise<AbTest[]>;
+  getActiveAbTests(): Promise<AbTest[]>;
+  updateAbTest(id: string, updates: Partial<AbTest>): Promise<AbTest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -780,6 +827,145 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.update(contentAssets)
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(contentAssets.id, id))
+      .returning();
+    return result;
+  }
+
+  // Market Intelligence Methods
+  async createMarketSignal(signal: InsertMarketSignal): Promise<MarketSignal> {
+    const [result] = await db.insert(marketSignals).values(signal).returning();
+    return result;
+  }
+
+  async getMarketSignals(): Promise<MarketSignal[]> {
+    return await db.select().from(marketSignals)
+      .orderBy(desc(marketSignals.flaggedAt));
+  }
+
+  async getMarketSignalsByImpact(impact: string): Promise<MarketSignal[]> {
+    return await db.select().from(marketSignals)
+      .where(eq(marketSignals.impact, impact))
+      .orderBy(desc(marketSignals.flaggedAt));
+  }
+
+  async getMarketSignalsByCategory(category: string): Promise<MarketSignal[]> {
+    return await db.select().from(marketSignals)
+      .where(eq(marketSignals.category, category))
+      .orderBy(desc(marketSignals.flaggedAt));
+  }
+
+  async updateMarketSignal(id: string, updates: Partial<MarketSignal>): Promise<MarketSignal> {
+    const [result] = await db.update(marketSignals)
+      .set(updates)
+      .where(eq(marketSignals.id, id))
+      .returning();
+    return result;
+  }
+
+  // Strategic Plans Methods
+  async createStrategicPlan(plan: InsertStrategicPlan): Promise<StrategicPlan> {
+    const [result] = await db.insert(strategicPlans).values(plan).returning();
+    return result;
+  }
+
+  async getStrategicPlans(): Promise<StrategicPlan[]> {
+    return await db.select().from(strategicPlans)
+      .orderBy(desc(strategicPlans.createdAt));
+  }
+
+  async getActiveStrategicPlans(): Promise<StrategicPlan[]> {
+    return await db.select().from(strategicPlans)
+      .where(eq(strategicPlans.status, 'active'))
+      .orderBy(desc(strategicPlans.createdAt));
+  }
+
+  async updateStrategicPlan(id: string, updates: Partial<StrategicPlan>): Promise<StrategicPlan> {
+    const [result] = await db.update(strategicPlans)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(strategicPlans.id, id))
+      .returning();
+    return result;
+  }
+
+  // Partners Methods
+  async createPartner(partner: InsertPartner): Promise<Partner> {
+    const [result] = await db.insert(partners).values(partner).returning();
+    return result;
+  }
+
+  async getPartners(): Promise<Partner[]> {
+    return await db.select().from(partners)
+      .where(eq(partners.isActive, true))
+      .orderBy(desc(partners.joinedAt));
+  }
+
+  async getAvailablePartners(): Promise<Partner[]> {
+    return await db.select().from(partners)
+      .where(eq(partners.availability, 'available'))
+      .orderBy(desc(partners.performanceRating));
+  }
+
+  async getPartnersBySkills(skills: string[]): Promise<Partner[]> {
+    // Simplified skill matching - in production would use more sophisticated querying
+    return await db.select().from(partners)
+      .where(eq(partners.isActive, true))
+      .orderBy(desc(partners.performanceRating));
+  }
+
+  async updatePartner(id: string, updates: Partial<Partner>): Promise<Partner> {
+    const [result] = await db.update(partners)
+      .set(updates)
+      .where(eq(partners.id, id))
+      .returning();
+    return result;
+  }
+
+  // Projects Methods
+  async createProject(project: InsertProject): Promise<Project> {
+    const [result] = await db.insert(projects).values(project).returning();
+    return result;
+  }
+
+  async getProjects(): Promise<Project[]> {
+    return await db.select().from(projects)
+      .orderBy(desc(projects.createdAt));
+  }
+
+  async getProjectsByStatus(status: string): Promise<Project[]> {
+    return await db.select().from(projects)
+      .where(eq(projects.status, status))
+      .orderBy(desc(projects.createdAt));
+  }
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+    const [result] = await db.update(projects)
+      .set(updates)
+      .where(eq(projects.id, id))
+      .returning();
+    return result;
+  }
+
+  // A/B Tests Methods
+  async createAbTest(test: InsertAbTest): Promise<AbTest> {
+    const [result] = await db.insert(abTests).values(test).returning();
+    return result;
+  }
+
+  async getAbTests(): Promise<AbTest[]> {
+    return await db.select().from(abTests)
+      .orderBy(desc(abTests.createdAt));
+  }
+
+  async getActiveAbTests(): Promise<AbTest[]> {
+    return await db.select().from(abTests)
+      .where(eq(abTests.status, 'running'))
+      .orderBy(desc(abTests.createdAt));
+  }
+
+  async updateAbTest(id: string, updates: Partial<AbTest>): Promise<AbTest> {
+    const [result] = await db.update(abTests)
+      .set(updates)
+      .where(eq(abTests.id, id))
       .returning();
     return result;
   }

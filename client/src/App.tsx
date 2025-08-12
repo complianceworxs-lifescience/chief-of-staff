@@ -11,6 +11,7 @@ import Directives from "@/pages/directives";
 import AnalyticsPage from "@/pages/analytics";
 import AiAssistant from "@/pages/ai-assistant";
 import GovernancePage from "@/pages/governance";
+import { MarketIntelligence } from "@/pages/market-intelligence";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -24,6 +25,7 @@ function Router() {
         <Route path="/analytics" component={AnalyticsPage} />
         <Route path="/ai-assistant" component={AiAssistant} />
         <Route path="/governance" component={GovernancePage} />
+        <Route path="/market-intelligence" component={MarketIntelligence} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -320,6 +320,114 @@ export const insertRulesOfEngagementSchema = createInsertSchema(rulesOfEngagemen
 export const insertAutonomousPlaybookSchema = createInsertSchema(autonomousPlaybooks).omit({ id: true, createdAt: true });
 export const insertPlaybookExecutionSchema = createInsertSchema(playbookExecutions).omit({ id: true, executedAt: true });
 
+// New tables for Cognitive Enterprise features
+
+// Market Intelligence Layer
+export const marketSignals = pgTable("market_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  source: text("source").notNull(), // "regulatory", "competitor", "financial", "social"
+  sourceUrl: text("source_url"),
+  summary: text("summary").notNull(),
+  impact: text("impact").notNull(), // "high", "medium", "low"
+  urgency: text("urgency").notNull(), // "immediate", "near-term", "long-term"
+  category: text("category").notNull(), // "regulatory", "competitive", "market", "technology"
+  rawData: json("raw_data").$type<Record<string, any>>(),
+  tags: json("tags").$type<string[]>().default([]),
+  analysisNotes: text("analysis_notes"),
+  flaggedAt: timestamp("flagged_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+  actionTaken: boolean("action_taken").default(false),
+  assignedAgent: text("assigned_agent"),
+});
+
+// Generative Strategy Plans  
+export const strategicPlans = pgTable("strategic_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("draft"), // "draft", "active", "completed", "cancelled"
+  priority: text("priority").notNull(), // "critical", "high", "medium", "low"
+  generatedBy: text("generated_by").notNull(), // "chief-of-staff"
+  problemDiagnosis: text("problem_diagnosis").notNull(),
+  solution: json("solution").$type<any>().notNull(),
+  timeline: json("timeline").$type<any>().notNull(),
+  assignedAgents: json("assigned_agents").$type<string[]>().notNull(),
+  subGoals: json("sub_goals").$type<any[]>().notNull(),
+  successMetrics: json("success_metrics").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  progressScore: integer("progress_score").default(0),
+});
+
+// Partner & Skills Database
+export const partners = pgTable("partners", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // "EDP", "AIP", "contractor"
+  email: text("email").notNull(),
+  skills: json("skills").$type<string[]>().notNull(),
+  availability: text("availability").notNull(), // "available", "busy", "unavailable"
+  performanceRating: integer("performance_rating").notNull().default(85),
+  currentWorkload: integer("current_workload").default(0), // percentage
+  hourlyRate: integer("hourly_rate"),
+  totalProjectsCompleted: integer("total_projects_completed").default(0),
+  avgCompletionTime: integer("avg_completion_time").default(0), // hours
+  specializations: json("specializations").$type<string[]>().default([]),
+  isActive: boolean("is_active").default(true),
+  lastActive: timestamp("last_active").defaultNow().notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+// Project Management
+export const projects = pgTable("projects", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("pending"), // "pending", "assigned", "in_progress", "completed", "cancelled"
+  priority: text("priority").notNull(), // "urgent", "high", "medium", "low"
+  budget: integer("budget"), // in cents
+  estimatedHours: integer("estimated_hours"),
+  requiredSkills: json("required_skills").$type<string[]>().notNull(),
+  assignedPartnerId: text("assigned_partner_id"),
+  requestedBy: text("requested_by").notNull(), // agent that requested
+  strategicPlanId: text("strategic_plan_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  assignedAt: timestamp("assigned_at"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  dueDate: timestamp("due_date"),
+});
+
+// A/B Testing Framework
+export const abTests = pgTable("ab_tests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  hypothesis: text("hypothesis").notNull(),
+  testType: text("test_type").notNull(), // "marketing", "product", "content", "pricing"
+  status: text("status").notNull().default("draft"), // "draft", "running", "completed", "stopped"
+  variants: json("variants").$type<any[]>().notNull(),
+  targetMetric: text("target_metric").notNull(),
+  currentResults: json("current_results").$type<Record<string, any>>().default({}),
+  statisticalSignificance: integer("statistical_significance").default(0),
+  sampleSize: integer("sample_size"),
+  trafficSplit: json("traffic_split").$type<Record<string, number>>().default({}),
+  winningVariant: text("winning_variant"),
+  createdBy: text("created_by").notNull(), // "chief-of-staff"
+  managedBy: text("managed_by"), // which agent is running it
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for new tables
+export const insertMarketSignalSchema = createInsertSchema(marketSignals).omit({ id: true, flaggedAt: true });
+export const insertStrategicPlanSchema = createInsertSchema(strategicPlans).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertPartnerSchema = createInsertSchema(partners).omit({ id: true, lastActive: true, joinedAt: true });
+export const insertProjectSchema = createInsertSchema(projects).omit({ id: true, createdAt: true });
+export const insertAbTestSchema = createInsertSchema(abTests).omit({ id: true, createdAt: true });
+
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Conflict = typeof conflicts.$inferSelect;
@@ -351,6 +459,18 @@ export type AutonomousPlaybook = typeof autonomousPlaybooks.$inferSelect;
 export type InsertAutonomousPlaybook = z.infer<typeof insertAutonomousPlaybookSchema>;
 export type PlaybookExecution = typeof playbookExecutions.$inferSelect;
 export type InsertPlaybookExecution = z.infer<typeof insertPlaybookExecutionSchema>;
+
+// Cognitive Enterprise types
+export type MarketSignal = typeof marketSignals.$inferSelect;
+export type InsertMarketSignal = z.infer<typeof insertMarketSignalSchema>;
+export type StrategicPlan = typeof strategicPlans.$inferSelect;
+export type InsertStrategicPlan = z.infer<typeof insertStrategicPlanSchema>;
+export type Partner = typeof partners.$inferSelect;
+export type InsertPartner = z.infer<typeof insertPartnerSchema>;
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+export type AbTest = typeof abTests.$inferSelect;
+export type InsertAbTest = z.infer<typeof insertAbTestSchema>;
 export type InsertAiQuestion = z.infer<typeof insertAiQuestionSchema>;
 
 // Chief of Staff Types

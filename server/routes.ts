@@ -12,6 +12,8 @@ import { aiQuestionService } from "./services/ai-question-service";
 import { chiefOfStaff } from "./services/chief-of-staff";
 import { autonomousGovernance } from "./services/autonomous-governance";
 import { ContentManager } from "./services/content-manager";
+import { marketIntelligenceAgent } from "./services/market-intelligence";
+import { generativeStrategist } from "./services/generative-strategist";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
@@ -783,6 +785,148 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Agent data simulation completed" });
     } catch (error) {
       res.status(500).json({ message: "Failed to simulate agent data", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Market Intelligence Routes
+  app.get("/api/market-intelligence/signals", async (req, res) => {
+    try {
+      const signals = await storage.getMarketSignals();
+      res.json(signals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch market signals" });
+    }
+  });
+
+  app.get("/api/market-intelligence/signals/high-priority", async (req, res) => {
+    try {
+      const signals = await storage.getMarketSignalsByImpact('high');
+      res.json(signals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch high priority signals" });
+    }
+  });
+
+  app.get("/api/market-intelligence/signals/category/:category", async (req, res) => {
+    try {
+      const signals = await storage.getMarketSignalsByCategory(req.params.category);
+      res.json(signals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch signals by category" });
+    }
+  });
+
+  app.post("/api/market-intelligence/gather", async (req, res) => {
+    try {
+      const signals = await marketIntelligenceAgent.gatherMarketIntelligence();
+      res.json({ message: `Generated ${signals.length} market signals`, signals });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to gather market intelligence" });
+    }
+  });
+
+  app.patch("/api/market-intelligence/signals/:id/process", async (req, res) => {
+    try {
+      const { actionNotes } = req.body;
+      await marketIntelligenceAgent.markSignalProcessed(req.params.id, actionNotes);
+      res.json({ message: "Signal marked as processed" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to process signal" });
+    }
+  });
+
+  // Strategic Plans Routes
+  app.get("/api/strategic-plans", async (req, res) => {
+    try {
+      const plans = await storage.getStrategicPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch strategic plans" });
+    }
+  });
+
+  app.get("/api/strategic-plans/active", async (req, res) => {
+    try {
+      const plans = await storage.getActiveStrategicPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch active strategic plans" });
+    }
+  });
+
+  app.post("/api/strategic-plans/generate", async (req, res) => {
+    try {
+      const plan = await generativeStrategist.generateStrategicResponse();
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate strategic plan" });
+    }
+  });
+
+  app.patch("/api/strategic-plans/:id/status", async (req, res) => {
+    try {
+      const { status } = req.body;
+      const plan = await storage.updateStrategicPlan(req.params.id, { status });
+      res.json(plan);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update strategic plan" });
+    }
+  });
+
+  // Partners Routes
+  app.get("/api/partners", async (req, res) => {
+    try {
+      const partners = await storage.getPartners();
+      res.json(partners);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch partners" });
+    }
+  });
+
+  app.get("/api/partners/available", async (req, res) => {
+    try {
+      const partners = await storage.getAvailablePartners();
+      res.json(partners);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch available partners" });
+    }
+  });
+
+  // Projects Routes
+  app.get("/api/projects", async (req, res) => {
+    try {
+      const projects = await storage.getProjects();
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+
+  app.get("/api/projects/status/:status", async (req, res) => {
+    try {
+      const projects = await storage.getProjectsByStatus(req.params.status);
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch projects by status" });
+    }
+  });
+
+  // A/B Tests Routes
+  app.get("/api/ab-tests", async (req, res) => {
+    try {
+      const tests = await storage.getAbTests();
+      res.json(tests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch A/B tests" });
+    }
+  });
+
+  app.get("/api/ab-tests/active", async (req, res) => {
+    try {
+      const tests = await storage.getActiveAbTests();
+      res.json(tests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch active A/B tests" });
     }
   });
 

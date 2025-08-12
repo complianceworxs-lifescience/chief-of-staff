@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings } from "lucide-react";
+import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 interface Conflict {
@@ -27,6 +27,7 @@ export function Layout({ children }: LayoutProps) {
     { path: "/goals", label: "Goals & Priorities", icon: TrendingUp },
     { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
     { path: "/directives", label: "Directives", icon: Users },
+    { path: "/market-intelligence", label: "Market Intelligence", icon: Search },
     { path: "/governance", label: "Governance", icon: Settings },
     { path: "/analytics", label: "Analytics", icon: MessageSquare },
     { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
