@@ -326,6 +326,65 @@ export class ChiefOfStaffService {
   }
   
   // =====================================
+  // 4. LEARN & REFINE (The Loop Closure)
+  // =====================================
+  
+  /**
+   * Chief of Staff conflict resolution - auto-resolve agent conflicts as part of Strategic Execution Loop
+   */
+  async resolveAgentConflicts(): Promise<void> {
+    const activeConflicts = await storage.getActiveConflicts();
+    
+    for (const conflict of activeConflicts) {
+      // Chief of Staff orchestrates resolution based on strategic priorities
+      await this.orchestrateConflictResolution(conflict.id);
+    }
+    
+    // Update agent statuses to remove conflict flags
+    await this.updateAgentStatuses();
+  }
+  
+  private async orchestrateConflictResolution(conflictId: string): Promise<void> {
+    const snapshot = await this.getBusinessSnapshot();
+    const goals = snapshot.goals.filter(g => g.status === 'active');
+    
+    // Auto-resolve based on strategic priorities
+    let resolution: "auto" | "escalate" | "manual" = "auto";
+    let resolutionReason = "Chief of Staff orchestrated automatic resolution based on strategic priorities and resource optimization.";
+    
+    // If high-priority goals are at risk, escalate for CEO decision
+    const highPriorityGoals = goals.filter(g => g.priority === 'high');
+    if (highPriorityGoals.length > 0) {
+      resolution = "escalate";
+      resolutionReason = "Escalated to CEO due to high-priority goal dependencies.";
+    }
+    
+    // Use existing conflict resolver
+    const { conflictResolver } = await import("../services/conflict-resolver");
+    await conflictResolver.resolveConflict(conflictId, resolution, resolutionReason);
+  }
+  
+  private async updateAgentStatuses(): Promise<void> {
+    const activeConflicts = await storage.getActiveConflicts();
+    const conflictedAgentIds = new Set(
+      activeConflicts.flatMap(c => c.agents)
+    );
+    
+    const allAgents = await storage.getAgents();
+    
+    for (const agent of allAgents) {
+      const shouldHaveConflictStatus = conflictedAgentIds.has(agent.id);
+      const currentlyHasConflictStatus = agent.status === 'conflict';
+      
+      if (shouldHaveConflictStatus && !currentlyHasConflictStatus) {
+        await storage.updateAgent(agent.id, { status: 'conflict' });
+      } else if (!shouldHaveConflictStatus && currentlyHasConflictStatus) {
+        await storage.updateAgent(agent.id, { status: 'healthy' });
+      }
+    }
+  }
+
+  // =====================================
   // UTILITY METHODS
   // =====================================
   

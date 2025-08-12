@@ -516,6 +516,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chief of Staff Conflict Resolution
+  app.post("/api/chief-of-staff/resolve-conflicts", async (req, res) => {
+    try {
+      await chiefOfStaff.resolveAgentConflicts();
+      res.json({ message: "Chief of Staff resolved all active conflicts as part of Strategic Execution Loop" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to resolve conflicts" });
+    }
+  });
+
   // Prioritized Initiatives (Analysis Output)
   app.get("/api/chief-of-staff/initiatives", async (req, res) => {
     try {
