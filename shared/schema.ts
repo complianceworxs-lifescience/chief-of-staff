@@ -271,6 +271,55 @@ export const insertCampaignBriefSchema = createInsertSchema(campaignBriefs).omit
 export const insertBrandAssetSchema = createInsertSchema(brandAssets).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertContentAssetSchema = createInsertSchema(contentAssets).omit({ id: true, createdAt: true, updatedAt: true });
 
+// New tables for autonomous governance system
+export const rulesOfEngagement = pgTable("rules_of_engagement", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // "financial", "autonomy", "conflict", "human_loop", "performance"
+  rules: json("rules").$type<Record<string, any>>().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const autonomousPlaybooks = pgTable("autonomous_playbooks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  agentId: varchar("agent_id").notNull(),
+  triggerCondition: text("trigger_condition").notNull(),
+  action: text("action").notNull(),
+  autonomyLevel: integer("autonomy_level").notNull(), // 1=Manual Approval, 2=Autonomous with Notification, 3=Fully Autonomous
+  status: text("status").notNull().default("proposed"), // "proposed", "active", "suspended", "archived"
+  createdBy: text("created_by").notNull().default("chief-of-staff"),
+  approvedBy: text("approved_by"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  approvedAt: timestamp("approved_at"),
+  executionCount: integer("execution_count").default(0).notNull(),
+  successRate: integer("success_rate").default(0).notNull(),
+  riskLevel: text("risk_level").notNull(), // "low", "medium", "high", "critical"
+  financialImpact: integer("financial_impact").default(0), // in dollars
+  reasoning: text("reasoning").notNull(),
+});
+
+export const playbookExecutions = pgTable("playbook_executions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  playbookId: varchar("playbook_id").notNull(),
+  agentId: varchar("agent_id").notNull(),
+  trigger: text("trigger").notNull(),
+  action: text("action").notNull(),
+  result: text("result").notNull(), // "success", "failure", "pending_approval"
+  executedAt: timestamp("executed_at").defaultNow().notNull(),
+  approvalRequired: boolean("approval_required").default(false).notNull(),
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  metadata: json("metadata").$type<Record<string, any>>(),
+});
+
+export const insertRulesOfEngagementSchema = createInsertSchema(rulesOfEngagement).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAutonomousPlaybookSchema = createInsertSchema(autonomousPlaybooks).omit({ id: true, createdAt: true });
+export const insertPlaybookExecutionSchema = createInsertSchema(playbookExecutions).omit({ id: true, executedAt: true });
+
 export type Agent = typeof agents.$inferSelect;
 export type InsertAgent = z.infer<typeof insertAgentSchema>;
 export type Conflict = typeof conflicts.$inferSelect;
@@ -294,6 +343,14 @@ export type InsertAgentWorkload = z.infer<typeof insertAgentWorkloadSchema>;
 export type SmartRecommendation = typeof smartRecommendations.$inferSelect;
 export type InsertSmartRecommendation = z.infer<typeof insertSmartRecommendationSchema>;
 export type AiQuestion = typeof aiQuestions.$inferSelect;
+
+// Autonomous governance types
+export type RulesOfEngagement = typeof rulesOfEngagement.$inferSelect;
+export type InsertRulesOfEngagement = z.infer<typeof insertRulesOfEngagementSchema>;
+export type AutonomousPlaybook = typeof autonomousPlaybooks.$inferSelect;
+export type InsertAutonomousPlaybook = z.infer<typeof insertAutonomousPlaybookSchema>;
+export type PlaybookExecution = typeof playbookExecutions.$inferSelect;
+export type InsertPlaybookExecution = z.infer<typeof insertPlaybookExecutionSchema>;
 export type InsertAiQuestion = z.infer<typeof insertAiQuestionSchema>;
 
 // Chief of Staff Types

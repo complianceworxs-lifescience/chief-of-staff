@@ -10,6 +10,7 @@ import { smartRecommendationsEngine } from "./services/smart-recommendations";
 import { workloadBalancer } from "./services/workload-balancer";
 import { aiQuestionService } from "./services/ai-question-service";
 import { chiefOfStaff } from "./services/chief-of-staff";
+import { autonomousGovernance } from "./services/autonomous-governance";
 import { ContentManager } from "./services/content-manager";
 import { 
   insertConflictSchema, 
@@ -359,6 +360,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Workloads updated successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to update workloads" });
+    }
+  });
+
+  // Autonomous Governance routes
+  app.get("/api/governance/rules", async (req, res) => {
+    try {
+      const rules = await autonomousGovernance.getRulesOfEngagement();
+      res.json(rules);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch rules of engagement" });
+    }
+  });
+
+  app.post("/api/governance/rules", async (req, res) => {
+    try {
+      const rule = await autonomousGovernance.createRulesOfEngagement(req.body);
+      res.json(rule);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create rule" });
+    }
+  });
+
+  app.get("/api/governance/playbooks", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const playbooks = await autonomousGovernance.getPlaybooks(status);
+      res.json(playbooks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch playbooks" });
+    }
+  });
+
+  app.post("/api/governance/playbooks", async (req, res) => {
+    try {
+      const playbook = await autonomousGovernance.createPlaybook(req.body);
+      res.json(playbook);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create playbook" });
+    }
+  });
+
+  app.patch("/api/governance/playbooks/:id/approve", async (req, res) => {
+    try {
+      const { approvedBy } = req.body;
+      const playbook = await autonomousGovernance.approvePlaybook(req.params.id, approvedBy);
+      res.json(playbook);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve playbook" });
+    }
+  });
+
+  app.patch("/api/governance/playbooks/:id/reject", async (req, res) => {
+    try {
+      const { reason } = req.body;
+      const playbook = await autonomousGovernance.rejectPlaybook(req.params.id, reason);
+      res.json(playbook);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to reject playbook" });
+    }
+  });
+
+  app.get("/api/governance/executions", async (req, res) => {
+    try {
+      const agentId = req.query.agentId as string;
+      const executions = await autonomousGovernance.getExecutions(agentId);
+      res.json(executions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch executions" });
+    }
+  });
+
+  app.get("/api/governance/pending-approvals", async (req, res) => {
+    try {
+      const approvals = await autonomousGovernance.getPendingApprovals();
+      res.json(approvals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pending approvals" });
+    }
+  });
+
+  app.patch("/api/governance/executions/:id/approve", async (req, res) => {
+    try {
+      const { approvedBy } = req.body;
+      const execution = await autonomousGovernance.approveExecution(req.params.id, approvedBy);
+      res.json(execution);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to approve execution" });
     }
   });
 
