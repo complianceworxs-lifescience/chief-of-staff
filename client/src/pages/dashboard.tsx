@@ -25,10 +25,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-        {/* System Overview */}
+        {/* Strategic Execution Loop Overview */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">System Overview</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Strategic Execution Loop</h2>
+              <p className="text-gray-600 mt-1">Orchestrated Execution - ComplianceWorxs' competitive advantage</p>
+            </div>
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <Clock className="h-4 w-4" />
               <span>
@@ -38,6 +41,49 @@ export default function Dashboard() {
                 }
               </span>
             </div>
+          </div>
+          
+          {/* Strategic Execution Loop Steps */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="h-5 w-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900">1. Goal</h3>
+                </div>
+                <p className="text-sm text-gray-600">Define clear, high-level business objectives</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-purple-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  <h3 className="font-semibold text-purple-900">2. Orchestrate</h3>
+                </div>
+                <p className="text-sm text-gray-600">Analyze data and create prioritized directives</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <HeartPulse className="h-5 w-5 text-green-600" />
+                  <h3 className="font-semibold text-green-900">3. Execute</h3>
+                </div>
+                <p className="text-sm text-gray-600">Agents execute tasks with precision</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-orange-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Bell className="h-5 w-5 text-orange-600" />
+                  <h3 className="font-semibold text-orange-900">4. Learn & Refine</h3>
+                </div>
+                <p className="text-sm text-gray-600">Analyze results and optimize strategy</p>
+              </CardContent>
+            </Card>
           </div>
           
           {/* System Health Cards */}
