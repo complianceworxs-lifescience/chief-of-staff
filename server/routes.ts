@@ -1053,6 +1053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Unified Autonomy Layer routes
   app.use("/api/autonomy", (await import("./routes/autonomy")).autonomyRouter);
+  app.use("/api/tier2", (await import("./routes/tier2")).default);
 
   const httpServer = createServer(app);
   return httpServer;

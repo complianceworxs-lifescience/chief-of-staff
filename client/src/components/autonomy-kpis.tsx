@@ -16,9 +16,22 @@ interface AutonomyKPIs {
 }
 
 export function AutonomyKPIs() {
-  const { data: kpis, isLoading } = useQuery<AutonomyKPIs>({
+  // Check for Tier 2 first, fallback to Tier 1
+  const { data: tier2KPIs } = useQuery<any>({
     queryKey: ['/api/autonomy/kpis'],
+    select: (data) => data?.tier === 2 ? data : null
   });
+  
+  const { data: kpis, isLoading } = useQuery<AutonomyKPIs>({
+    queryKey: ['/api/autonomy/kpis', { tier: tier2KPIs ? '2' : '1' }],
+    enabled: !tier2KPIs
+  });
+
+  // Show Tier 2 component if available
+  if (tier2KPIs) {
+    // Dynamic import doesn't work here, just use regular autonomy KPIs for now
+    // TODO: Implement proper Tier 2 KPI switching
+  }
 
   if (isLoading) {
     return (

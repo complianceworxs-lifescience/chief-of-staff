@@ -1,0 +1,209 @@
+Tier 2 Autonomy — Upgrade Pack (apply to Chief of Staff)
+What Tier 2 adds (outcomes)
+
+Lower cost/incident via budget-aware actions
+
+Higher throughput via dynamic resource orchestration
+
+Fewer stalls via data-freshness contracts + fallbacks
+
+Gets smarter over time via playbook learning (multi-armed bandit)
+
+Safer autonomy via risk gates (HITL only when truly needed)
+
+1) Config (Replit Secrets)
+# Budgets & pricing
+AUTOREM_BUDGET_CAP_DAILY_USD=25
+AUTOREM_COST_PER_RESTART=0.02
+AUTOREM_COST_PER_RETRY=0.005
+AUTOREM_COST_PER_REBALANCE=0.03
+AUTOREM_COST_PER_FETCH=0.002
+AUTOREM_VALUE_REVENUE_POINT=1.0    # $ value per unit of CRO “impact”
+AUTOREM_VALUE_MARKETING_POINT=0.3  # $ proxy per CMO impact
+AUTOREM_VALUE_CONTENT_POINT=0.2
+
+# Autoscaling / orchestration
+AUTOREM_MAX_CONCURRENCY=8
+AUTOREM_MIN_CONCURRENCY=1
+AUTOREM_QUEUE_SLA_MIN=15
+AUTOREM_ROI_FLOOR=0.2
+
+# Data freshness contracts (minutes)
+FRESHNESS_MARKET_INTEL=60
+FRESHNESS_CONTENT_BRIEFS=1440
+FRESHNESS_SALES_PIPELINE=30
+
+# Learning loop
+AUTOREM_BANDIT_ENABLED=true
+AUTOREM_BANDIT_EXPLORATION=0.15     # epsilon for exploration
+
+# Risk gates
+AUTOREM_RISK_HITL_THRESHOLD=0.8     # 0-1 risk score → escalate
+AUTOREM_MAX_ESCALATIONS_PER_DAY=5
+
+2) Cost-Aware Action Selector
+
+Extend the Autonomy layer to compute Expected Utility for each candidate playbook:
+
+EU = (Projected Value Gain) − (Action Cost) − (Risk Penalty)
+
+Where:
+
+Projected Value Gain derives from the affected directive’s impact (CRO/CMO/Content points × value weights).
+
+Action Cost comes from the per-step cost constants.
+
+Risk Penalty = risk_score × expected downside (time lost, budget breach).
+
+Select the playbook with max EU, not just “first match”.
+
+3) Dynamic Resource Orchestration
+
+A small global scheduler the CoS runs every N seconds:
+
+Compute ROI score per agent:
+
+ROI = (impact_points/hour) / (compute_slots_used)
+
+Shift concurrency slots toward agents with ROI above AUTOREM_ROI_FLOOR and backlog over SLA.
+
+Preempt low-ROI work when a high-ROI agent breaches SLA.
+
+Never exceed AUTOREM_MAX_CONCURRENCY, never drop below AUTOREM_MIN_CONCURRENCY.
+
+One-liner hook (runs on a timer):
+
+await CoS.rebalanceConcurrency({ slaMin: AUTOREM_QUEUE_SLA_MIN, roiFloor: AUTOREM_ROI_FLOOR });
+
+4) Data Dependency Graph & Freshness Contracts
+
+Declare dependencies per directive/agent: source, freshnessTargetMinutes.
+
+Before retries, the CoS checks freshness; if stale:
+
+refreshCache → refetchSource → validateInputs
+
+If source unreachable, fallback source (if defined) or degrade gracefully (reduced scope).
+
+Contract example:
+
+{
+  "source": "MarketIntel",
+  "freshnessTargetMinutes": 60,
+  "fallback": "PartnerFeeds",
+  "degradeMode": "UseLastKnownGood<=6h"
+}
+
+5) Learning Loop (Bandit for Playbook Selection)
+
+Track each remediation attempt as a reward:
+reward = (alignment_delta + successRate_delta) − time_to_recover_minutes − action_cost
+
+Maintain per-playbook averages; pick via epsilon-greedy (ε from config).
+
+Over time, best playbooks get picked more; poor ones get demoted automatically.
+
+6) Risk-Gated HITL (only when it really matters)
+
+Compute a risk score per action:
+
+budget overrun likelihood, user-facing blast radius, compliance sensitivity
+
+If risk >= AUTOREM_RISK_HITL_THRESHOLD or cost cap breached:
+
+Escalate to CEO with two pre-composed options (safe & aggressive), never raw logs.
+
+7) Additions to Playbooks (Tier 2 variants)
+
+Add these entries to your existing PLAYBOOKS:
+
+{
+  name: "CostAwareRebalance",
+  match: { classification: "CAPACITY" },
+  steps: [
+    { do: "estimateImpact", args: { agentVar: "agent" } },
+    { do: "rebalanceByROI", args: { roiFloorVar: "env.AUTOREM_ROI_FLOOR" } },
+    { do: "throttleLowROI", args: { reserveSlots: 1 } }
+  ],
+  successCriteria: { backlogAgeMaxMinutes: Number(process.env.AUTOREM_QUEUE_SLA_MIN||15) }
+},
+{
+  name: "FreshnessFirstRetry",
+  match: { classification: "DATA_DEP" },
+  steps: [
+    { do: "checkFreshness", args: { sourceVar: "context.dependencies[0]" } },
+    { do: "refreshIfStale", args: { freshnessMapEnv: true } },
+    { do: "retryLastTask", args: { backoffMs: 1200, max: 2 } }
+  ],
+  successCriteria: { inputsValid: true }
+},
+{
+  name: "BanditChosenPlaybook",
+  match: { classification: "TRANSIENT" },
+  steps: [
+    { do: "selectByBandit", args: { candidates: ["RestartAndRetryTransient","FreshnessFirstRetry"] } },
+    { do: "executeSelected" }
+  ],
+  successCriteria: { lastTaskSucceeded: true }
+}
+
+
+New primitive actions to implement (thin wrappers):
+
+estimateImpact({agentVar}) → returns impact points from directive metadata.
+
+rebalanceByROI({roiFloorVar}) → shifts slots among agents.
+
+throttleLowROI({reserveSlots})
+
+checkFreshness({sourceVar}), refreshIfStale({freshnessMapEnv})
+
+selectByBandit({candidates}), executeSelected()
+
+8) KPIs (Tier 2)
+
+Track weekly (dashboard tiles + CSV/JSON):
+
+Cost per auto-resolved incident (should ↓)
+
+Throughput (directives completed/hour) per agent
+
+Autoscaling efficiency (avg slots in use vs. allocated)
+
+Stale-data incidents & time-to-freshness
+
+Bandit lift: MTTR improvement vs. fixed playbook
+
+HITL rate (should stay low and meaningful)
+
+9) Rollout (fast & safe)
+
+Enable cost-aware selector (no UI change needed).
+
+Turn on rebalanceConcurrency with a conservative ROI floor.
+
+Enforce freshness contracts for MarketIntel and SalesPipeline first.
+
+Flip bandit on with ε=0.15; review rewards after 48 hours.
+
+Enable risk gates with current budget caps.
+
+10) One Directive (drop into CoS queue)
+{
+  "directive": "Tier 2 Autonomy Upgrade",
+  "owner": "ChiefOfStaff",
+  "objectives": [
+    "Add cost-aware playbook selection (Expected Utility).",
+    "Implement global concurrency rebalancer based on ROI and SLA.",
+    "Enforce data-freshness contracts with refresh/fallback/degrade.",
+    "Enable bandit-based learning for playbook choice (epsilon-greedy).",
+    "Gate high-risk/over-budget actions with HITL escalation."
+  ],
+  "successCriteria": [
+    "≥20% reduction in cost per incident vs. Tier 1 baseline.",
+    "≥15% improvement in directives/hour throughput.",
+    "Stale-data incidents reduced by ≥50%.",
+    "Bandit selection improves MTTR by ≥10%.",
+    "HITL escalations remain <5/day and only on high-risk cases."
+  ]
+}

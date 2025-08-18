@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { Autonomy } from "../services/autonomy";
+import { AutonomyTier2 } from "../services/autonomy-tier2";
 import type { Signal } from "../services/autonomy";
 
 const router = Router();
@@ -17,8 +18,8 @@ router.post("/execute", async (req, res) => {
       });
     }
 
-    // Execute unified autonomy pipeline
-    await Autonomy.execute(signal);
+    // Execute Tier 2 enhanced autonomy pipeline
+    await AutonomyTier2.execute(signal);
     
     res.json({ 
       success: true, 
@@ -34,7 +35,10 @@ router.post("/execute", async (req, res) => {
 // Get KPI metrics for autonomy dashboard
 router.get("/kpis", async (req, res) => {
   try {
-    const kpis = Autonomy.getKPIMetrics();
+    const { tier } = req.query;
+    const kpis = tier === '1' ? 
+      Autonomy.getKPIMetrics() : 
+      AutonomyTier2.getTier2KPIMetrics();
     res.json(kpis);
   } catch (error) {
     console.error("Failed to get autonomy KPIs:", error);
@@ -70,14 +74,18 @@ router.get("/lineage", async (req, res) => {
 router.post("/classify", async (req, res) => {
   try {
     const signal: Signal = req.body;
+    const { tier } = req.query;
     const classification = Autonomy.classifyIssue(signal);
-    const playbook = Autonomy.selectPlaybook({ classification });
+    const playbook = tier === '1' ?
+      Autonomy.selectPlaybook({ classification }) :
+      AutonomyTier2.selectPlaybook({ classification, signal });
     
     res.json({ 
       classification,
       playbook: playbook.name,
       steps: playbook.steps.length,
-      successCriteria: playbook.successCriteria
+      successCriteria: playbook.successCriteria,
+      tier: tier === '1' ? 1 : 2
     });
   } catch (error) {
     console.error("Failed to classify signal:", error);
