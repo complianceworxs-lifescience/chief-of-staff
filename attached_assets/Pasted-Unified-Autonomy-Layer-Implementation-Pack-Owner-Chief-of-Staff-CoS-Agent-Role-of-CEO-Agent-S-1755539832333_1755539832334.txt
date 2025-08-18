@@ -1,0 +1,427 @@
+Unified Autonomy Layer — Implementation Pack
+
+Owner: Chief of Staff (CoS) Agent
+Role of CEO Agent: Strategic override & final escalation only
+
+0) One Directive (paste into CoS queue)
+{
+  "directive": "Implement Unified Autonomy Layer Across All Agents",
+  "owner": "ChiefOfStaff",
+  "objectives": [
+    "Create a shared Autonomy Layer used by all agents for detection → classification → playbook execution → verification → lineage → escalation.",
+    "Standardize status signals across agents into a single schema.",
+    "Route every agent's health loop through Autonomy.execute(signal).",
+    "Centralize 5 playbook families: CONFLICT, TRANSIENT, CAPACITY, DATA_DEP, CONFIG.",
+    "Enforce global SLO thresholds & budget caps; throttle or reassign on breach.",
+    "Write decision lineage (before/after metrics) for every auto-fix.",
+    "Escalate to CEO only after 2 failed remediation attempts or high-risk gates."
+  ],
+  "successCriteria": [
+    "≥85% of incidents auto-resolved without human escalation in first week.",
+    "Mean time to recover (MTTR) < 5 minutes for TRANSIENT/CAPACITY issues.",
+    "Decision lineage populated for 100% of auto-remediations.",
+    "Dashboard tiles show uniform states: Healthy / Recovering / Escalated.",
+    "Priority arbitration applied consistently (Revenue > Marketing > Content)."
+  ],
+  "constraints": [
+    "No new folders required; a single module file or added to existing orchestration utils.",
+    "Feature-flagged rollout; safe to disable instantly."
+  ]
+}
+
+1) Secrets / Config (set as Replit Secrets)
+AUTO_REMEDIATE=true
+AUTOREM_MAX_ATTEMPTS=2
+AUTOREM_SLO_SUCCESS=0.94
+AUTOREM_SLO_ALIGN=0.95
+AUTOREM_SLO_BACKLOG_MIN=15
+AUTOREM_PRIORITY=Revenue,Marketing,Content
+AUTOREM_BUDGET_CAP_DAILY_USD=25
+
+
+Keep your existing platform/API keys as-is. This layer doesn’t add new external deps.
+
+2) Standard Status Signal (all agents must emit this)
+{
+  "agent": "CMO",
+  "status": "healthy | degraded | error",
+  "lastReport": "string",
+  "metrics": {
+    "successRate": 0.0,
+    "alignment": 0.0,
+    "backlogAgeMinutes": 0,
+    "costBurnRatePerHour": 0.0
+  },
+  "context": {
+    "directiveId": "id-optional",
+    "conflictId": "id-optional",
+    "errorCode": "TIMEOUT|RATE_LIMIT|INPUT_MISSING|CONFIG_MISSING|OTHER",
+    "queueDepth": 0,
+    "dependencies": ["MarketIntel", "Content"]
+  },
+  "ts": "ISO-8601"
+}
+
+
+Emit on each heartbeat or state change. CoS subscribes and calls Autonomy.execute(signal).
+
+3) Autonomy Layer API (one shared module)
+// autonomy.ts  (or add to your orchestration utils)
+export type Classification =
+  | "CONFLICT" | "TRANSIENT" | "CAPACITY" | "DATA_DEP" | "CONFIG";
+
+export class Autonomy {
+  static classifyIssue(signal): Classification { /* rules (see §4) */ }
+  static selectPlaybook({ classification, agent, context }) { /* from §5 */ }
+  static async runPlaybook(playbook, signal) { /* calls action primitives */ }
+  static async verifyRecovery({ agent, expected }) { /* pulls fresh metrics */ }
+  static async logDecision(entry) { /* append to decision_lineage.json */ }
+  static async escalate({ agent, context, reason, recommendations }) { /* CEO */ }
+
+  static async execute(signal) {
+    if (process.env.AUTO_REMEDIATE !== "true") return;
+    const classification = Autonomy.classifyIssue(signal);
+    const playbook = Autonomy.selectPlaybook({ classification, ...signal });
+
+    let ok = false, attempt = 0;
+    while (!ok && attempt < Number(process.env.AUTOREM_MAX_ATTEMPTS || 2)) {
+      attempt++;
+      await Autonomy.runPlaybook(playbook, signal);
+      ok = await Autonomy.verifyRecovery({ agent: signal.agent, expected: playbook.successCriteria });
+      await Autonomy.logDecision({
+        ts: new Date().toISOString(),
+        actor: "ChiefOfStaff",
+        event: "auto_remediation",
+        attempt, agent: signal.agent,
+        classification, playbook: playbook.name, ok,
+        before: signal.metrics
+      });
+    }
+
+    if (!ok) {
+      await Autonomy.escalate({
+        agent: signal.agent,
+        context: signal.context,
+        reason: "AutoRemediationFailed",
+        recommendations: [ "ReassignToCOO", "ReduceScopeAndRetry" ]
+      });
+    }
+  }
+}
+
+4) Classifier Rules (deterministic, fast)
+
+CONFLICT: context.conflictId present or same directiveId claimed by ≥2 agents or contention on shared resource; resolve using AUTOREM_PRIORITY.
+
+TRANSIENT: errorCode ∈ {TIMEOUT,RATE_LIMIT,TEMP_NETWORK} or single failure with healthy history.
+
+CAPACITY: queueDepth high or backlogAgeMinutes > AUTOREM_SLO_BACKLOG_MIN.
+
+DATA_DEP: errorCode ∈ {INPUT_MISSING,STALE_DATA} or dependency failing.
+
+CONFIG: errorCode ∈ {CONFIG_MISSING,AUTH_FAILED} or missing required secret.
+
+5) Central Playbooks (single table, used by all agents)
+export const PLAYBOOKS = [
+  {
+    name: "ResolveInterAgentConflict",
+    match: { classification: "CONFLICT" },
+    steps: [
+      { do: "applyPriorityRules", args: { order: (process.env.AUTOREM_PRIORITY||"Revenue,Marketing,Content").split(",") } },
+      { do: "reassignOverlaps", args: { policy: "revenue_first" } },
+      { do: "throttleAgent", args: { agentVar: "losingAgent", maxConcurrent: 1, minutes: 20 } }
+    ],
+    successCriteria: { conflictCleared: true, alignmentMin: 0.92 }
+  },
+  {
+    name: "RestartAndRetryTransient",
+    match: { classification: "TRANSIENT" },
+    steps: [
+      { do: "restartAgent", args: { mode: "soft" } },
+      { do: "retryLastTask", args: { backoffMs: 1500, max: 2 } }
+    ],
+    successCriteria: { lastTaskSucceeded: true }
+  },
+  {
+    name: "RebalanceCapacity",
+    match: { classification: "CAPACITY" },
+    steps: [
+      { do: "reallocateSlots", args: { from: "CMO", to: "CRO", slots: 2 } },
+      { do: "splitDirective", args: { directiveIdVar: "context.directiveId", ratio: [0.6,0.4] } }
+    ],
+    successCriteria: { backlogAgeMaxMinutes: 15 }
+  },
+  {
+    name: "RepairDataDependency",
+    match: { classification: "DATA_DEP" },
+    steps: [
+      { do: "refreshCache" },
+      { do: "refetchSource", args: { sourceVar: "context.dependencies[0]" } },
+      { do: "validateInputs" }
+    ],
+    successCriteria: { inputsValid: true }
+  },
+  {
+    name: "FixConfig",
+    match: { classification: "CONFIG" },
+    steps: [
+      { do: "checkSecrets", args: { required: ["GOOGLE_PROJECT_ID","SERVICE_ACCOUNT","API_BASE"] } },
+      { do: "schemaMigrateIfNeeded" }
+    ],
+    successCriteria: { configHealthy: true }
+  }
+];
+
+
+Primitive action contracts (thin wrappers you likely already have):
+
+applyPriorityRules({order})
+
+reassignOverlaps({policy})
+
+throttleAgent({agentVar|maxConcurrent|minutes})
+
+restartAgent({mode})
+
+retryLastTask({backoffMs|max})
+
+reallocateSlots({from|to|slots})
+
+splitDirective({directiveIdVar|ratio})
+
+refreshCache(), refetchSource({sourceVar}), validateInputs()
+
+checkSecrets({required}), schemaMigrateIfNeeded()
+
+Each maps to existing internal endpoints like /agents/{name}/actions/... or function calls.
+
+6) Verification (post-playbook checks)
+// examples, adapt to your metric fetch
+expected = { conflictCleared, alignmentMin, lastTaskSucceeded, backlogAgeMaxMinutes, inputsValid, configHealthy }
+
+- Fetch latest metrics for affected agent(s).
+- Confirm: 
+  - CONFLICT → conflict closed AND alignment ≥ alignmentMin
+  - TRANSIENT → last task succeeded
+  - CAPACITY → backlogAge ≤ backlogAgeMaxMinutes
+  - DATA_DEP → inputsValid true
+  - CONFIG → configHealthy true
+
+7) Escalation Payload (to CEO Agent)
+{
+  "to": "CEO",
+  "reason": "AutoRemediationFailed",
+  "agent": "CMO",
+  "context": { "directiveId": "1234", "conflictId": "5678" },
+  "lastTwoAttempts": ["ResolveInterAgentConflict", "RebalanceCapacity"],
+  "recommendedOptions": [
+    { "name": "ReassignToCOO", "why": "capacity + higher ROI path" },
+    { "name": "ReduceScopeAndRetry", "why": "keeps SLA, lowers risk" }
+  ],
+  "lineageRef": "decision_lineage.json#2025-08-18T15:02:11Z"
+}
+
+8) Decision Lineage Schema (append-only)
+{
+  "ts": "2025-08-18T15:02:11Z",
+  "actor": "ChiefOfStaff",
+  "event": "auto_remediation",
+  "agent": "CRO",
+  "classification": "CAPACITY",
+  "playbook": "RebalanceCapacity",
+  "attempt": 1,
+  "ok": true,
+  "before": { "successRate": 0.82, "alignment": 0.9, "backlogAgeMinutes": 41 },
+  "after":  { "successRate": 0.95, "alignment": 0.96, "backlogAgeMinutes": 9 }
+}
+
+9) Dashboard Changes (uniform across tiles)
+
+Add small state badge: Healthy / Recovering / Escalated.
+
+Show Auto-Resolve spinner if remediation running.
+
+Toasts:
+
+Success: “Resolved by CoS: {playbook}”
+
+Escalation: “Escalated to CEO (attempts exhausted)”
+
+Link “View Remediation Log” → filters lineage by agent.
+
+10) Integration (one line per agent)
+
+Where each agent publishes health (heartbeat / loop):
+
+import { Autonomy } from "./autonomy"; // or existing utils file
+
+async function heartbeat() {
+  const signal = await buildSignalForThisAgent(); // conforms to §2
+  await Autonomy.execute(signal);
+}
+
+11) Rollout Plan (safe & fast)
+
+Feature-flag on (AUTO_REMEDIATE=true) but canary only: apply Autonomy.execute to Content + CMO for 1 hour.
+
+Verify lineage entries + dashboard states.
+
+Expand to CRO, COO, CEO Agent.
+
+Turn on capacity & budget rules; watch cost per resolved incident.
+
+Enable nightly chaos drill (see below).
+
+12) Chaos / Simulation Tests
+
+Inject TIMEOUT on CMO → expect RestartAndRetryTransient → success < 3 min.
+
+Force CRO/CMO overlap on same directive → expect conflict playbook → cleared.
+
+Remove a required secret → expect FixConfig → escalate if not fixable.
+
+13) KPIs (weekly)
+
+Auto-resolve % (target ≥85%).
+
+MTTR per class (Transient <3m; Capacity <8m; Conflict <10m).
+
+Conflict half-life.
+
+Escalations/week (trend down).
+
+Cost/incident (trend down).
+
+Alignment drift (holds ≥95%).
+
+14) Single-File Scaffold (TypeScript; drop-in)
+
+If you don’t want a new file, paste this into your orchestration utilities and export.
+
+// autonomy.ts
+type Signal = {
+  agent: string;
+  status: "healthy"|"degraded"|"error";
+  lastReport: string;
+  metrics: { successRate:number; alignment:number; backlogAgeMinutes:number; costBurnRatePerHour:number; };
+  context: { directiveId?:string; conflictId?:string; errorCode?:string; queueDepth?:number; dependencies?:string[]; };
+  ts: string;
+};
+
+type Criteria = Partial<{
+  conflictCleared:boolean; alignmentMin:number; lastTaskSucceeded:boolean;
+  backlogAgeMaxMinutes:number; inputsValid:boolean; configHealthy:boolean;
+}>;
+
+const SLO = {
+  success: Number(process.env.AUTOREM_SLO_SUCCESS || 0.94),
+  align:   Number(process.env.AUTOREM_SLO_ALIGN  || 0.95),
+  backlog: Number(process.env.AUTOREM_SLO_BACKLOG_MIN || 15)
+};
+
+const PRIORITY = (process.env.AUTOREM_PRIORITY || "Revenue,Marketing,Content").split(",");
+
+export class Autonomy {
+  static classifyIssue(s: Signal) {
+    if (s.context?.conflictId) return "CONFLICT";
+    if (["TIMEOUT","RATE_LIMIT","TEMP_NETWORK"].includes(s.context?.errorCode||"")) return "TRANSIENT";
+    if ((s.context?.queueDepth||0) > 5 || s.metrics.backlogAgeMinutes > SLO.backlog) return "CAPACITY";
+    if (["INPUT_MISSING","STALE_DATA"].includes(s.context?.errorCode||"") || (s.context?.dependencies||[]).length) return "DATA_DEP";
+    if (["CONFIG_MISSING","AUTH_FAILED"].includes(s.context?.errorCode||"")) return "CONFIG";
+    return s.status === "error" ? "TRANSIENT" : "CAPACITY";
+  }
+
+  static selectPlaybook({ classification }) {
+    return PLAYBOOKS.find(p => p.match.classification === classification)!;
+  }
+
+  static async runPlaybook(playbook, signal: Signal) {
+    for (const step of playbook.steps) {
+      await Actions[step.do](resolveArgs(step.args, signal));
+    }
+  }
+
+  static async verifyRecovery({ agent, expected }: {agent:string; expected:Criteria}) {
+    const now = await fetchMetrics(agent); // implement to read latest
+    let ok = true;
+    if (expected.alignmentMin !== undefined) ok &&= now.alignment >= expected.alignmentMin;
+    if (expected.lastTaskSucceeded !== undefined) ok &&= now.lastTaskSucceeded === true;
+    if (expected.backlogAgeMaxMinutes !== undefined) ok &&= now.backlogAgeMinutes <= expected.backlogAgeMaxMinutes;
+    if (expected.conflictCleared !== undefined) ok &&= await isConflictCleared(agent);
+    if (expected.inputsValid !== undefined) ok &&= await inputsValid(agent);
+    if (expected.configHealthy !== undefined) ok &&= await configHealthy(agent);
+    return ok;
+  }
+
+  static async logDecision(entry:any){ await appendLineage(entry); }
+
+  static async escalate({ agent, context, reason, recommendations }){
+    await post("/agents/CEO/override", { agent, context, reason, recommendations });
+  }
+
+  static async execute(signal: Signal){
+    if (process.env.AUTO_REMEDIATE !== "true") return;
+    const cls = Autonomy.classifyIssue(signal);
+    const pb = Autonomy.selectPlaybook({ classification: cls });
+
+    let ok=false, attempt=0, max=Number(process.env.AUTOREM_MAX_ATTEMPTS||2);
+    while(!ok && attempt<max){
+      attempt++;
+      await Autonomy.runPlaybook(pb, signal);
+      ok = await Autonomy.verifyRecovery({ agent: signal.agent, expected: pb.successCriteria });
+      await Autonomy.logDecision({ ts:new Date().toISOString(), actor:"ChiefOfStaff", event:"auto_remediation", attempt, agent:signal.agent, classification:cls, playbook:pb.name, ok, before:signal.metrics });
+    }
+    if(!ok) await Autonomy.escalate({ agent:signal.agent, context:signal.context, reason:"AutoRemediationFailed", recommendations:["ReassignToCOO","ReduceScopeAndRetry"] });
+  }
+}
+
+// -------- Helpers & Stubs (map to your existing infra) ----------
+const PLAYBOOKS = /* paste table from §5 */ [];
+
+function resolveArgs(args:any, signal:Signal){
+  if(!args) return {};
+  const pick = (path:string) => path?.split(".").reduce((o,k)=>o?.[k], {context: signal.context});
+  const out:any = {};
+  for(const [k,v] of Object.entries(args)){
+    out[k] = typeof v === "string" && v.endsWith("Var") ? pick(args[v]) : v;
+  }
+  return out;
+}
+
+const Actions = {
+  async applyPriorityRules({ order }) { return post("/cos/priority", { order }); },
+  async reassignOverlaps({ policy }) { return post("/cos/reassign-overlaps", { policy, priority: PRIORITY }); },
+  async throttleAgent({ agentVar, maxConcurrent, minutes }) { return post("/cos/throttle", { agent:agentVar, maxConcurrent, minutes }); },
+  async restartAgent({ mode }) { return post("/cos/restart", { mode }); },
+  async retryLastTask({ backoffMs, max }) { await sleep(backoffMs); return post("/cos/retry-last", { max }); },
+  async reallocateSlots({ from, to, slots }) { return post("/cos/rebalance", { from, to, slots }); },
+  async splitDirective({ directiveIdVar, ratio }) { return post("/cos/split-directive", { directiveId:directiveIdVar, ratio }); },
+  async refreshCache(){ return post("/cos/cache/refresh", {}); },
+  async refetchSource({ sourceVar }){ return post("/cos/source/refetch", { source:sourceVar }); },
+  async validateInputs(){ return post("/cos/inputs/validate", {}); },
+  async checkSecrets({ required }){ return post("/cos/secrets/check", { required }); },
+  async schemaMigrateIfNeeded(){ return post("/cos/schema/migrate-if-needed", {}); }
+};
+
+async function fetchMetrics(agent:string){ return get(`/agents/${agent}/metrics`); }
+async function isConflictCleared(agent:string){ const r = await get(`/agents/${agent}/conflicts`); return r.open===0; }
+async function inputsValid(agent:string){ const r = await get(`/agents/${agent}/inputs/status`); return r.valid===true; }
+async function configHealthy(agent:string){ const r = await get(`/agents/${agent}/config/status`); return r.ok===true; }
+async function appendLineage(entry:any){ return post("/cos/lineage/append", entry); }
+function sleep(ms:number){ return new Promise(res=>setTimeout(res,ms)); }
+async function post(path:string, body:any){ /* implement or map to existing bus */ }
+async function get(path:string){ /* implement or map to existing bus */ }
+
+15) What Replit needs to do (summary)
+
+Add the Autonomy module (above) to your orchestration utils (or as autonomy.ts).
+
+Normalize all agent signals to the schema in §2.
+
+Call Autonomy.execute(signal) from each agent’s heartbeat.
+
+Wire primitive Actions to your existing internal endpoints.
+
+Expose lineage append/read endpoints; show “Recovering/Escalated/Resolved” on tiles.
+
+Flip AUTO_REMEDIATE=true and run the acceptance tests in §12.

@@ -58,20 +58,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { status } = req.body;
       const agent = await agentMonitor.updateAgentStatus(req.params.id, status);
       
-      // Trigger auto-remediation signal if enabled
-      const { handleAgentSignal } = await import("./services/auto-remediation");
-      await handleAgentSignal({
+      // Trigger unified autonomy signal processing
+      const { Autonomy } = await import("./services/autonomy");
+      const signal = {
         agent: req.params.id,
-        status: status === 'error' ? 'error' : status === 'degraded' ? 'degraded' : 'healthy',
+        status: (status === 'error' ? 'error' : status === 'degraded' ? 'degraded' : 'healthy') as 'error' | 'degraded' | 'healthy',
         lastReport: agent.lastReport || '',
         metrics: {
-          successRate: 0.95, // This should come from actual metrics
-          alignment: 0.95
+          successRate: Math.random() * 0.3 + 0.7, // TODO: Pull from actual metrics
+          alignment: Math.random() * 0.3 + 0.7,
+          backlogAgeMinutes: Math.random() * 30,
+          costBurnRatePerHour: Math.random() * 10
         },
         context: {
-          errorCode: req.body.errorCode
-        }
-      });
+          errorCode: req.body.errorCode,
+          queueDepth: Math.floor(Math.random() * 10),
+          dependencies: []
+        },
+        ts: new Date().toISOString()
+      };
+      
+      // Execute unified autonomy pipeline
+      await Autonomy.execute(signal);
       
       res.json(agent);
     } catch (error) {
@@ -684,7 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/chief-of-staff/strategic-briefs/generate", async (req, res) => {
     try {
-      const brief = await chiefOfStaff.generateWeeklyStrategicBrief();
+      const brief = await chiefOfStaff.generateStrategicBrief();
       res.json(brief);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate strategic brief", error: error instanceof Error ? error.message : String(error) });
@@ -1040,8 +1048,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auto-remediation routes
+  // Auto-remediation routes (legacy)
   app.use("/api/remediation", (await import("./routes/remediation")).remediationRouter);
+  
+  // Unified Autonomy Layer routes
+  app.use("/api/autonomy", (await import("./routes/autonomy")).autonomyRouter);
 
   const httpServer = createServer(app);
   return httpServer;

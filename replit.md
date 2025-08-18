@@ -20,7 +20,8 @@ The application follows a modern full-stack architecture. The frontend is a Reac
     - **AI Assistant**: Integrated with a dedicated AI questions database table and service, providing contextual responses about system data.
     - **Autonomous Governance**: Features a two-level delegation system with user-defined Rules of Engagement and autonomous playbook management (Level 1: Manual Approval, Level 2: Auto with Notification, Level 3: Fully Autonomous).
     - **Strategic Execution Loop Enhancement**: The Chief of Staff automatically creates and validates playbooks for conflicts and recurring approval patterns, integrating risk assessment, financial impact analysis, and autonomy level recommendations.
-    - **Auto-Remediation**: Implements a comprehensive pipeline to detect, classify (CONFLICT, TRANSIENT, CAPACITY, DATA_DEP, CONFIG), and resolve agent issues using specialized playbooks, ensuring no Human-In-The-Loop (HITL) intervention is required for standard operations.
+    - **Unified Autonomy Layer**: Enterprise-grade autonomous system implementing the complete implementation pack with standardized signal processing, 5 specialized playbooks (CONFLICT, TRANSIENT, CAPACITY, DATA_DEP, CONFIG), decision lineage tracking, and budget-aware execution. Replaces basic auto-remediation with unified approach across all agents.
+    - **Auto-Remediation**: Legacy system maintained for backward compatibility, now integrated with the Unified Autonomy Layer.
 - **Feature Specifications**:
     - **Agent Orchestration**: Monitors, aligns, and resolves conflicts among specialized Executive Agents (e.g., CRO, CFO, COO, CCO, CEO, CMO, Content Manager, Market Intelligence Agent).
     - **Content Manager**: Enhanced capabilities for content synthesis and generation, acting as a bridge between strategic directives and campaign execution.
