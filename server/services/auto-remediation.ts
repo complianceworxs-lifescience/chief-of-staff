@@ -2,15 +2,35 @@ import { db } from "../db";
 import { agents, agentDirectives, conflicts } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 
-// Configuration with fallbacks
+// Configuration with fallbacks - Tier 1 Must-haves for Real Autonomy
 const CONFIG = {
   AUTO_REMEDIATE: process.env.AUTO_REMEDIATE === 'true' || true, // Default enabled for demo
   AUTOREM_MAX_ATTEMPTS: parseInt(process.env.AUTOREM_MAX_ATTEMPTS || '2'),
+  
+  // SLOs per agent: success ≥ 94%, alignment ≥ 95%, backlog age ≤ 15m
   AUTOREM_SLO_THRESHOLDS: {
-    success_rate: parseFloat(process.env.REMEDIATION_THRESHOLD_PERFORMANCE || '0.9') / 100,
-    alignment: parseFloat(process.env.REMEDIATION_THRESHOLD_PERFORMANCE || '0.9') / 100
+    success_rate: 0.94,  // Must be ≥ 94% or triggers remediation
+    alignment: 0.95,     // Must be ≥ 95% or triggers remediation
+    backlog_age_minutes: 15 // Must be ≤ 15m or triggers remediation
   },
-  AUTOREM_PRIORITY: (process.env.AUTOREM_PRIORITY || 'Revenue,Marketing,Content').split(',')
+  
+  // Clear priorities & arbitration: Revenue > Marketing > Content
+  AUTOREM_PRIORITY: ['Revenue', 'Marketing', 'Content'],
+  
+  // Budget caps per agent + per directive
+  BUDGET_CAPS: {
+    per_agent_daily: 1000,    // $1000/day per agent max
+    per_directive: 100,       // $100 per directive max
+    emergency_reserve: 5000   // $5000 emergency budget
+  },
+  
+  // KPI tracking for autonomy measurement
+  KPI_TARGETS: {
+    auto_resolve_rate: 0.85,  // Aim >85% auto-resolved vs escalated
+    mttd_minutes: 5,          // Mean Time To Detect ≤ 5 minutes
+    mttr_minutes: 15,         // Mean Time To Recover ≤ 15 minutes
+    cost_per_incident: 50     // Target cost per resolved incident
+  }
 };
 
 export type AgentStatus = 'healthy' | 'degraded' | 'error' | 'recovering';
@@ -336,7 +356,7 @@ async function verifyRecovery(params: { agent: string; expected: Record<string, 
   return Math.random() > 0.3; // 70% success rate for demo
 }
 
-// Decision logging
+// Decision logging with complete lineage tracking
 async function logDecision(params: {
   agent: string;
   classification: Classification;
@@ -345,6 +365,11 @@ async function logDecision(params: {
   context: Record<string, any>;
   attempt: number;
 }): Promise<void> {
+  const startTime = Date.now();
+  
+  // Get before metrics
+  const beforeMetrics = await getAgentMetrics(params.agent);
+  
   const logEntry = {
     ts: new Date().toISOString(),
     actor: "ChiefOfStaff",
@@ -354,13 +379,34 @@ async function logDecision(params: {
     playbook: params.playbook,
     attempt: params.attempt,
     result: params.success ? "success" : "failure",
-    context: params.context
+    context: params.context,
+    
+    // Lineage tracking: problem → playbook → result → metric delta
+    lineage: {
+      problem: `${params.classification} detected for ${params.agent}`,
+      playbook: params.playbook,
+      result: params.success ? "resolved" : "failed",
+      metrics_before: beforeMetrics,
+      metrics_after: params.success ? await getAgentMetrics(params.agent) : beforeMetrics,
+      execution_time_ms: Date.now() - startTime
+    },
+    
+    // KPI tracking
+    kpis: {
+      mttd: params.context.detection_time_ms || 0,
+      mttr: params.success ? Date.now() - startTime : null,
+      estimated_cost: calculateRemediationCost(params.playbook, params.attempt),
+      auto_resolved: params.success
+    }
   };
 
-  console.log('AUTO-REMEDIATION: Decision logged', logEntry);
+  console.log('AUTO-REMEDIATION: Complete decision lineage logged', logEntry);
   
-  // In production, this would append to a persistent log file or database
-  // For now, we'll just log to console and could store in database table
+  // Update running KPI metrics
+  await updateKPIMetrics(logEntry);
+  
+  // Store in remediation log table (in production)
+  remediationLog.push(logEntry);
 }
 
 // Escalation
@@ -447,4 +493,199 @@ export function getAgentState(agent: string) {
 
 export function getAllAgentStates() {
   return Object.fromEntries(agentStates);
+}
+
+// KPI tracking and autonomy measurement
+const remediationLog: any[] = [];
+const kpiMetrics = {
+  total_incidents: 0,
+  auto_resolved: 0,
+  escalated: 0,
+  total_cost: 0,
+  total_detection_time: 0,
+  total_recovery_time: 0,
+  conflict_half_life_minutes: 0
+};
+
+// Helper functions for enhanced autonomy features
+async function getAgentMetrics(agent: string): Promise<{ successRate: number; alignment: number; backlogAge: number }> {
+  // In production, this would query real metrics from the database
+  return {
+    successRate: Math.random() * 0.3 + 0.7, // 70-100%
+    alignment: Math.random() * 0.3 + 0.7,   // 70-100%
+    backlogAge: Math.random() * 30          // 0-30 minutes
+  };
+}
+
+function calculateRemediationCost(playbook: string, attempt: number): number {
+  const baseCosts: Record<string, number> = {
+    'ResolveInterAgentConflict': 25,
+    'RestartAndRetryTransient': 10,
+    'RebalanceCapacity': 30,
+    'RepairDataDependency': 15,
+    'FixConfig': 20
+  };
+  
+  const baseCost = baseCosts[playbook] || 25;
+  const attemptMultiplier = Math.pow(1.5, attempt - 1); // Escalating cost per attempt
+  
+  return Math.round(baseCost * attemptMultiplier);
+}
+
+async function updateKPIMetrics(logEntry: any): Promise<void> {
+  kpiMetrics.total_incidents++;
+  
+  if (logEntry.result === 'success') {
+    kpiMetrics.auto_resolved++;
+  } else {
+    kpiMetrics.escalated++;
+  }
+  
+  kpiMetrics.total_cost += logEntry.kpis.estimated_cost || 0;
+  
+  if (logEntry.kpis.mttd) {
+    kpiMetrics.total_detection_time += logEntry.kpis.mttd;
+  }
+  
+  if (logEntry.kpis.mttr) {
+    kpiMetrics.total_recovery_time += logEntry.kpis.mttr;
+  }
+  
+  // Calculate conflict half-life (exponential decay rate)
+  const totalConflicts = kpiMetrics.total_incidents;
+  const resolvedConflicts = kpiMetrics.auto_resolved;
+  kpiMetrics.conflict_half_life_minutes = totalConflicts > 0 ? 
+    (kpiMetrics.total_recovery_time / resolvedConflicts) / (1000 * 60) : 0;
+}
+
+// Budget enforcement and cost awareness
+function checkBudgetConstraints(agent: string, playbook: string, attempt: number): boolean {
+  const estimatedCost = calculateRemediationCost(playbook, attempt);
+  const dailySpend = getDailySpendForAgent(agent);
+  
+  // Check per-directive limit
+  if (estimatedCost > CONFIG.BUDGET_CAPS.per_directive) {
+    console.log(`AUTO-REMEDIATION: Playbook ${playbook} exceeds per-directive budget (${estimatedCost} > ${CONFIG.BUDGET_CAPS.per_directive})`);
+    return false;
+  }
+  
+  // Check daily agent limit
+  if (dailySpend + estimatedCost > CONFIG.BUDGET_CAPS.per_agent_daily) {
+    console.log(`AUTO-REMEDIATION: Agent ${agent} would exceed daily budget (${dailySpend + estimatedCost} > ${CONFIG.BUDGET_CAPS.per_agent_daily})`);
+    return false;
+  }
+  
+  return true;
+}
+
+function getDailySpendForAgent(agent: string): number {
+  const today = new Date().toDateString();
+  return remediationLog
+    .filter(log => log.agent === agent && new Date(log.ts).toDateString() === today)
+    .reduce((sum, log) => sum + (log.kpis.estimated_cost || 0), 0);
+}
+
+// Enhanced SLO monitoring and triggers
+function checkSLOViolations(metrics: { successRate: number; alignment: number; backlogAge: number }): boolean {
+  return (
+    metrics.successRate < CONFIG.AUTOREM_SLO_THRESHOLDS.success_rate ||
+    metrics.alignment < CONFIG.AUTOREM_SLO_THRESHOLDS.alignment ||
+    metrics.backlogAge > CONFIG.AUTOREM_SLO_THRESHOLDS.backlog_age_minutes
+  );
+}
+
+// Priority arbitration and preemption rules
+function applyPriorityArbitration(conflictingAgents: string[]): string {
+  // Sort agents by priority order (Revenue > Marketing > Content)
+  const priorityOrder = CONFIG.AUTOREM_PRIORITY;
+  
+  const sortedAgents = conflictingAgents.sort((a, b) => {
+    const aPriority = priorityOrder.findIndex(p => a.toLowerCase().includes(p.toLowerCase()));
+    const bPriority = priorityOrder.findIndex(p => b.toLowerCase().includes(p.toLowerCase()));
+    
+    if (aPriority === -1) return 1;   // Unknown agents get lowest priority
+    if (bPriority === -1) return -1;
+    
+    return aPriority - bPriority;     // Lower index = higher priority
+  });
+  
+  return sortedAgents[0]; // Return highest priority agent
+}
+
+// Export KPI metrics and autonomy health
+export function getAutonomyKPIs() {
+  const autoResolveRate = kpiMetrics.total_incidents > 0 ? 
+    kpiMetrics.auto_resolved / kpiMetrics.total_incidents : 0;
+  
+  const avgMTTD = kpiMetrics.auto_resolved > 0 ? 
+    kpiMetrics.total_detection_time / kpiMetrics.auto_resolved / 1000 / 60 : 0; // minutes
+  
+  const avgMTTR = kpiMetrics.auto_resolved > 0 ? 
+    kpiMetrics.total_recovery_time / kpiMetrics.auto_resolved / 1000 / 60 : 0; // minutes
+  
+  const avgCostPerIncident = kpiMetrics.total_incidents > 0 ? 
+    kpiMetrics.total_cost / kpiMetrics.total_incidents : 0;
+  
+  return {
+    // Core KPIs to prove autonomy
+    auto_resolve_rate: autoResolveRate,
+    target_auto_resolve_rate: CONFIG.KPI_TARGETS.auto_resolve_rate,
+    
+    mttd_minutes: avgMTTD,
+    target_mttd_minutes: CONFIG.KPI_TARGETS.mttd_minutes,
+    
+    mttr_minutes: avgMTTR,
+    target_mttr_minutes: CONFIG.KPI_TARGETS.mttr_minutes,
+    
+    cost_per_incident: avgCostPerIncident,
+    target_cost_per_incident: CONFIG.KPI_TARGETS.cost_per_incident,
+    
+    conflict_half_life_minutes: kpiMetrics.conflict_half_life_minutes,
+    
+    // Raw counts
+    total_incidents: kpiMetrics.total_incidents,
+    auto_resolved: kpiMetrics.auto_resolved,
+    escalated: kpiMetrics.escalated,
+    total_cost: kpiMetrics.total_cost,
+    
+    // Health indicators
+    is_autonomous: autoResolveRate >= CONFIG.KPI_TARGETS.auto_resolve_rate,
+    performance_grade: calculateAutonomyGrade(autoResolveRate, avgMTTR, avgCostPerIncident),
+    
+    // Trend indicators (simplified)
+    trending_up: kpiMetrics.auto_resolved > kpiMetrics.escalated,
+    budget_healthy: kpiMetrics.total_cost < CONFIG.BUDGET_CAPS.emergency_reserve
+  };
+}
+
+function calculateAutonomyGrade(autoResolveRate: number, mttr: number, costPerIncident: number): string {
+  let score = 0;
+  
+  // Auto-resolve rate (40% of grade)
+  if (autoResolveRate >= 0.95) score += 40;
+  else if (autoResolveRate >= 0.85) score += 35;
+  else if (autoResolveRate >= 0.75) score += 25;
+  else if (autoResolveRate >= 0.60) score += 15;
+  
+  // Recovery time (35% of grade)
+  if (mttr <= 10) score += 35;
+  else if (mttr <= 15) score += 30;
+  else if (mttr <= 25) score += 20;
+  else if (mttr <= 45) score += 10;
+  
+  // Cost efficiency (25% of grade)
+  if (costPerIncident <= 30) score += 25;
+  else if (costPerIncident <= 50) score += 20;
+  else if (costPerIncident <= 75) score += 15;
+  else if (costPerIncident <= 100) score += 10;
+  
+  if (score >= 90) return 'A';
+  if (score >= 80) return 'B';
+  if (score >= 70) return 'C';
+  if (score >= 60) return 'D';
+  return 'F';
+}
+
+export function getRemediationLog() {
+  return remediationLog;
 }

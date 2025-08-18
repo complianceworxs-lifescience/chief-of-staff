@@ -8,6 +8,7 @@ import { ConflictCard } from "@/components/conflict-card";
 import { StrategicAlignment } from "@/components/strategic-alignment";
 import { WeeklyReports } from "@/components/weekly-reports";
 import { SystemControls } from "@/components/system-controls";
+import { AutonomyKPIs } from "@/components/autonomy-kpis";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
 export default function Dashboard() {
@@ -163,6 +164,9 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Autonomy Performance KPIs */}
+        <AutonomyKPIs />
 
         {/* Agent Status Monitoring */}
         <div className="mb-8">

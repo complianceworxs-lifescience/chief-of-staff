@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { handleAgentSignal, getAgentState, getAllAgentStates, autoRemediate } from "../services/auto-remediation";
+import { handleAgentSignal, getAgentState, getAllAgentStates, autoRemediate, getAutonomyKPIs, getRemediationLog } from "../services/auto-remediation";
 import type { AgentSignal } from "../services/auto-remediation";
 
 const router = Router();
@@ -92,6 +92,41 @@ router.get("/config", async (req, res) => {
   } catch (error) {
     console.error("Failed to get remediation config:", error);
     res.status(500).json({ error: "Failed to get config" });
+  }
+});
+
+// Get autonomy KPIs and performance metrics
+router.get("/kpis", async (req, res) => {
+  try {
+    const kpis = getAutonomyKPIs();
+    res.json(kpis);
+  } catch (error) {
+    console.error("Failed to get autonomy KPIs:", error);
+    res.status(500).json({ error: "Failed to get KPIs" });
+  }
+});
+
+// Get complete remediation decision log
+router.get("/log", async (req, res) => {
+  try {
+    const { agent, limit } = req.query;
+    let log = getRemediationLog();
+    
+    // Filter by agent if specified
+    if (agent && typeof agent === 'string') {
+      log = log.filter(entry => entry.agent === agent);
+    }
+    
+    // Limit results if specified
+    if (limit && typeof limit === 'string') {
+      const limitNum = parseInt(limit);
+      log = log.slice(-limitNum); // Get most recent entries
+    }
+    
+    res.json(log);
+  } catch (error) {
+    console.error("Failed to get remediation log:", error);
+    res.status(500).json({ error: "Failed to get log" });
   }
 });
 
