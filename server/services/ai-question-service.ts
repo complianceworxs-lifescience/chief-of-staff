@@ -34,14 +34,17 @@ export class AiQuestionService {
     if (lowerQuestion.includes('agent') && (lowerQuestion.includes('status') || lowerQuestion.includes('health'))) {
       return 'agent_status';
     }
+    // Check strategy first to prioritize strategic questions over performance ones
+    if (lowerQuestion.includes('strategy') || lowerQuestion.includes('objective') || lowerQuestion.includes('goal') || 
+        lowerQuestion.includes('target') || lowerQuestion.includes('strategic') || lowerQuestion.includes('progress') ||
+        lowerQuestion.includes('milestone') || lowerQuestion.includes('achievement')) {
+      return 'strategy';
+    }
     if (lowerQuestion.includes('conflict') || lowerQuestion.includes('disagree') || lowerQuestion.includes('issue')) {
       return 'conflicts';
     }
     if (lowerQuestion.includes('performance') || lowerQuestion.includes('success') || lowerQuestion.includes('rate') || lowerQuestion.includes('metric')) {
       return 'performance';
-    }
-    if (lowerQuestion.includes('strategy') || lowerQuestion.includes('objective') || lowerQuestion.includes('goal') || lowerQuestion.includes('target')) {
-      return 'strategy';
     }
     if (lowerQuestion.includes('workload') || lowerQuestion.includes('capacity') || lowerQuestion.includes('task') || 
         lowerQuestion.includes('overloaded') || lowerQuestion.includes('overload') || lowerQuestion.includes('utilization') ||
@@ -312,10 +315,13 @@ export class AiQuestionService {
   }
   
   private generateStrategyResponse(question: string, data: any, relatedIds: string[]): { answer: string, relatedIds: string[] } {
-    const { objectives } = data;
+    const { objectives, agents, systemMetrics } = data;
     
     if (!objectives || objectives.length === 0) {
-      return { answer: "No strategic objectives are currently defined.", relatedIds };
+      return { 
+        answer: "🎯 **STRATEGIC OBJECTIVES STATUS**\n\n❌ **NO OBJECTIVES DEFINED**\n\nNo strategic objectives are currently active in the system. This indicates:\n\n**IMMEDIATE ACTIONS NEEDED:**\n🚨 CRITICAL: Define strategic objectives to guide agent activities\n📋 Set measurable goals with target completion dates\n🎯 Align agent activities with strategic priorities\n📊 Establish KPIs and success metrics\n\n**RECOMMENDED NEXT STEPS:**\n1. Access the Strategic Command Center to create objectives\n2. Define 3-5 core strategic priorities for the next quarter\n3. Assign responsibility to specific agents\n4. Set up progress tracking and milestone reviews", 
+        relatedIds 
+      };
     }
     
     relatedIds.push(...objectives.map((o: any) => o.id));
@@ -323,26 +329,88 @@ export class AiQuestionService {
     const avgProgress = objectives.reduce((sum: number, o: any) => sum + o.progress, 0) / objectives.length;
     const onTrack = objectives.filter((o: any) => o.progress >= 75);
     const atRisk = objectives.filter((o: any) => o.progress < 50);
+    const stalled = objectives.filter((o: any) => {
+      const lastUpdate = new Date(o.lastUpdated || o.createdAt);
+      const daysSinceUpdate = (new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceUpdate > 7 && o.progress < 90;
+    });
     
-    let answer = `Strategic overview:\n\n`;
-    answer += `• ${objectives.length} active objectives\n`;
-    answer += `• ${Math.round(avgProgress)}% average progress\n`;
-    answer += `• ${onTrack.length} objectives on track\n`;
-    answer += `• ${atRisk.length} objectives at risk\n\n`;
+    let answer = `🎯 **STRATEGIC OBJECTIVES PROGRESS ANALYSIS**\n\n`;
     
-    if (onTrack.length > 0) {
-      answer += `High-performing objectives:\n`;
-      onTrack.slice(0, 2).forEach((obj: any) => {
-        answer += `- ${obj.title} (${obj.progress}% complete)\n`;
-      });
+    // Executive Summary
+    answer += `**EXECUTIVE SUMMARY:**\n`;
+    answer += `📊 Total Objectives: ${objectives.length}\n`;
+    answer += `📈 Average Progress: ${Math.round(avgProgress)}%\n`;
+    answer += `✅ On Track (≥75%): ${onTrack.length} objectives\n`;
+    answer += `⚠️ At Risk (<50%): ${atRisk.length} objectives\n`;
+    answer += `🚨 Stalled: ${stalled.length} objectives\n\n`;
+    
+    // Individual objective breakdown
+    answer += `**DETAILED OBJECTIVE ANALYSIS:**\n`;
+    objectives.forEach((obj: any, index: number) => {
+      const progressIcon = obj.progress >= 90 ? '🎉' : 
+                           obj.progress >= 75 ? '✅' : 
+                           obj.progress >= 50 ? '🟡' : '🔴';
+      const statusText = obj.progress >= 90 ? 'NEARLY COMPLETE' :
+                        obj.progress >= 75 ? 'ON TRACK' :
+                        obj.progress >= 50 ? 'IN PROGRESS' : 'AT RISK';
+      
+      const daysActive = obj.createdAt ? Math.floor((new Date().getTime() - new Date(obj.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+      const lastUpdate = obj.lastUpdated ? new Date(obj.lastUpdated) : new Date(obj.createdAt || Date.now());
+      const daysSinceUpdate = Math.floor((new Date().getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      answer += `\n${progressIcon} **${obj.title}** (${statusText})\n`;
+      answer += `   Progress: ${obj.progress}% complete\n`;
+      answer += `   Priority: ${obj.priority === 'high' ? '🔥 HIGH' : obj.priority === 'medium' ? '📊 MEDIUM' : '📝 LOW'}\n`;
+      answer += `   Owner: ${obj.assignedTo || 'Unassigned'}\n`;
+      answer += `   Active: ${daysActive} days, Last Updated: ${daysSinceUpdate} days ago\n`;
+      
+      if (obj.description) {
+        answer += `   Description: ${obj.description.substring(0, 100)}${obj.description.length > 100 ? '...' : ''}\n`;
+      }
+      
+      // Status-specific insights
+      if (obj.progress < 25 && daysActive > 30) {
+        answer += `   🚨 ALERT: Low progress after ${daysActive} days - needs immediate attention\n`;
+      } else if (daysSinceUpdate > 7) {
+        answer += `   ⚠️ WARNING: No updates in ${daysSinceUpdate} days - may be stalled\n`;
+      } else if (obj.progress >= 75) {
+        answer += `   🎯 OPPORTUNITY: Near completion - push for final delivery\n`;
+      }
+    });
+    
+    // Strategic alignment insights
+    if (agents && agents.length > 0) {
+      const avgAgentAlignment = agents.reduce((sum: number, a: any) => sum + (a.strategicAlignment || 0), 0) / agents.length;
+      answer += `\n\n**STRATEGIC ALIGNMENT:**\n`;
+      answer += `📊 Average Agent Alignment: ${Math.round(avgAgentAlignment)}%\n`;
+      
+      const poorAlignment = agents.filter((a: any) => (a.strategicAlignment || 0) < 60);
+      if (poorAlignment.length > 0) {
+        answer += `⚠️ Agents with poor alignment: ${poorAlignment.map((a: any) => a.name).join(', ')}\n`;
+      }
     }
     
+    // Actionable recommendations
+    answer += `\n**IMMEDIATE RECOMMENDATIONS:**\n`;
     if (atRisk.length > 0) {
-      answer += `\nObjectives needing attention:\n`;
-      atRisk.slice(0, 2).forEach((obj: any) => {
-        answer += `- ${obj.title} (${obj.progress}% complete)\n`;
-      });
+      answer += `🚨 CRITICAL: ${atRisk.length} objectives at risk - conduct urgent review sessions\n`;
     }
+    if (stalled.length > 0) {
+      answer += `🔄 PRIORITY: ${stalled.length} stalled objectives - identify and remove blockers\n`;
+    }
+    if (onTrack.length > 0) {
+      answer += `🎯 OPPORTUNITY: ${onTrack.length} objectives near completion - allocate resources for final push\n`;
+    }
+    if (avgProgress < 60) {
+      answer += `📈 STRATEGIC: Overall progress at ${Math.round(avgProgress)}% - consider strategy revision or resource reallocation\n`;
+    }
+    
+    answer += `\n**NEXT STEPS:**\n`;
+    answer += `📋 Schedule weekly progress reviews for at-risk objectives\n`;
+    answer += `🎯 Realign agent activities with strategic priorities\n`;
+    answer += `📊 Update objective timelines and resource allocation\n`;
+    answer += `💡 Consider adding new objectives if current ones are progressing well\n`;
     
     return { answer, relatedIds };
   }
