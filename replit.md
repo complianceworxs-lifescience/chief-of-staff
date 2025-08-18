@@ -6,6 +6,8 @@ This project develops a sophisticated Chief of Staff AI system for ComplianceWor
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Budget constraint: $25/day per agent (updated from $1000/day on August 18, 2025).
+Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflicts autonomously.
+Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.
@@ -22,6 +24,8 @@ The application follows a modern full-stack architecture. The frontend is a Reac
     - **Strategic Execution Loop Enhancement**: The Chief of Staff automatically creates and validates playbooks for conflicts and recurring approval patterns, integrating risk assessment, financial impact analysis, and autonomy level recommendations.
     - **Unified Autonomy Layer**: Enterprise-grade autonomous system implementing the complete implementation pack with standardized signal processing, 5 specialized playbooks (CONFLICT, TRANSIENT, CAPACITY, DATA_DEP, CONFIG), decision lineage tracking, and budget-aware execution. Replaces basic auto-remediation with unified approach across all agents.
     - **Tier 2 Autonomy**: Advanced upgrade adding cost-aware playbook selection via Expected Utility calculations, dynamic resource orchestration with ROI-based slot allocation, data freshness contracts with fallback mechanisms, bandit learning for playbook optimization (epsilon-greedy), and risk-gated HITL escalation. Achieves lower cost/incident, higher throughput, reduced stalls, continuous improvement, and safer autonomous operations.
+    - **Tier 3 Coordination**: Inter-agent coordination with conflict half-life <10min, cooperation efficiency tracking, and sim harness for safe testing.
+    - **Chief of Staff Runbook**: 6-tier autonomy rollout with daily KPI monitoring (Auto-resolve ≥85%, MTTR <5min, Cost reduction ≥15%, Escalations ≤5/day), progressive tier enablement via environment toggles, and automatic rollback protocol if KPIs regress >5% in 24h.
     - **Auto-Remediation**: Legacy system maintained for backward compatibility, now integrated with the Unified Autonomy Layer.
 - **Feature Specifications**:
     - **Agent Orchestration**: Monitors, aligns, and resolves conflicts among specialized Executive Agents (e.g., CRO, CFO, COO, CCO, CEO, CMO, Content Manager, Market Intelligence Agent).
