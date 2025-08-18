@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { conflictMonitor } from "./services/conflict-monitor";
 
 const app = express();
 app.use(express.json());
@@ -67,5 +68,9 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start autonomous conflict monitoring
+    conflictMonitor.startMonitoring(30000); // Monitor every 30 seconds
+    log("Autonomous conflict monitoring started - No HITL required");
   });
 })();

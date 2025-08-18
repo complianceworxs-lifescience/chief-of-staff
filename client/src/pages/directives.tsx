@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Users, CheckCircle, AlertCircle, Play, Target, Zap, Settings } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle, AlertCircle, Play, Target, Zap, Settings, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { DirectiveActions } from "@/components/directive-actions";
 import { ConflictResolutionPanel } from "@/components/conflict-resolution-panel";

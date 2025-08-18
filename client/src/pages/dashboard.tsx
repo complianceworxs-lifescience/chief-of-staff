@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Clock, HeartPulse, Users, AlertTriangle, Target } from "lucide-react";
+import { Bell, Clock, HeartPulse, Users, AlertTriangle, Target, CheckCircle, Zap, Cpu } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { AgentStatusCard } from "@/components/agent-status-card";
 import { ConflictCard } from "@/components/conflict-card";
@@ -17,6 +17,16 @@ export default function Dashboard() {
 
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
     queryKey: ["/api/conflicts/active"]
+  });
+
+  const { data: resolvedConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/conflicts/resolved"],
+    refetchInterval: 5000 // Refresh every 5 seconds to show autonomous activity
+  });
+
+  const { data: systemHealth } = useQuery<any>({
+    queryKey: ["/api/conflicts/system-health"],
+    refetchInterval: 15000 // Monitor autonomous system health
   });
 
   const { data: systemMetrics } = useQuery<SystemMetrics>({
@@ -164,25 +174,136 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Active Conflicts & Resolution */}
+        {/* Autonomous Conflict Resolution System */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Active Conflicts & Resolution</h3>
-            <Badge variant="outline" className="bg-orange-100 text-orange-800">
-              {activeConflicts.length} Active
-            </Badge>
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-semibold text-gray-900">Autonomous Conflict Resolution</h3>
+              <Badge className="bg-blue-100 text-blue-800">
+                <Cpu className="h-3 w-3 mr-1" />
+                NO HITL
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                {activeConflicts.length} Active
+              </Badge>
+              <Badge className="bg-green-100 text-green-800">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                {resolvedConflicts.length} Auto-Resolved
+              </Badge>
+            </div>
           </div>
           
+          {/* Autonomous System Status */}
+          {systemHealth && (
+            <Card className="mb-4 border-l-4 border-l-blue-600">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Zap className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium">Autonomous System Status</h4>
+                      <p className="text-sm text-gray-600">
+                        Continuously monitoring and resolving conflicts without human intervention
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">{systemHealth.resolvedToday || 0}</div>
+                      <div className="text-xs text-gray-500">Resolved Today</div>
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${systemHealth.overallHealth === 'healthy' ? 'text-green-600' : systemHealth.overallHealth === 'warning' ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {systemHealth.overallHealth?.charAt(0).toUpperCase() + systemHealth.overallHealth?.slice(1) || 'Unknown'}
+                      </div>
+                      <div className="text-xs text-gray-500">System Health</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Resolved Conflicts (Real-time Autonomous Activity) */}
           <div className="space-y-4">
+            {resolvedConflicts.length > 0 ? (
+              <div>
+                <h4 className="text-lg font-medium mb-3 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Recently Auto-Resolved Conflicts
+                </h4>
+                <div className="space-y-3">
+                  {resolvedConflicts.slice(0, 3).map((conflict) => (
+                    <Card key={conflict.id} className="border-l-4 border-l-green-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-green-100 text-green-800 text-xs">
+                                AUTONOMOUS
+                              </Badge>
+                              <span className="text-sm font-medium">{conflict.title}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{conflict.resolution}</p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                              <span>Agents: {conflict.agents.join(', ').toUpperCase()}</span>
+                              <span>Impact: {conflict.impactScore}/100</span>
+                              <span>Resolution Time: {conflict.resolutionTime}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs text-gray-500">Resolved</div>
+                            <div className="text-sm font-medium">
+                              {formatDistanceToNow(new Date(conflict.resolvedAt), { addSuffix: true })}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            
+            {/* Active Conflicts (if any) */}
             {activeConflicts.length > 0 ? (
-              activeConflicts.map((conflict) => (
-                <ConflictCard key={conflict.id} conflict={conflict} />
-              ))
-            ) : (
+              <div>
+                <h4 className="text-lg font-medium mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  Active Conflicts Being Resolved
+                </h4>
+                <div className="space-y-3">
+                  {activeConflicts.map((conflict) => (
+                    <ConflictCard key={conflict.id} conflict={conflict} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            
+            {/* Show success message when no conflicts */}
+            {activeConflicts.length === 0 && resolvedConflicts.length > 0 ? (
+              <Card className="border-l-4 border-l-green-500">
+                <CardContent className="p-6 text-center">
+                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                  <h4 className="font-medium text-green-900 mb-2">All Conflicts Autonomously Resolved</h4>
+                  <p className="text-gray-600">
+                    The Chief of Staff AI system is operating independently and has successfully resolved all detected conflicts without requiring human intervention.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : null}
+            
+            {/* Show monitoring status when no data yet */}
+            {activeConflicts.length === 0 && resolvedConflicts.length === 0 && (
               <Card>
                 <CardContent className="p-6 text-center">
-                  <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No active conflicts detected</p>
+                  <Cpu className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                  <h4 className="font-medium text-blue-900 mb-2">Autonomous Monitoring Active</h4>
+                  <p className="text-gray-600">
+                    Chief of Staff AI system is continuously monitoring for conflicts and will resolve them automatically when detected.
+                  </p>
                 </CardContent>
               </Card>
             )}
