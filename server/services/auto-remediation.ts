@@ -19,7 +19,7 @@ const CONFIG = {
   
   // Budget caps per agent + per directive
   BUDGET_CAPS: {
-    per_agent_daily: 1000,    // $1000/day per agent max
+    per_agent_daily: 25,      // $25/day per agent max
     per_directive: 100,       // $100 per directive max
     emergency_reserve: 5000   // $5000 emergency budget
   },

@@ -5,6 +5,7 @@ This project develops a sophisticated Chief of Staff AI system for ComplianceWor
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Budget constraint: $25/day per agent (updated from $1000/day on August 18, 2025).
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.
