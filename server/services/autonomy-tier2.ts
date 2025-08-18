@@ -424,9 +424,10 @@ export class AutonomyTier2 extends Autonomy {
     console.log(`TIER2: Cost-aware playbook selection for ${classification}`);
     
     // Get all matching playbooks (Tier 1 + Tier 2)
-    const tier1Playbooks = Autonomy.getPlaybooks().filter((p: any) => p.match.classification === classification);
+    // Since we can't access base class playbooks, use the standard selection as fallback
+    const basePlaybook = super.selectPlaybook({ classification });
     const tier2Playbooks = TIER2_PLAYBOOKS.filter(p => p.match.classification === classification);
-    const allCandidates = [...tier1Playbooks, ...tier2Playbooks];
+    const allCandidates = [basePlaybook, ...tier2Playbooks];
     
     if (allCandidates.length === 0) {
       throw new Error(`No playbooks found for classification: ${classification}`);
@@ -487,7 +488,11 @@ export class AutonomyTier2 extends Autonomy {
       console.log(`TIER2: Attempt ${attempt}/${maxAttempts} for ${signal.agent}`);
 
       try {
-        await this.runPlaybookTier2(playbook, signal);
+        if (TIER2_PLAYBOOKS.includes(playbook)) {
+          await this.runPlaybookTier2(playbook, signal);
+        } else {
+          await super.runPlaybook(playbook, signal);
+        }
         ok = await this.verifyRecovery({ 
           agent: signal.agent, 
           expected: playbook.successCriteria 
@@ -633,7 +638,7 @@ export class AutonomyTier2 extends Autonomy {
 
   // Expose helper methods for testing
   static getPlaybooks() {
-    return []; // Return empty for now, will be populated with actual playbooks
+    return TIER2_PLAYBOOKS; // Return Tier 2 playbooks
   }
   
   static resolveArgs(args: any, signal: Signal): any {
