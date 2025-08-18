@@ -34,22 +34,25 @@ export default function AiAssistant() {
 
   const askQuestion = useMutation({
     mutationFn: async (data: { question: string; context?: string }) => {
-      console.log('Asking question:', data);
+      console.log('🤖 Asking question:', data);
       const response = await apiRequest('POST', '/api/questions', data);
       const result = await response.json();
-      console.log('Question response:', result);
+      console.log('✅ Question response received:', result);
       return result;
     },
-    onSuccess: (data) => {
-      console.log('Question successfully processed:', data);
-      // Force refetch to ensure we get the latest data
-      refetchQuestions();
-      queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+    onSuccess: async (data) => {
+      console.log('✅ Question successfully processed:', data);
+      // Clear the form immediately
       setQuestion("");
       setContext("");
+      // Force immediate refetch with a small delay
+      setTimeout(() => {
+        refetchQuestions();
+        queryClient.invalidateQueries({ queryKey: ['/api/questions'] });
+      }, 100);
     },
     onError: (error) => {
-      console.error('Error asking question:', error);
+      console.error('❌ Error asking question:', error);
     }
   });
 

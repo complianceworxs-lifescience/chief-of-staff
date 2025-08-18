@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Assistant Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .question { margin: 10px 0; }
+        button { padding: 10px; margin: 5px; }
+        .response { 
+            background: #f0f0f0; 
+            padding: 15px; 
+            margin: 10px 0; 
+            white-space: pre-line; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Assistant Debug Tool</h1>
+    
+    <div class="question">
+        <button onclick="testQuestion('What is the current status of all agents?')">Test Agent Status</button>
+        <button onclick="testQuestion('Which agents are overloaded with work?')">Test Workload</button>
+        <button onclick="testQuestion('Are there any active conflicts?')">Test Conflicts</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testQuestion(question) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Processing question: ' + question + '</p>';
+            
+            try {
+                const response = await fetch('/api/questions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+                
+                const result = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <h3>Question: ${result.question}</h3>
+                    <p><strong>Category:</strong> ${result.category}</p>
+                    <p><strong>Confidence:</strong> ${result.confidence}%</p>
+                    <div class="response">
+                        <strong>AI Response:</strong><br>
+                        ${result.response}
+                    </div>
+                    <p><strong>Related Data:</strong> ${result.relatedData?.join(', ') || 'None'}</p>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
