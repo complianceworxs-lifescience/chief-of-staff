@@ -1,0 +1,113 @@
+auto-remediation is table-stakes for real autonomy—without it, you don’t have agents; you have pagers. It’s the difference between noticing a problem and fixing it before you’re pulled in.
+
+Here’s the full picture of what matters for Agent Autonomy (ranked by impact):
+
+Tier 1 — Must-haves (make autonomy real)
+
+Auto-remediation (self-healing)
+
+Detect → classify → pick playbook → execute → verify → log → escalate.
+
+Covers conflicts, capacity, transient errors, missing data, and config drift.
+
+Clear priorities & arbitration
+
+Deterministic tie-breakers across agents (e.g., Revenue > Marketing > Content).
+
+Preemption rules: who yields when resources collide.
+
+Observability & SLOs
+
+Health signals: success rate, backlog age, alignment score, time-to-recover.
+
+SLOs per agent (e.g., “95% directives within 30m”) that trigger remediation.
+
+Safety guardrails
+
+Allowed actions/policies, budget caps, scope limits, data access boundaries.
+
+Built-in rollback/undo for risky operations.
+
+Decision lineage & explainability
+
+Every auto-fix recorded with: problem → playbook → result → metric delta.
+
+Enables audits and model improvement.
+
+Tier 2 — Performance multipliers
+
+Cost awareness
+
+Actions priced against a budget; prefer cheaper playbooks when equivalent.
+
+Pause noncritical work when burn rate spikes.
+
+Resource orchestration
+
+Dynamic scaling/slots per agent; reallocate compute/queue depth on demand.
+
+Data dependency management
+
+Input contracts, freshness checks, cache refresh strategies, fallback sources.
+
+Learning loop
+
+Post-fix review: promote successful playbooks, demote noisy ones.
+
+Gradient: conflicts resolved faster over time with fewer escalations.
+
+Human-in-the-Loop thresholds
+
+Only escalate when: attempts exhausted, high-risk action, or KPI damage projected.
+
+CEO/COO override surfaces top 2 recommended fixes, not raw logs.
+
+Tier 3 — Resilience & evolution
+
+Versioning & change management
+
+Canary new playbooks; feature flags; staged rollouts.
+
+Simulation/chaos tests
+
+Nightly conflict drills and failure injection; verify auto-recovery works.
+
+Policy compliance
+
+Map actions to compliance constraints (GxP, audit trails, PII handling).
+
+Minimal checklist for ComplianceWorxs (practical)
+
+✅ Auto-remediation router with 5 classifiers: CONFLICT, TRANSIENT, CAPACITY, DATA_DEP, CONFIG.
+
+✅ Priority table: ["Revenue","Marketing","Content"] used by conflict resolver.
+
+✅ SLOs per agent: success ≥ 94%, alignment ≥ 95%, backlog age ≤ 15m.
+
+✅ Budget caps per agent + per directive; stop or throttle on breach.
+
+✅ Lineage log per action with before/after metrics.
+
+✅ Escalation rule: max 2 failed fixes → escalate to CEO with two safe options.
+
+KPIs to prove autonomy (track weekly)
+
+MTTD (detect) and MTTR (recover) per agent.
+
+% auto-resolved vs escalated (aim >85% auto).
+
+Conflict half-life (time from detection → cleared).
+
+Cost per resolved incident (should trend down).
+
+Alignment drift rate (how often playbooks need manual override).
+
+If you only do three things this week
+
+Turn on auto-remediation with 2 attempts + escalation.
+
+Enforce a global priority policy for arbitration.
+
+Wire SLO triggers that launch playbooks and write lineage.
+
+Do that, and your Chief of Staff stops paging you and starts running the shop.

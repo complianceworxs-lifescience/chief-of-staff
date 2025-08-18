@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Clock, HeartPulse, Users, AlertTriangle, Target, CheckCircle, Zap, Cpu } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { AgentStatusCard } from "@/components/agent-status-card";
+import { AgentStatusCardWithRemediation } from "@/components/agent-status-card-with-remediation";
 import { ConflictCard } from "@/components/conflict-card";
 import { StrategicAlignment } from "@/components/strategic-alignment";
 import { WeeklyReports } from "@/components/weekly-reports";
@@ -169,7 +169,7 @@ export default function Dashboard() {
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Agent Status Monitoring</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {agents.map((agent) => (
-              <AgentStatusCard key={agent.id} agent={agent} />
+              <AgentStatusCardWithRemediation key={agent.id} agent={agent} />
             ))}
           </div>
         </div>

@@ -1,0 +1,230 @@
+Auto-Remediation Mode (implementation brief for Replit)
+0) Objective
+
+When any agent tile shows Error or a conflict is detected, the Chief of Staff (CoS) should diagnose → select a playbook → execute → verify → log → escalate without you touching anything.
+
+1) Feature Flag & Config
+
+AUTO_REMEDIATE=true
+
+AUTOREM_MAX_ATTEMPTS=2 (before escalation)
+
+AUTOREM_SLO_THRESHOLDS={ "success_rate": 0.9, "alignment": 0.9 }
+
+AUTOREM_PRIORITY=["Revenue","Marketing","Content"] ← conflict tie-breaker
+
+Put these in Replit Secrets. No new folders required.
+
+2) State Machine (per agent card)
+HEALTHY → DEGRADED → ERROR → RECOVERING → HEALTHY
+
+
+Enter DEGRADED if Success Rate or Strategic Alignment falls below thresholds for 2 consecutive checks.
+
+Enter ERROR on failed job, missing heartbeat, or conflict assignment failure.
+
+RECOVERING while a playbook is running.
+
+3) Event Hook (wire to your existing status loop)
+
+When you compute the card data, call:
+
+await handleAgentSignal({
+  agent: "CRO" | "CMO" | "Content" | "CEO" | "CoS" | "MarketIntel",
+  status: "healthy" | "degraded" | "error",
+  lastReport: "string",
+  metrics: { successRate: number, alignment: number },
+  context: { directiveId?: string, conflictId?: string, errorCode?: string }
+});
+
+4) Auto-Remediation Router
+
+One function the CoS calls to fix things:
+
+// /app/chief_of_staff/autoRemediate.ts (use your existing utils file if you prefer)
+export async function autoRemediate(signal) {
+  if (!process.env.AUTO_REMEDIATE) return;
+
+  const { agent, status, context } = signal;
+
+  // 1) Classify
+  const classification = classifyIssue(signal); // "CONFLICT" | "TRANSIENT" | "CAPACITY" | "DATA_DEP" | "CONFIG"
+
+  // 2) Pick playbook
+  const playbook = selectPlaybook({ agent, classification, context });
+
+  // 3) Execute
+  const result = await runPlaybook(playbook);
+
+  // 4) Verify (post-check)
+  const ok = await verifyRecovery({ agent, expected: playbook.successCriteria });
+
+  // 5) Log lineage
+  await logDecision({
+    agent,
+    classification,
+    playbook: playbook.name,
+    ok,
+    context,
+  });
+
+  // 6) Escalate if still bad
+  if (!ok) await escalate({ to: "CEO", agent, context, reason: "AutoRemediationFailed" });
+}
+
+
+Classifiers (simple, rule-based to start):
+
+CONFLICT → conflictId present OR multiple agents touching the same directive with different priorities.
+
+TRANSIENT → errorCode in [TIMEOUT,RATE_LIMIT,TEMP_NETWORK].
+
+CAPACITY → queue length > N or backlog age > X.
+
+DATA_DEP → missing input artifact, failed fetch, or stale cache.
+
+CONFIG → missing secret/env, invalid schema.
+
+5) Playbooks (minimal JSON, no new files required)
+
+Add this object where you store settings; CoS reads from memory:
+
+export const PLAYBOOKS = [
+  {
+    name: "ResolveInterAgentConflict",
+    match: { classification: "CONFLICT" },
+    steps: [
+      { do: "applyPriorityRules", args: { order: process.env.AUTOREM_PRIORITY?.split(",") } },
+      { do: "reassignOverlappingDirectives", args: { from: "CMO", to: "CRO", policy: "revenue_first" } },
+      { do: "throttleAgent", args: { agent: "Content", maxConcurrent: 1, forMinutes: 30 } }
+    ],
+    successCriteria: { conflictCleared: true, alignmentMin: 0.92 }
+  },
+  {
+    name: "RestartAndRetryTransient",
+    match: { classification: "TRANSIENT" },
+    steps: [
+      { do: "restartAgent", args: { soft: true } },
+      { do: "retryLastJob", args: { backoffMs: 2000, max: 2 } }
+    ],
+    successCriteria: { lastJobSucceeded: true }
+  },
+  {
+    name: "RebalanceCapacity",
+    match: { classification: "CAPACITY" },
+    steps: [
+      { do: "reallocateCapacity", args: { from: "CMO", to: "CRO", slots: 2 } },
+      { do: "splitDirective", args: { directiveIdVar: "context.directiveId", ratio: [0.6,0.4] } }
+    ],
+    successCriteria: { backlogAgeMaxMinutes: 15 }
+  },
+  {
+    name: "RepairDataDependency",
+    match: { classification: "DATA_DEP" },
+    steps: [
+      { do: "refreshCache" },
+      { do: "refetchSource", args: { source: "MarketIntel" } },
+      { do: "validateInputs" }
+    ],
+    successCriteria: { inputsValid: true }
+  },
+  {
+    name: "FixConfig",
+    match: { classification: "CONFIG" },
+    steps: [
+      { do: "checkSecrets", args: { required: ["GOOGLE_PROJECT_ID","SERVICE_ACCOUNT","API_BASE"] } },
+      { do: "schemaMigrateIfNeeded" }
+    ],
+    successCriteria: { configHealthy: true }
+  }
+];
+
+
+You already have CEO/COO/CMO/Content endpoints—each do: maps to a tiny function that calls those endpoints (or internal methods) you already use.
+
+Primitive actions to implement (thin wrappers):
+
+applyPriorityRules(order: string[])
+
+reassignOverlappingDirectives({from,to,policy})
+
+throttleAgent({agent,maxConcurrent,forMinutes})
+
+restartAgent({soft})
+
+retryLastJob({backoffMs,max})
+
+reallocateCapacity({from,to,slots})
+
+splitDirective({directiveId,ratio})
+
+refreshCache(), refetchSource({source}), validateInputs()
+
+checkSecrets({required}), schemaMigrateIfNeeded()
+
+All can live in the same file you already use for orchestration utilities.
+
+6) Verification & KPIs
+
+After a playbook runs, pull fresh metrics for the affected agent(s):
+
+Conflict cleared? (conflictId closed)
+
+Success Rate ≥ threshold
+
+Strategic Alignment ≥ threshold
+
+Backlog age reduced
+
+If any fail after AUTOREM_MAX_ATTEMPTS, escalate to CEO.
+
+7) Escalation (keeps you safe)
+async function escalate({ to, agent, context, reason }) {
+  await post("/agents/CEO/override", {
+    agent, reason, context,
+    requestedAction: "manual_decision",
+    suggestions: top3Alternatives(context) // compile from failure traces
+  });
+}
+
+8) Decision Lineage (fits your audit trail)
+
+Append to decision_lineage.json (or your existing log):
+
+{
+  "ts":"2025-08-18T15:02:11Z",
+  "actor":"ChiefOfStaff",
+  "event":"auto_remediation",
+  "agent":"CMO",
+  "classification":"CONFLICT",
+  "playbook":"ResolveInterAgentConflict",
+  "attempt":1,
+  "result":"success",
+  "metrics_after":{"successRate":0.95,"alignment":0.96}
+}
+
+9) UI Hooks (tiny changes to the tiles)
+
+If status==="error" show [Auto-Resolve] button and auto-trigger in background.
+
+While running: badge = Recovering…
+
+On success: toast “Conflict cleared by CoS: {playbook}”
+
+On fail: toast “Escalated to CEO (attempts exhausted)”
+
+Add small “View Remediation Log” link → filters decision_lineage.json for that agent.
+
+10) Acceptance Criteria (for QA in Replit)
+
+Force a conflict between CRO & CMO on the same directive.
+
+Expect: CoS runs ResolveInterAgentConflict, alignment ≥ 0.92 within one cycle, tile flips to Healthy.
+
+Simulate a transient timeout on CEO agent.
+
+Expect: restart+retry, tile → Recovering → Healthy; lineage recorded.
+
+Simulate missing secret.
+
+Expect: FixConfig playbook; if unresolved after 2 tries → escalate to CEO with suggestions.

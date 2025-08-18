@@ -57,6 +57,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { status } = req.body;
       const agent = await agentMonitor.updateAgentStatus(req.params.id, status);
+      
+      // Trigger auto-remediation signal if enabled
+      const { handleAgentSignal } = await import("./services/auto-remediation");
+      await handleAgentSignal({
+        agent: req.params.id,
+        status: status === 'error' ? 'error' : status === 'degraded' ? 'degraded' : 'healthy',
+        lastReport: agent.lastReport || '',
+        metrics: {
+          successRate: 0.95, // This should come from actual metrics
+          alignment: 0.95
+        },
+        context: {
+          errorCode: req.body.errorCode
+        }
+      });
+      
       res.json(agent);
     } catch (error) {
       res.status(500).json({ message: "Failed to update agent status" });
@@ -1023,6 +1039,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to execute workflow" });
     }
   });
+
+  // Auto-remediation routes
+  app.use("/api/remediation", (await import("./routes/remediation")).remediationRouter);
 
   const httpServer = createServer(app);
   return httpServer;
