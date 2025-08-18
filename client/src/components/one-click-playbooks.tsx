@@ -1,0 +1,287 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { 
+  Zap, 
+  DollarSign, 
+  FileSearch, 
+  Settings,
+  RefreshCw,
+  Target,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  TrendingUp
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+
+interface Playbook {
+  id: string;
+  title: string;
+  description: string;
+  category: 'conflict' | 'revenue' | 'content' | 'optimization';
+  estimatedTime: string;
+  impact: 'low' | 'medium' | 'high';
+  targetAgents: string[];
+  actions: string[];
+  successRate: number;
+}
+
+const playbooks: Playbook[] = [
+  {
+    id: 'resolve-agent-conflict',
+    title: 'Resolve Agent Conflict',
+    description: 'Triggers auto-priority rules + COO resource shuffle',
+    category: 'conflict',
+    estimatedTime: '5-10 min',
+    impact: 'high',
+    targetAgents: ['coo', 'all-agents'],
+    actions: [
+      'Apply priority weighting rules',
+      'Analyze resource bottlenecks',
+      'Redistribute workload via COO Agent',
+      'Update agent task queues'
+    ],
+    successRate: 92
+  },
+  {
+    id: 'accelerate-revenue-tasks',
+    title: 'Accelerate Revenue Tasks',
+    description: 'CRO Agent gets temporary resource boost',
+    category: 'revenue',
+    estimatedTime: '3-5 min',
+    impact: 'high',
+    targetAgents: ['cro', 'cmo', 'coo'],
+    actions: [
+      'Identify high-impact revenue tasks',
+      'Allocate additional processing capacity to CRO',
+      'Prioritize partnership and upsell initiatives',
+      'Generate revenue acceleration report'
+    ],
+    successRate: 88
+  },
+  {
+    id: 'audit-content-bottleneck',
+    title: 'Audit Content Bottleneck',
+    description: 'CMO Agent generates report + reorders backlog',
+    category: 'content',
+    estimatedTime: '10-15 min',
+    impact: 'medium',
+    targetAgents: ['cmo', 'content-manager'],
+    actions: [
+      'Analyze content pipeline bottlenecks',
+      'Generate content performance audit',
+      'Reorder backlog by strategic priority',
+      'Optimize content creation workflow'
+    ],
+    successRate: 85
+  },
+  {
+    id: 'system-optimization-sweep',
+    title: 'System Optimization Sweep',
+    description: 'Comprehensive efficiency analysis and automation',
+    category: 'optimization',
+    estimatedTime: '15-20 min',
+    impact: 'high',
+    targetAgents: ['coo', 'chief-of-staff'],
+    actions: [
+      'Run full system efficiency analysis',
+      'Identify automation opportunities',
+      'Optimize cross-agent workflows',
+      'Update operational procedures'
+    ],
+    successRate: 90
+  }
+];
+
+export function OneClickPlaybooks() {
+  const { toast } = useToast();
+  const [runningPlaybooks, setRunningPlaybooks] = useState<string[]>([]);
+  const [completedPlaybooks, setCompletedPlaybooks] = useState<string[]>([]);
+
+  const handleRunPlaybook = async (playbook: Playbook) => {
+    setRunningPlaybooks(prev => [...prev, playbook.id]);
+    
+    try {
+      // Execute the playbook workflow
+      const result = await apiRequest('/api/workflows/execute', 'POST', {
+        workflow: playbook.title,
+        targetAgents: playbook.targetAgents,
+        playbookId: playbook.id,
+        actions: playbook.actions
+      });
+
+      // Simulate playbook execution time
+      setTimeout(() => {
+        setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
+        setCompletedPlaybooks(prev => [...prev, playbook.id]);
+        
+        toast({
+          title: "Playbook Completed",
+          description: `${playbook.title} executed successfully in ${playbook.estimatedTime}`,
+        });
+
+        // Remove from completed after 10 seconds
+        setTimeout(() => {
+          setCompletedPlaybooks(prev => prev.filter(id => id !== playbook.id));
+        }, 10000);
+      }, 3000);
+      
+    } catch (error) {
+      setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
+      toast({
+        title: "Playbook Failed",
+        description: `Unable to execute ${playbook.title}. Please try again.`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'conflict': return <AlertTriangle className="h-5 w-5" />;
+      case 'revenue': return <DollarSign className="h-5 w-5" />;
+      case 'content': return <FileSearch className="h-5 w-5" />;
+      case 'optimization': return <Settings className="h-5 w-5" />;
+      default: return <Zap className="h-5 w-5" />;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'conflict': return 'bg-red-100 text-red-600';
+      case 'revenue': return 'bg-green-100 text-green-600';
+      case 'content': return 'bg-purple-100 text-purple-600';
+      case 'optimization': return 'bg-blue-100 text-blue-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getImpactColor = (impact: string) => {
+    switch (impact) {
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <Card data-testid="one-click-playbooks">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5" />
+          One-Click Strategic Playbooks
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {playbooks.map((playbook) => {
+            const isRunning = runningPlaybooks.includes(playbook.id);
+            const isCompleted = completedPlaybooks.includes(playbook.id);
+            
+            return (
+              <div
+                key={playbook.id}
+                className={`border rounded-lg p-4 transition-all ${
+                  isCompleted ? 'bg-green-50 border-green-200' :
+                  isRunning ? 'bg-blue-50 border-blue-200' : 
+                  'bg-white border-gray-200 hover:border-gray-300'
+                }`}
+                data-testid={`playbook-card-${playbook.id}`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 rounded-lg ${getCategoryColor(playbook.category)}`}>
+                      {getCategoryIcon(playbook.category)}
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{playbook.title}</h4>
+                      <p className="text-sm text-gray-600">{playbook.description}</p>
+                    </div>
+                  </div>
+                  
+                  {isCompleted && <CheckCircle className="h-5 w-5 text-green-600" />}
+                  {isRunning && <RefreshCw className="h-5 w-5 text-blue-600 animate-spin" />}
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {playbook.estimatedTime}
+                      </div>
+                      <Badge className={getImpactColor(playbook.impact)}>
+                        {playbook.impact.toUpperCase()} IMPACT
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>{playbook.successRate}% success</span>
+                    </div>
+                  </div>
+                  
+                  <Progress 
+                    value={isRunning ? 65 : isCompleted ? 100 : 0} 
+                    className="h-2"
+                  />
+                </div>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => handleRunPlaybook(playbook)}
+                        disabled={isRunning || isCompleted}
+                        className="w-full"
+                        variant={isCompleted ? "outline" : "default"}
+                        data-testid={`button-run-playbook-${playbook.id}`}
+                      >
+                        {isCompleted ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Completed
+                          </>
+                        ) : isRunning ? (
+                          <>
+                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                            Running...
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="h-4 w-4 mr-2" />
+                            Run Playbook
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="max-w-xs">
+                        <p className="font-medium mb-1">Actions:</p>
+                        <ul className="text-xs space-y-1">
+                          {playbook.actions.map((action, index) => (
+                            <li key={index}>• {action}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
