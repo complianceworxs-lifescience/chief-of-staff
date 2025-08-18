@@ -71,6 +71,13 @@ app.use((req, res, next) => {
     
     // Start autonomous conflict monitoring
     conflictMonitor.startMonitoring(30000); // Monitor every 30 seconds
+    
+    // Start active intervention engine
+    import("./services/active-intervention").then(module => {
+      module.activeInterventionEngine.start();
+      log("Active intervention engine started - Taking preventive actions");
+    });
+    
     log("Autonomous conflict monitoring started - No HITL required");
   });
 })();
