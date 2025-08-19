@@ -31,10 +31,25 @@ import {
   TrendingUp,
   Users,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Shield,
+  AlertCircle,
+  Timer
 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+
+interface DirectiveConflict {
+  id: string;
+  conflictType: string;
+  agents: string[];
+  description: string;
+  resolution?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  status: string;
+}
 
 interface DirectiveActionsProps {
   directive: {
@@ -46,6 +61,8 @@ interface DirectiveActionsProps {
     impactScore: number;
     effortScore: number;
     estimatedImpact: string;
+    lastConflict?: DirectiveConflict;
+    conflictCount?: number;
   };
   onUpdate: () => void;
 }
@@ -119,6 +136,17 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
             description: "Created duplicate for parallel execution",
           });
           break;
+          
+        case 'intercede':
+          result = await apiRequest(`/api/directives/${directive.id}/intercede`, 'POST', { 
+            reason: 'Manual intervention requested',
+            pauseExecution: true 
+          });
+          toast({
+            title: "Interceding in Directive",
+            description: "Agent execution paused, directive moved to manual review queue",
+          });
+          break;
       }
       
       onUpdate();
@@ -160,8 +188,39 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
     }
   };
 
+  // Mock conflict data for demonstration - would come from API in production
+  const mockLastConflict = directive.lastConflict || {
+    id: "mock-conflict-1",
+    conflictType: "priority",
+    agents: ["cmo", "cro"],
+    description: "CMO wanted brand-first messaging, CRO prioritized revenue-first approach",
+    resolution: "CRO priority applied per governance rule (revenue > marketing)",
+    resolvedBy: "auto",
+    resolvedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
+    status: "resolved"
+  };
+
+  const hasActiveConflict = directive.status === 'conflict' || (directive.lastConflict && directive.lastConflict.status === 'active');
+  const hasRecentConflict = directive.lastConflict || mockLastConflict;
+  const conflictCount = directive.conflictCount || 2;
+
   return (
     <Card className="mb-4" data-testid={`directive-card-${directive.id}`}>
+      {/* Conflict Banner */}
+      {hasActiveConflict && (
+        <div className="bg-orange-50 border-l-4 border-l-orange-500 p-3 m-4 mb-0 rounded">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <span className="text-orange-800 font-medium">
+              Conflict Detected: {hasRecentConflict.agents.map(a => a.toUpperCase()).join(' vs ')} Agent
+            </span>
+          </div>
+          <p className="text-orange-700 text-sm mt-1">
+            Resolution: {hasRecentConflict.resolvedBy === 'auto' ? 'Auto-resolved' : 'Manual intervention'} - {hasRecentConflict.resolution}
+          </p>
+        </div>
+      )}
+      
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -176,6 +235,11 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
               <Badge variant="outline">
                 {agents.find(a => a.id === directive.assignedAgent)?.name || directive.assignedAgent}
               </Badge>
+              {conflictCount > 0 && (
+                <Badge className="bg-orange-100 text-orange-800 text-xs">
+                  {conflictCount} conflicts resolved
+                </Badge>
+              )}
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1">
@@ -270,18 +334,33 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
             </Button>
           ) : null}
 
-          {/* Escalate */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAction('escalate')}
-            disabled={isLoading || directive.assignedAgent === 'ceo'}
-            className="flex items-center gap-1"
-            data-testid={`button-escalate-${directive.id}`}
-          >
-            <AlertTriangle className="h-4 w-4" />
-            Escalate
-          </Button>
+          {/* Intercede (Priority button for conflicts) */}
+          {hasActiveConflict || hasRecentConflict ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleAction('intercede')}
+              disabled={isLoading}
+              className="flex items-center gap-1 border-orange-300 text-orange-700 hover:bg-orange-50"
+              data-testid={`button-intercede-${directive.id}`}
+            >
+              <Shield className="h-4 w-4" />
+              Intercede
+            </Button>
+          ) : (
+            /* Escalate (Default option when no conflicts) */
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleAction('escalate')}
+              disabled={isLoading || directive.assignedAgent === 'ceo'}
+              className="flex items-center gap-1"
+              data-testid={`button-escalate-${directive.id}`}
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Escalate
+            </Button>
+          )}
 
           {/* Clone & Split */}
           <Button
@@ -311,6 +390,37 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
             </Button>
           )}
         </div>
+        
+        {/* Last Conflict Resolution Log */}
+        {hasRecentConflict && (
+          <>
+            <Separator className="my-4" />
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-gray-700">
+                      Last Conflict ({hasRecentConflict.resolvedAt ? formatDistanceToNow(new Date(hasRecentConflict.resolvedAt)) : 'Recently'} ago)
+                    </span>
+                    <Badge className="bg-gray-100 text-gray-700 text-xs">
+                      {hasRecentConflict.status === 'resolved' ? 'RESOLVED' : hasRecentConflict.status.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    {hasRecentConflict.description}
+                  </p>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-gray-700">
+                      <span className="font-medium">Resolution:</span> {hasRecentConflict.resolution}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );

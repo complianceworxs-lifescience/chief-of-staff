@@ -25,6 +25,9 @@ export const conflicts = pgTable("conflicts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
   resolution: text("resolution"),
+  directiveId: text("directive_id"), // Link conflicts to specific directives
+  riskScore: integer("risk_score").default(0),
+  impactScore: integer("impact_score").default(0),
 });
 
 export const strategicObjectives = pgTable("strategic_objectives", {
@@ -61,6 +64,20 @@ export const systemMetrics = pgTable("system_metrics", {
 });
 
 // New tables for enhanced features
+// Directive Conflicts - track conflicts per directive
+export const directiveConflicts = pgTable("directive_conflicts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  directiveId: text("directive_id").notNull(),
+  conflictType: text("conflict_type").notNull(), // "priority", "resource", "approach", "timeline"
+  agents: json("agents").$type<string[]>().notNull(),
+  description: text("description").notNull(),
+  resolution: text("resolution"),
+  resolvedBy: text("resolved_by"), // "auto" or agent_id
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  status: text("status").notNull().default("active"), // "active", "resolved", "escalated"
+});
+
 export const agentCommunications = pgTable("agent_communications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   fromAgent: text("from_agent").notNull(),
@@ -128,6 +145,7 @@ export const insertPerformanceHistorySchema = createInsertSchema(performanceHist
 export const insertConflictPredictionSchema = createInsertSchema(conflictPredictions).omit({ id: true, createdAt: true });
 export const insertAgentWorkloadSchema = createInsertSchema(agentWorkloads).omit({ id: true, lastUpdated: true });
 export const insertSmartRecommendationSchema = createInsertSchema(smartRecommendations).omit({ id: true, createdAt: true });
+export const insertDirectiveConflictSchema = createInsertSchema(directiveConflicts).omit({ id: true, createdAt: true });
 
 export const aiQuestions = pgTable("ai_questions", {
   id: text("id").primaryKey().default(sql`gen_random_uuid()`),

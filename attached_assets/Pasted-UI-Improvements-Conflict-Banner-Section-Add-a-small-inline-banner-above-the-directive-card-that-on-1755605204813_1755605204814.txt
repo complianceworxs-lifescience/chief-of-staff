@@ -1,0 +1,87 @@
+UI Improvements
+
+Conflict Banner Section
+
+Add a small inline banner above the directive card that only appears if there’s a conflict.
+
+Example:
+
+⚠ Conflict Detected: CRO Agent vs CMO Agent
+Resolution: Prioritized CRO (Revenue Impact Higher)
+
+
+Resolution Log
+
+Each directive card should show a “Last Conflict” row at the bottom:
+
+Short description of the conflict
+
+Short description of how it was resolved
+
+Timestamp
+
+Example:
+
+Last Conflict (2h ago): CMO wanted brand-first messaging, CRO prioritized revenue-first.  
+Resolution: CRO priority applied, logged in system.
+
+
+One-Click Intercede Button
+
+Add a single “Intercede” button (replace Reassign/Cancel for conflicts).
+
+If pressed, it pauses agent execution and pulls the directive into your queue for manual review.
+
+🔹 Agent Actions for Conflict Resolution
+
+When a conflict arises (e.g., two agents disagree on execution path):
+
+Auto-Detect Conflict
+
+Agents tag a directive with status: conflict.
+
+Log which agents are in disagreement and the issue.
+
+Auto-Resolve Rules
+
+Use weighted governance rules (e.g. revenue > marketing > ops > admin).
+
+Apply the rule, continue execution, and log resolution.
+
+Write Conflict Summary
+
+Agents generate a 1–2 line summary:
+
+“Conflict: CMO wanted 2-week brand campaign, CRO needed 1-week sales sprint.
+Resolution: CRO priority applied due to revenue urgency.”
+
+Push to Dashboard
+
+Resolution summary appears directly in the directive card.
+
+Conflict count (e.g. “3 conflicts auto-resolved this week”) can show at the top of the dashboard.
+
+Escalation Threshold
+
+If auto-resolve fails (e.g. both sides equal weight, or repeated conflicts), system triggers the Intercede button for you.
+
+🔹 Example Dashboard Card After Improvement
+Partnership Playbook Leadership
+-------------------------------------------------
+Status: ACTIVE | Priority: HIGH | CRO Agent
+Goal: $30K MRR, 5 enterprise clients
+Impact: 95/100 | Effort: 75/100
+
+Last Conflict (4h ago): CCO wanted audit-first, CRO pushed for revenue-first.
+Resolution: CRO priority applied per governance rule.
+-------------------------------------------------
+[Pause] [Escalate] [Intercede]
+
+
+👉 This keeps the UI actionable and glanceable:
+
+Agents resolve conflicts themselves and leave a short log.
+
+You only see a short description + resolution.
+
+You step in only if the Intercede button lights up.

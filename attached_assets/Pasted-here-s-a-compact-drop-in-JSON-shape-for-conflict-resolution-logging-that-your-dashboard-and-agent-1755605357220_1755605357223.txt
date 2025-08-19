@@ -1,0 +1,175 @@
+here’s a compact, drop-in JSON shape for conflict + resolution logging that your dashboard and agents can both use. It’s terse, consistent, and built for the “one-line summary + one-click intercede” flow.
+
+JSON Schema (concise)
+{
+  "$id": "cw.conflictEvent.v1",
+  "type": "object",
+  "required": ["id", "directive_id", "detected_at", "status", "agents", "category", "summary", "decision"],
+  "properties": {
+    "id": { "type": "string" },                       // uuid
+    "directive_id": { "type": "string" },             // links to card
+    "detected_at": { "type": "string", "format": "date-time" },
+    "resolved_at": { "type": ["string", "null"], "format": "date-time" },
+
+    "status": { "enum": ["auto_resolved", "needs_intervention", "intervened", "dismissed"] },
+
+    "agents": {
+      "type": "object",
+      "required": ["primary", "counterparty"],
+      "properties": {
+        "primary": { "type": "string" },              // e.g., "CRO"
+        "counterparty": { "type": "string" },         // e.g., "CMO"
+        "others": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "category": {                                     // what clashed
+      "enum": ["revenue", "compliance", "strategy", "timeline", "resourcing", "brand", "data_quality", "other"]
+    },
+
+    "trigger": { "type": "string" },                  // short cause phrase
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "impact_score": { "type": "number" },         // 0-100
+        "effort_score": { "type": "number" },         // 0-100
+        "revenue_risk_usd": { "type": "number" },
+        "compliance_risk_level": { "enum": ["none","low","medium","high","critical"] }
+      }
+    },
+
+    "governance_rule": {                              // which rule decided outcome
+      "type": "object",
+      "properties": {
+        "id": { "enum": ["CRO_over_brand","CCO_over_speed","CEO_over_scope","COO_over_method","tie_breaker"] },
+        "reason": { "type": "string" }                // brief “why”
+      }
+    },
+
+    "decision": {
+      "type": "object",
+      "required": ["winner", "action"],
+      "properties": {
+        "winner": { "type": "string" },               // e.g., "CRO"
+        "action": { "type": "string" },               // e.g., "Run 1-week sales sprint"
+        "next_steps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "summary": { "type": "string", "maxLength": 220 },// 1–2 lines for the card
+    "notes": { "type": "string" },                    // optional longer text
+
+    "intercede": {                                    // lights your single button
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "reason": { "type": "string" },
+        "action_id": { "type": "string" }             // opaque id your UI posts back to
+      }
+    }
+  }
+}
+
+Minimal payloads (copy-paste examples)
+1) Revenue vs Brand → Auto-resolved
+{
+  "id": "cfx_8b2f",
+  "directive_id": "dir_3321",
+  "detected_at": "2025-08-19T12:04:11Z",
+  "resolved_at": "2025-08-19T12:04:13Z",
+  "status": "auto_resolved",
+  "agents": { "primary": "CRO", "counterparty": "CMO" },
+  "category": "revenue",
+  "trigger": "Timeline conflict: awareness campaign vs sales sprint",
+  "metrics": { "impact_score": 92, "effort_score": 48, "revenue_risk_usd": 30000, "compliance_risk_level": "none" },
+  "governance_rule": { "id": "CRO_over_brand", "reason": "Revenue-first hierarchy" },
+  "decision": {
+    "winner": "CRO",
+    "action": "Launch 1-week enterprise sales sprint; postpone awareness to Q next.",
+    "next_steps": ["Update content calendar", "Reallocate 30% budget to outbound", "Set 5 enterprise targets"]
+  },
+  "summary": "Conflict: CMO wanted 2-week brand push; CRO needed 1-week sales sprint. Resolution: CRO wins (revenue priority).",
+  "intercede": { "enabled": false }
+}
+
+2) Compliance vs Speed → Needs your Intercede
+{
+  "id": "cfx_91aa",
+  "directive_id": "dir_3321",
+  "detected_at": "2025-08-19T12:31:02Z",
+  "resolved_at": null,
+  "status": "needs_intervention",
+  "agents": { "primary": "COO", "counterparty": "CCO" },
+  "category": "compliance",
+  "trigger": "Release blocked: incomplete validation step for GxP data export",
+  "metrics": { "impact_score": 70, "effort_score": 60, "revenue_risk_usd": 12000, "compliance_risk_level": "high" },
+  "governance_rule": { "id": "tie_breaker", "reason": "Compliance high vs revenue moderate; repeated 3x this week" },
+  "decision": {
+    "winner": "CCO",
+    "action": "Pause release pending validation SOP-17 step 3 sign-off",
+    "next_steps": ["Run automated validation tests", "Attach evidence pack", "Recheck export mapping"]
+  },
+  "summary": "Conflict: COO wanted early ship; CCO flagged high compliance risk. Resolution pending — needs manual call.",
+  "intercede": { "enabled": true, "reason": "High compliance risk + repeat conflict", "action_id": "act_7c04" }
+}
+
+What the dashboard should render (at a glance)
+
+Banner (only if status ≠ auto_resolved)
+
+⚠ Conflict Detected: {agents.primary} vs {agents.counterparty} — {category}
+
+One-line log inside the directive card
+
+Use summary
+
+Tiny “why” hover
+
+From governance_rule.reason
+
+One button
+
+If intercede.enabled === true, show [Intercede] and POST { action_id, decision: "approve_winner" | "override_to_<AGENT>" | "schedule_followup" , note }
+
+Logbook tab (optional)
+
+Render decision.next_steps as checklist; mark done by agents
+
+Agent behavior (deterministic + simple)
+
+On conflict detection, create event with status: "auto_resolved" if a rule applies AND compliance_risk_level !== "high"; else needs_intervention.
+
+Always fill summary in ≤ 2 sentences.
+
+If needs_intervention, set intercede.enabled = true and provide action_id.
+
+When you click Intercede, agents:
+
+pause directive,
+
+apply your decision,
+
+set status: "intervened" and resolved_at now,
+
+append a new event if outcome triggers follow-up conflicts.
+
+Roll-up counters for the page header (optional)
+{
+  "conflict_stats": {
+    "window": "7d",
+    "auto_resolved": 12,
+    "needs_intervention": 2,
+    "avg_time_to_resolution_sec": 96
+  }
+}
+
+
+This gives you:
+
+a single, consistent JSON your agents emit,
+
+a one-line summary per card,
+
+a single Intercede button wired by intercede.action_id,
+
+clean auditability when you need it.
