@@ -1,0 +1,134 @@
+/**
+ * Market Intelligence: ingest-and-score playbook integration test
+ * - With NO_CONFIG -> returns { ok:false, reason:"NO_CONFIG" }
+ * - With seeded config -> POST /api/mi/ingest-and-score writes to store
+ * - /api/mi/stats and /api/mi/active reflect non-zero counts immediately
+ */
+
+import request from "supertest";
+import express from "express";
+
+// ---------- In-memory store used by mocks ----------
+let MI_ACTIVE: any[] = [];
+
+jest.mock("@/stores/mi", () => ({
+  MiStore: {
+    upsert: async (items: any[]) => { MI_ACTIVE = dedupe([...MI_ACTIVE, ...items]); },
+    listActive: async () => [...MI_ACTIVE],
+    stats: async () => ({
+      total: MI_ACTIVE.length,
+      high_priority: MI_ACTIVE.filter(i => (i.priority ?? 0) >= 0.8).length,
+      processed_today: MI_ACTIVE.length,
+      assignments: new Set(MI_ACTIVE.map(i => i.assigned_to).filter(Boolean)).size,
+      last_run_at: new Date().toISOString()
+    })
+  }
+}));
+
+function dedupe(items: any[]) {
+  const seen = new Set<string>();
+  const out: any[] = [];
+  for (const it of items) {
+    const k = it.url ?? it.id ?? JSON.stringify(it);
+    if (!seen.has(k)) { seen.add(k); out.push(it); }
+  }
+  return out;
+}
+
+// ---------- Mocks for services used by orchestrator ----------
+const mockGet = jest.fn();
+jest.mock("@/services/mi/config", () => ({
+  MiConfig: { get: () => mockGet() }
+}));
+
+const mockRunAll = jest.fn();
+jest.mock("@/services/mi/collectors", () => ({
+  MiCollectors: { runAll: (...args: any[]) => mockRunAll(...args) }
+}));
+
+const mockScore = jest.fn();
+jest.mock("@/services/mi/scorer", () => ({
+  MiScorer: { score: (...args: any[]) => mockScore(...args) }
+}));
+
+// ---------- Import orchestrator under test ----------
+import ingestHandler from "@/pages/api/mi/ingest-and-score";
+import { MiStore } from "@/stores/mi";
+
+// ---------- Tiny Express harness ----------
+const app = express();
+app.use(express.json());
+const asExpress = (h: any) => (req: any, res: any) => h(req, res);
+
+app.post("/api/mi/ingest-and-score", asExpress(ingestHandler));
+// These mimic your dashboard reads
+app.get("/api/mi/active", async (_req, res) => res.json(await MiStore.listActive()));
+app.get("/api/mi/stats", async (_req, res) => res.json(await MiStore.stats()));
+
+describe("Market Intelligence ingest-and-score (integration)", () => {
+  beforeEach(() => { MI_ACTIVE = []; mockGet.mockReset(); mockRunAll.mockReset(); mockScore.mockReset(); });
+
+  it("returns NO_CONFIG when no watchlist/sources are set", async () => {
+    mockGet.mockResolvedValue({ empty: true }); // orchestrator should bail
+    const r = await request(app).post("/api/mi/ingest-and-score").send({});
+    expect(r.status).toBe(200);
+    expect(r.body.ok).toBe(false);
+    expect(r.body.reason).toBe("NO_CONFIG");
+
+    const stats = await request(app).get("/api/mi/stats");
+    expect(stats.body.total).toBe(0);
+  });
+
+  it("ingests, scores, writes to store, and stats/active update immediately", async () => {
+    // 1) Seed a real config
+    mockGet.mockResolvedValue({
+      keywords: ["FDA warning letter", "CSV validation", "Part 11"],
+      competitors: ["flinn.ai", "valgenesis.com"],
+      regulators: ["fda.gov", "ema.europa.eu"],
+      tech: ["GxP cloud"],
+      priority_threshold: 0.6,
+      auto_assign: { regulatory: "CCO", competitive: "CRO", market: "CEO", technology: "COO" }
+    });
+
+    // 2) Collectors return raw items
+    mockRunAll.mockResolvedValue([
+      { id: "a1", url: "https://fda.gov/x", title: "FDA Warning Letter", source: "fda.gov", kind: "regulatory" },
+      { id: "a2", url: "https://valgenesis.com/blog/y", title: "ValGenesis launch", source: "valgenesis.com", kind: "competitive" },
+      { id: "a3", url: "https://example.com/z", title: "21 CFR Part 11 update", source: "ema.europa.eu", kind: "regulatory" }
+    ]);
+
+    // 3) Scorer annotates items with category, priority, and assignment
+    mockScore.mockImplementation((raw: any[], cfg: any) =>
+      raw.map((r: any) => ({
+        ...r,
+        category: r.kind,
+        priority: r.kind === "regulatory" ? 0.9 : 0.75,
+        assigned_to: cfg.auto_assign[r.kind === "competitive" ? "competitive" : "regulatory"]
+      }))
+    );
+
+    // Sanity: empty before
+    const pre = await request(app).get("/api/mi/stats");
+    expect(pre.body.total).toBe(0);
+
+    // 4) Run orchestrator (what your "Gather Intelligence" button should call)
+    const run = await request(app).post("/api/mi/ingest-and-score").send({});
+    expect(run.status).toBe(200);
+    expect(run.body.ok).toBe(true);
+    expect(run.body.stats.total).toBeGreaterThan(0);
+
+    // 5) Dashboard reads now reflect data
+    const stats = await request(app).get("/api/mi/stats");
+    expect(stats.body.total).toBe(3);
+    expect(stats.body.high_priority).toBe(2); // two regulatory @ 0.9
+    expect(stats.body.assignments).toBeGreaterThan(0);
+
+    const active = await request(app).get("/api/mi/active");
+    expect(active.body.length).toBe(3);
+    for (const it of active.body) {
+      expect(it.category).toBeDefined();
+      expect(typeof it.priority).toBe("number");
+      expect(it.assigned_to).toBeDefined();
+    }
+  });
+});

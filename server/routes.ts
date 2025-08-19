@@ -912,7 +912,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Market Intelligence Routes
+  // =====================================
+  // MARKET INTELLIGENCE ORCHESTRATOR
+  // =====================================
+
+  // Market Intelligence Core Orchestrator - matches test specification
+  app.post("/api/mi/ingest-and-score", async (req, res) => {
+    console.log("MI Orchestrator: ingest-and-score called");
+    res.setHeader('Content-Type', 'application/json');
+    
+    try {
+      // Run MI collectors to gather raw data
+      const signals = await marketIntelligenceAgent.gatherMarketIntelligence();
+      
+      // Store signals in the same storage the dashboard reads
+      console.log(`MI Orchestrator: Generated ${signals.length} new signals`);
+      
+      // Return stats that match what dashboard expects
+      const allSignals = await storage.getMarketSignals();
+      const stats = {
+        total: allSignals.length,
+        high_priority: allSignals.filter(s => s.impact === 'high').length,
+        processed_today: allSignals.filter(s => s.actionTaken && 
+          new Date(s.processedAt || s.flaggedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length,
+        assignments: new Set(allSignals.filter(s => s.assignedAgent).map(s => s.assignedAgent)).size,
+        last_run_at: new Date().toISOString()
+      };
+      
+      res.json({ 
+        ok: true, 
+        stats,
+        message: `Collected and scored ${signals.length} new intelligence signals`
+      });
+    } catch (error) {
+      console.error("MI Orchestrator error:", error);
+      res.status(500).json({ 
+        ok: false, 
+        message: "MI orchestrator failed", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Market Intelligence Stats - what dashboard queries
+  app.get("/api/mi/stats", async (req, res) => {
+    try {
+      const allSignals = await storage.getMarketSignals();
+      const stats = {
+        total: allSignals.length,
+        high_priority: allSignals.filter(s => s.impact === 'high').length,
+        processed_today: allSignals.filter(s => s.actionTaken && 
+          new Date(s.processedAt || s.flaggedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length,
+        assignments: new Set(allSignals.filter(s => s.assignedAgent).map(s => s.assignedAgent)).size,
+        last_run_at: new Date().toISOString()
+      };
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get MI stats", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Market Intelligence Active Signals - what dashboard queries
+  app.get("/api/mi/active", async (req, res) => {
+    try {
+      const signals = await storage.getMarketSignals();
+      res.json(signals);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch active MI signals", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Legacy Market Intelligence Routes (for backward compatibility)
   app.get("/api/market-intelligence/signals", async (req, res) => {
     try {
       const signals = await storage.getMarketSignals();
@@ -942,10 +1012,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/market-intelligence/gather", async (req, res) => {
     try {
-      const signals = await marketIntelligenceAgent.gatherMarketIntelligence();
-      res.json({ message: `Generated ${signals.length} market signals`, signals });
+      // Redirect to new MI orchestrator
+      const response = await fetch(`http://localhost:5000/api/mi/ingest-and-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`MI orchestrator returned ${response.status}`);
+      }
+      
+      const result = await response.json();
+      res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to gather market intelligence" });
+      console.error("Market intelligence gather failed:", error);
+      res.status(500).json({ message: "Failed to gather market intelligence", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

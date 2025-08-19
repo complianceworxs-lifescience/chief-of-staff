@@ -71,13 +71,15 @@ export function MarketIntelligence() {
   });
 
   const gatherIntelligence = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/market-intelligence/gather'),
-    onSuccess: () => {
+    mutationFn: () => apiRequest('POST', '/api/mi/ingest-and-score'),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/market-intelligence/signals'] });
       queryClient.invalidateQueries({ queryKey: ['/api/market-intelligence/signals/high-priority'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/mi/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/mi/active'] });
       toast({
         title: "Intelligence Gathered",
-        description: "New market signals have been collected and analyzed"
+        description: data?.message || "New market signals have been collected and analyzed"
       });
     },
     onError: () => {
