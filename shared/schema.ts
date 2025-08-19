@@ -64,18 +64,46 @@ export const systemMetrics = pgTable("system_metrics", {
 });
 
 // New tables for enhanced features
-// Directive Conflicts - track conflicts per directive
+// Enhanced Directive Conflicts with governance rules
 export const directiveConflicts = pgTable("directive_conflicts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   directiveId: text("directive_id").notNull(),
-  conflictType: text("conflict_type").notNull(), // "priority", "resource", "approach", "timeline"
-  agents: json("agents").$type<string[]>().notNull(),
-  description: text("description").notNull(),
-  resolution: text("resolution"),
-  resolvedBy: text("resolved_by"), // "auto" or agent_id
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  detectedAt: timestamp("detected_at").defaultNow().notNull(),
   resolvedAt: timestamp("resolved_at"),
-  status: text("status").notNull().default("active"), // "active", "resolved", "escalated"
+  status: text("status").notNull().default("auto_resolved"), // "auto_resolved", "needs_intervention", "intervened", "dismissed"
+  
+  // Agent information
+  primaryAgent: text("primary_agent").notNull(), // e.g., "CRO"
+  counterpartyAgent: text("counterparty_agent").notNull(), // e.g., "CMO"  
+  otherAgents: json("other_agents").$type<string[]>().default([]),
+  
+  // Conflict details
+  category: text("category").notNull(), // "revenue", "compliance", "strategy", "timeline", "resourcing", "brand", "data_quality", "other"
+  trigger: text("trigger").notNull(), // short cause phrase
+  
+  // Metrics
+  impactScore: integer("impact_score").default(0), // 0-100
+  effortScore: integer("effort_score").default(0), // 0-100
+  revenueRiskUsd: integer("revenue_risk_usd").default(0),
+  complianceRiskLevel: text("compliance_risk_level").default("none"), // "none", "low", "medium", "high", "critical"
+  
+  // Governance decision
+  governanceRuleId: text("governance_rule_id"), // "CRO_over_brand", "CCO_over_speed", "CEO_over_scope", "COO_over_method", "tie_breaker"
+  governanceReason: text("governance_reason"),
+  
+  // Decision outcome
+  winner: text("winner").notNull(),
+  action: text("action").notNull(),
+  nextSteps: json("next_steps").$type<string[]>().default([]),
+  
+  // Summary and notes
+  summary: text("summary").notNull(), // 1-2 lines for card display
+  notes: text("notes"),
+  
+  // Intercede functionality
+  interceptEnabled: boolean("intercept_enabled").default(false),
+  interceptReason: text("intercept_reason"),
+  interceptActionId: text("intercept_action_id")
 });
 
 export const agentCommunications = pgTable("agent_communications", {
@@ -145,7 +173,7 @@ export const insertPerformanceHistorySchema = createInsertSchema(performanceHist
 export const insertConflictPredictionSchema = createInsertSchema(conflictPredictions).omit({ id: true, createdAt: true });
 export const insertAgentWorkloadSchema = createInsertSchema(agentWorkloads).omit({ id: true, lastUpdated: true });
 export const insertSmartRecommendationSchema = createInsertSchema(smartRecommendations).omit({ id: true, createdAt: true });
-export const insertDirectiveConflictSchema = createInsertSchema(directiveConflicts).omit({ id: true, createdAt: true });
+export const insertDirectiveConflictSchema = createInsertSchema(directiveConflicts).omit({ id: true, detectedAt: true });
 
 export const aiQuestions = pgTable("ai_questions", {
   id: text("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -1,6 +1,43 @@
 import { db } from "../db";
-import { conflicts, agents, agentDirectives, agentWorkloads } from "@shared/schema";
+import { conflicts, agents, agentDirectives, agentWorkloads, directiveConflicts } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
+
+// Governance hierarchy rules from ComplianceWorxs specifications
+const GOVERNANCE_RULES = {
+  CRO_over_brand: {
+    id: "CRO_over_brand",
+    priority: 1,
+    applies: (conflict: any) => 
+      (conflict.category === "revenue" || conflict.trigger.toLowerCase().includes("revenue")) && 
+      conflict.agents.includes("cro"),
+    reason: "Revenue-first hierarchy"
+  },
+  CCO_over_speed: {
+    id: "CCO_over_speed", 
+    priority: 2,
+    applies: (conflict: any) => 
+      (conflict.category === "compliance" || conflict.complianceRiskLevel === "high") && 
+      conflict.agents.includes("cco"),
+    reason: "Compliance overrides speed"
+  },
+  CEO_over_scope: {
+    id: "CEO_over_scope",
+    priority: 3,
+    applies: (conflict: any) => 
+      (conflict.category === "strategy" || conflict.trigger.toLowerCase().includes("vision")) && 
+      conflict.agents.includes("ceo"),
+    reason: "Strategic vision overrides execution"
+  },
+  COO_over_method: {
+    id: "COO_over_method",
+    priority: 4,
+    applies: (conflict: any) => 
+      (conflict.category === "resourcing" || conflict.category === "timeline") && 
+      conflict.agents.includes("coo") && 
+      !conflict.agents.includes("cro") && !conflict.agents.includes("cco"),
+    reason: "Operational efficiency prevails"
+  }
+};
 
 interface ConflictResolutionStrategy {
   id: string;

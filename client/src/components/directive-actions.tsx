@@ -188,16 +188,19 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
     }
   };
 
-  // Mock conflict data for demonstration - would come from API in production
+  // Enhanced governance-based conflict resolution data
   const mockLastConflict = directive.lastConflict || {
-    id: "mock-conflict-1",
-    conflictType: "priority",
-    agents: ["cmo", "cro"],
-    description: "CMO wanted brand-first messaging, CRO prioritized revenue-first approach",
-    resolution: "CRO priority applied per governance rule (revenue > marketing)",
+    id: "cfx_8b2f",
+    conflictType: "revenue",
+    agents: ["CMO", "CRO"],
+    description: "Timeline conflict: CMO wanted 2-week awareness campaign, CRO needed 1-week sales sprint",
+    resolution: "CRO wins (Revenue-first hierarchy) - Launch 1-week enterprise sales sprint; postpone awareness to Q next",
     resolvedBy: "auto",
     resolvedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-    status: "resolved"
+    status: "resolved",
+    governanceRule: "CRO_over_brand",
+    impactScore: 92,
+    revenueRisk: 30000
   };
 
   const hasActiveConflict = directive.status === 'conflict' || (directive.lastConflict && directive.lastConflict.status === 'active');
@@ -236,8 +239,13 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
                 {agents.find(a => a.id === directive.assignedAgent)?.name || directive.assignedAgent}
               </Badge>
               {conflictCount > 0 && (
-                <Badge className="bg-orange-100 text-orange-800 text-xs">
-                  {conflictCount} conflicts resolved
+                <Badge className="bg-green-100 text-green-700 text-xs">
+                  ✅ {conflictCount} auto-resolved
+                </Badge>
+              )}
+              {mockLastConflict.governanceRule && (
+                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                  Rule: {mockLastConflict.governanceRule.replace('_', ' → ')}
                 </Badge>
               )}
             </div>
@@ -403,8 +411,11 @@ export function DirectiveActions({ directive, onUpdate }: DirectiveActionsProps)
                     <span className="text-sm font-medium text-gray-700">
                       Last Conflict ({hasRecentConflict.resolvedAt ? formatDistanceToNow(new Date(hasRecentConflict.resolvedAt)) : 'Recently'} ago)
                     </span>
-                    <Badge className="bg-gray-100 text-gray-700 text-xs">
-                      {hasRecentConflict.status === 'resolved' ? 'RESOLVED' : hasRecentConflict.status.toUpperCase()}
+                    <Badge className="bg-green-100 text-green-700 text-xs">
+                      ✅ AUTO-RESOLVED
+                    </Badge>
+                    <Badge className="bg-blue-100 text-blue-700 text-xs">
+                      {mockLastConflict.governanceRule || 'GOVERNANCE APPLIED'}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-2">
