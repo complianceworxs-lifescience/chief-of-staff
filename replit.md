@@ -8,6 +8,7 @@ Preferred communication style: Simple, everyday language.
 Budget constraint: $25/day per agent (updated from $1000/day on August 18, 2025).
 Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflicts autonomously.
 Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
+Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.
