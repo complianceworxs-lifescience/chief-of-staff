@@ -42,7 +42,20 @@ export default function GoalsPage() {
   const queryClient = useQueryClient();
 
   const { data: goals = [], isLoading } = useQuery<BusinessGoal[]>({
-    queryKey: ["/api/chief-of-staff/goals"]
+    queryKey: ["/api/objectives"],
+    select: (data: any[]) => data.map(obj => ({
+      id: obj.id,
+      title: obj.title,
+      description: `Strategic objective targeting ${obj.progress}% completion`,
+      targetValue: "100%",
+      currentValue: `${obj.progress}%`,
+      deadline: obj.lastUpdate || new Date().toISOString(),
+      priority: obj.progress > 75 ? "high" : obj.progress > 50 ? "medium" : "low",
+      status: obj.progress >= 90 ? "completed" : obj.progress >= 75 ? "on-track" : obj.progress >= 50 ? "in-progress" : "at-risk",
+      category: "strategic",
+      createdAt: obj.lastUpdate || new Date().toISOString(),
+      updatedAt: obj.lastUpdate || new Date().toISOString()
+    }))
   });
 
   const { data: snapshot } = useQuery({
@@ -51,17 +64,18 @@ export default function GoalsPage() {
 
   const createGoalMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      return await apiRequest("/api/chief-of-staff/goals", {
-        method: "POST",
-        body: JSON.stringify({
-          ...data,
-          deadline: data.deadline.toISOString()
-        })
+      const response = await apiRequest('POST', "/api/objectives", {
+        title: data.title,
+        description: data.description,
+        progress: 0,
+        priority: data.priority,
+        quarter: `Q${Math.ceil((new Date().getMonth() + 1) / 3)} ${new Date().getFullYear()}`,
+        contributingAgents: ["chief-of-staff"]
       });
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chief-of-staff/goals"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/chief-of-staff/snapshot"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/objectives"] });
       setIsDialogOpen(false);
       form.reset();
     }
