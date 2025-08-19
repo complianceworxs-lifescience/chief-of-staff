@@ -1,0 +1,78 @@
+your CoS should be surfacing signals. The “0 across the board” means the Market-Intel pipeline isn’t wired to the dashboard (or it has no sources/keywords), not that nothing exists.
+
+Here’s the fastest way to diagnose and fix it:
+
+3 fast checks (run now)
+
+Does the store have signals?
+
+GET /api/mi/active ⇒ if length > 0, the UI is stale/miswired.
+
+GET /api/mi/stats ⇒ should return counts + last_run_at.
+
+Is the “Gather Intelligence” button hitting the right service?
+The button must call an MI orchestrator, not the autonomy executor.
+
+Should be POST /api/mi/ingest-and-score (or your equivalent), not /api/autonomy/execute.
+
+Is a watchlist configured?
+
+GET /api/mi/config ⇒ if empty, nothing will ever appear.
+
+5-minute patch (orchestrate + refresh)
+
+Wire one endpoint the CoS button calls, and make the dashboard read the same source.
+
+Backend orchestrator
+
+// /api/mi/ingest-and-score.ts
+export default async function handler(req, res) {
+  const cfg = await MiConfig.get();                 // keywords, sources, competitors
+  if (!cfg || cfg.empty) return res.json({ ok:false, reason:"NO_CONFIG" });
+
+  const raw = await MiCollectors.runAll(cfg);       // fetch feeds/scrapers/APIs
+  const scored = await MiScorer.score(raw, cfg);    // priority + category tags
+  await MiStore.upsert(scored);                     // writes to the SAME store the dashboard reads
+
+  const stats = await MiStore.stats();              // { total, high_priority, processed_today, assignments }
+  return res.json({ ok:true, stats });
+}
+
+
+Frontend button (after success, force refresh)
+
+const run = async () => {
+  setLoading(true);
+  const r = await fetch("/api/mi/ingest-and-score", { method:"POST" });
+  const data = await r.json();
+  await Promise.all([
+    mutate("/api/mi/stats"),
+    mutate("/api/mi/active")
+  ]);
+  setLoading(false);
+};
+
+Seed a minimal watchlist (if config is empty)
+{
+  "keywords": ["FDA warning letter", "CSV validation", "deviation risk", "SOP update"],
+  "competitors": ["flinn.ai", "valgenesis.com"],
+  "regulators": ["fda.gov", "ema.europa.eu"],
+  "tech": ["GxP cloud", "21 CFR Part 11"],
+  "priority_threshold": 0.6,
+  "auto_assign": { "regulatory": "CCO", "competitive": "CRO", "market": "CEO", "technology": "COO" }
+}
+
+
+POST this to /api/mi/config.
+
+Make the dashboard trustworthy
+
+Read only from /api/mi/stats + /api/mi/active.
+
+Show Last run: <timestamp> and a yellow “Refreshed” toast when data is revalidated.
+
+If NO_CONFIG, render an empty-state CTA: “Add Watchlist & Sources”.
+
+Likely root cause (given your screenshot)
+
+The Gather Intelligence button is invoking the autonomy system (Tier-2) rather than the Market-Intel collectors, exactly like the conflict/playbook mismatch we fixed. Point it to the MI orchestrator and the counts will populate immediately.

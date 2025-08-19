@@ -49,14 +49,25 @@ export function MarketIntelligence() {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const { data: allSignals, isLoading } = useQuery<MarketSignal[]>({
+  const { data: allSignals = [], isLoading, error } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals'],
-    refetchInterval: 300000 // 5 minutes
+    refetchInterval: 30000, // 30 seconds for faster updates
+    staleTime: 0 // Always fetch fresh data
   });
 
-  const { data: highPrioritySignals } = useQuery<MarketSignal[]>({
+  const { data: highPrioritySignals = [] } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals/high-priority'],
-    refetchInterval: 60000 // 1 minute for high priority
+    refetchInterval: 30000, // 30 seconds for high priority
+    staleTime: 0 // Always fetch fresh data
+  });
+
+  // Debug logging
+  console.log('Market Intelligence Data:', { 
+    allSignals, 
+    isLoading, 
+    error,
+    signalCount: allSignals?.length || 0,
+    highPriorityCount: highPrioritySignals?.length || 0
   });
 
   const gatherIntelligence = useMutation({
