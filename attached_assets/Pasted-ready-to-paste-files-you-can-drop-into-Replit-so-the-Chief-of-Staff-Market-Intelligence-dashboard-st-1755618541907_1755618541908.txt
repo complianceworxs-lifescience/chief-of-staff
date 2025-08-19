@@ -1,0 +1,284 @@
+ready-to-paste files you can drop into Replit so the Chief-of-Staff Market Intelligence dashboard starts showing real signals.
+
+What these things are
+
+Ready-to-paste = copy these files into your Replit project as-is. No refactor. They expose /api/mi/* endpoints your dashboard can call.
+
+File-backed store = instead of a database, we save JSON files in ./data/. It’s simple and persists across restarts in Replit.
+
+Collector stub = a small module that pulls items from RSS feeds you list in the config (e.g., FDA/EMA). It’s “stub” because you can add more sources later; it already works with RSS today.
+
+1) Install tiny deps (once)
+
+In the Replit shell:
+
+npm i express node-fetch@3 fast-xml-parser nanoid
+
+2) Create these files (copy/paste exactly)
+server.js
+import express from "express";
+import fs from "fs/promises";
+import { ensureStores, MiStore } from "./stores/mi.js";
+import { loadConfig, saveConfig } from "./services/mi/config.js";
+import { collectFromFeeds } from "./services/mi/collectors.js";
+import { MiScorer } from "./services/mi/scorer.js";
+
+const app = express();
+app.use(express.json());
+
+app.get("/", (_req, res) => res.send("MI API is up"));
+
+// --- Config endpoints (dashboard can POST your watchlist here) ---
+app.get("/api/mi/config", async (_req, res) => {
+  await ensureStores();
+  const cfg = await loadConfig();
+  res.json(cfg ?? { empty: true });
+});
+
+app.post("/api/mi/config", async (req, res) => {
+  await ensureStores();
+  await saveConfig(req.body || {});
+  res.json({ ok: true });
+});
+
+// --- Dashboard reads ---
+app.get("/api/mi/active", async (_req, res) => {
+  await ensureStores();
+  res.json(await MiStore.listActive());
+});
+
+app.get("/api/mi/stats", async (_req, res) => {
+  await ensureStores();
+  res.json(await MiStore.stats());
+});
+
+// --- Orchestrator: what the “Gather Intelligence” button should call ---
+app.post("/api/mi/ingest-and-score", async (_req, res) => {
+  await ensureStores();
+  const cfg = await loadConfig();
+  if (!cfg || cfg.empty || (!cfg.feeds || cfg.feeds.length === 0)) {
+    return res.json({ ok: false, reason: "NO_CONFIG" });
+  }
+
+  // 1) collect raw items from RSS feeds in config
+  const raw = await collectFromFeeds(cfg.feeds);
+
+  // 2) score + categorize + owner
+  const scored = MiScorer.score(raw, cfg);
+
+  // 3) write to the same store the dashboard reads
+  await MiStore.upsert(scored);
+
+  // 4) return fresh stats
+  const stats = await MiStore.stats();
+  res.json({ ok: true, stats });
+});
+
+// --- Start server ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`MI API listening on ${PORT}`));
+
+stores/mi.js
+import fs from "fs/promises";
+import path from "path";
+
+const DATA_DIR = "./data";
+const STORE_FILE = path.join(DATA_DIR, "mi.store.json");
+const CONFIG_FILE = path.join(DATA_DIR, "mi.config.json");
+
+export async function ensureStores() {
+  try { await fs.mkdir(DATA_DIR, { recursive: true }); } catch {}
+  try { await fs.access(STORE_FILE); } catch { await fs.writeFile(STORE_FILE, JSON.stringify({ items: [], last_run_at: null }, null, 2)); }
+  try { await fs.access(CONFIG_FILE); } catch { await fs.writeFile(CONFIG_FILE, JSON.stringify({ empty: true }, null, 2)); }
+}
+
+async function readJson(file) {
+  const txt = await fs.readFile(file, "utf8");
+  return JSON.parse(txt || "{}");
+}
+async function writeJson(file, obj) {
+  await fs.writeFile(file, JSON.stringify(obj, null, 2));
+}
+
+export const MiStore = {
+  async listActive() {
+    const db = await readJson(STORE_FILE);
+    return db.items || [];
+  },
+  async upsert(items) {
+    const db = await readJson(STORE_FILE);
+    const byKey = new Map((db.items || []).map(i => [i.url || i.id, i]));
+    for (const it of items) byKey.set(it.url || it.id, it);
+    const merged = Array.from(byKey.values());
+    await writeJson(STORE_FILE, { items: merged, last_run_at: new Date().toISOString() });
+  },
+  async stats() {
+    const db = await readJson(STORE_FILE);
+    const items = db.items || [];
+    const high = items.filter(i => (i.priority ?? 0) >= ((await readConfig()).priority_threshold ?? 0.6)).length;
+    const owners = new Set(items.map(i => i.assigned_to).filter(Boolean)).size;
+    return {
+      total: items.length,
+      high_priority: high,
+      processed_today: items.length,
+      assignments: owners,
+      last_run_at: db.last_run_at
+    };
+  }
+};
+
+// expose config helpers to scorer/starter
+export async function readConfig() { return readJson(CONFIG_FILE); }
+export async function writeConfig(cfg) { return writeJson(CONFIG_FILE, cfg); }
+export { STORE_FILE, CONFIG_FILE, DATA_DIR };
+
+services/mi/config.js
+import { readConfig, writeConfig } from "../../stores/mi.js";
+
+export async function loadConfig() {
+  const cfg = await readConfig();
+  if (!cfg || !cfg.feeds || cfg.feeds.length === 0) return { empty: true };
+  return cfg;
+}
+
+export async function saveConfig(cfg) {
+  // normalize minimal shape
+  const normalized = {
+    version: cfg.version || "1.0",
+    priority_threshold: cfg.priority_threshold ?? 0.6,
+    keywords: cfg.keywords || [],
+    auto_assign: cfg.auto_assign || { regulatory: "CCO", competitive: "CRO", market: "CEO", technology: "COO" },
+    feeds: cfg.feeds || []
+  };
+  await writeConfig(normalized);
+  return normalized;
+}
+
+services/mi/collectors.js
+import fetch from "node-fetch";
+import { XMLParser } from "fast-xml-parser";
+import { nanoid } from "nanoid";
+
+/**
+ * Pulls RSS/Atom items from a list of feed URLs.
+ * Each item -> { id, url, title, source, published_at, kind, snippet }
+ * 'kind' is guessed by simple keyword matching (regulatory/competitive/market/technology).
+ */
+export async function collectFromFeeds(feedUrls = []) {
+  const out = [];
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "" });
+
+  for (const url of feedUrls) {
+    try {
+      const res = await fetch(url, { timeout: 15000 });
+      const xml = await res.text();
+      const data = parser.parse(xml);
+
+      const channel = data.rss?.channel || data.feed;
+      const items = channel?.item || channel?.entry || [];
+      const list = Array.isArray(items) ? items : [items];
+
+      for (const it of list) {
+        const title = it.title?.["#text"] || it.title || "";
+        const link = it.link?.href || it.link || it.guid || "";
+        const desc = it.description || it.summary || "";
+        out.push({
+          id: nanoid(8),
+          url: typeof link === "string" ? link : "",
+          title: String(title).trim(),
+          source: new URL(url).hostname,
+          published_at: it.pubDate || it.updated || null,
+          snippet: String(desc).replace(/<[^>]+>/g, "").slice(0, 280),
+          kind: inferKind(title + " " + desc)
+        });
+      }
+    } catch (e) {
+      console.error("feed error:", url, e.message);
+      continue; // skip bad feeds, continue others
+    }
+  }
+  return out;
+}
+
+function inferKind(text) {
+  const t = text.toLowerCase();
+  if (/(warning letter|483|guidance|inspection|gmp|gcp|glp|mdr|ivdr|ema|fda)/.test(t)) return "regulatory";
+  if (/(launch|customer|pricing|partnership|integration|wins|case study|hiring|funding)/.test(t)) return "competitive";
+  if (/(trend|market|industry report|rfp|rfi|rfq|benchmark)/.test(t)) return "market";
+  if (/(ai|machine learning|automation|platform|api|audit trail)/.test(t)) return "technology";
+  return "market";
+}
+
+services/mi/scorer.js
+export const MiScorer = {
+  score(raw, cfg) {
+    const kw = new Set((cfg.keywords || []).map(s => s.toLowerCase()));
+    const th = cfg.priority_threshold ?? 0.6;
+
+    return raw.map(r => {
+      const text = `${r.title} ${r.snippet ?? ""}`.toLowerCase();
+      const base =
+        r.kind === "regulatory" ? 0.55 :
+        r.kind === "competitive" ? 0.45 :
+        r.kind === "market" ? 0.4 : 0.35;
+
+      let boost = 0;
+      for (const k of kw) if (text.includes(k)) { boost += 0.05; break; }
+
+      const priority = Math.min(1, base + boost);
+      const assigned_to = (cfg.auto_assign || {})[r.kind] || "COO";
+
+      return { ...r, category: r.kind, priority, assigned_to, high_priority: priority >= th };
+    });
+  }
+};
+
+3) Post a config (watchlist + feeds) and run
+
+Create MI_WATCHLIST.json with real RSS feeds. Example (swap/add your own):
+
+{
+  "priority_threshold": 0.6,
+  "keywords": ["21 CFR Part 11", "Annex 11", "warning letter", "inspection", "GMP", "GCP", "GLP"],
+  "auto_assign": { "regulatory": "CCO", "competitive": "CRO", "market": "CEO", "technology": "COO" },
+  "feeds": [
+    "https://www.fda.gov/about-fda/newsroom/press-announcements/rss.xml",
+    "https://feeds.feedburner.com/ema-news"  // replace with your preferred EMA RSS
+  ]
+}
+
+
+Then in Replit shell:
+
+node server.js &             # start API if not already running
+curl -X POST http://localhost:3000/api/mi/config \
+  -H "content-type: application/json" \
+  --data-binary @MI_WATCHLIST.json
+
+curl -X POST http://localhost:3000/api/mi/ingest-and-score
+curl http://localhost:3000/api/mi/stats
+curl http://localhost:3000/api/mi/active | head
+
+
+If stats.total is > 0, your Chief-of-Staff Market Intelligence page should populate immediately (as long as the UI reads /api/mi/stats and /api/mi/active and refreshes after the button).
+
+4) Wire your button
+
+Your “Gather Intelligence” button should do:
+
+await fetch("/api/mi/ingest-and-score", { method: "POST" });
+await Promise.all([
+  mutate("/api/mi/stats"),
+  mutate("/api/mi/active")
+]);
+
+
+That’s it. You now have:
+
+a file-backed store (/data/mi.store.json) the dashboard reads,
+
+a config endpoint to post your watchlist,
+
+an RSS collector stub that already works with FDA/EMA (and any other feeds you add),
+
+and a single orchestrator that your button calls.

@@ -916,99 +916,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // MARKET INTELLIGENCE ORCHESTRATOR
   // =====================================
 
-  // Market Intelligence Core Orchestrator - matches test specification
+  // Market Intelligence Core Orchestrator - Real RSS Feed Integration
   app.post("/api/mi/ingest-and-score", async (req, res) => {
     console.log("MI Orchestrator: ingest-and-score called");
     res.setHeader('Content-Type', 'application/json');
     
     try {
-      // Load Life Sciences Compliance watchlist configuration
-      const fs = await import('fs');
-      const path = await import('path');
+      // Import MI services
+      const { loadConfig } = await import('./services/mi/config.js');
+      const { collectFromFeeds } = await import('./services/mi/collectors.js');
+      const { MiScorer } = await import('./services/mi/scorer.js');
+      const { MiStore, ensureStores } = await import('./services/mi/store.js');
       
-      let miConfig;
-      try {
-        const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
-        const configData = fs.readFileSync(configPath, 'utf8');
-        miConfig = JSON.parse(configData);
-        console.log(`MI Config loaded: ${miConfig.keywords.length} keywords, ${miConfig.competitors.length} competitors`);
-      } catch (configError) {
-        console.warn("Using default MI config:", configError);
-        miConfig = {
-          keywords: ["FDA warning letter", "CSV validation", "deviation risk", "SOP update", "21 CFR Part 11"],
-          competitors: ["flinn.ai", "valgenesis.com", "workiva.com"],
-          regulators: [
-            { "name": "FDA", "domains": ["fda.gov"] },
-            { "name": "EMA", "domains": ["ema.europa.eu"] }
-          ],
-          auto_assign: { regulatory: "CCO", competitive: "CRO", market: "CEO", technology: "COO" }
-        };
+      await ensureStores();
+      const cfg = await loadConfig();
+      
+      if (!cfg || cfg.empty || (!cfg.feeds || cfg.feeds.length === 0)) {
+        return res.json({ 
+          ok: false, 
+          reason: "NO_CONFIG",
+          message: "No RSS feeds configured. Please set up watchlist configuration with feeds."
+        });
       }
 
-      // Run MI collectors with Life Sciences domain focus
-      const signals = await marketIntelligenceAgent.gatherMarketIntelligence();
+      console.log(`MI Config loaded: ${cfg.keywords?.length || 0} keywords, ${cfg.feeds?.length || 0} RSS feeds`);
+
+      // 1) Collect raw items from RSS feeds in config
+      const raw = await collectFromFeeds(cfg.feeds);
+
+      // 2) Score + categorize + assign ownership
+      const scored = MiScorer.score(raw, cfg);
+
+      // 3) Write to the same store the dashboard reads
+      await MiStore.upsert(scored);
+
+      // 4) Return fresh stats
+      const stats = await MiStore.stats();
       
-      // Enhanced scoring based on Life Sciences Compliance ecosystem
-      const scoredSignals = signals.map(signal => {
-        const text = `${signal.title} ${signal.summary || ''}`.toLowerCase();
-        let priorityScore = signal.impact === 'high' ? 0.8 : signal.impact === 'medium' ? 0.6 : 0.4;
-        
-        // Boost priority for regulatory signals
-        if (miConfig.boosts?.severity_terms) {
-          for (const [term, boost] of Object.entries(miConfig.boosts.severity_terms)) {
-            if (text.includes(term.toLowerCase())) {
-              priorityScore += Number(boost);
-            }
-          }
-        }
-        
-        // Domain-specific boosting for regulatory sources
-        if (signal.source && miConfig.boosts?.domains) {
-          for (const [domain, boost] of Object.entries(miConfig.boosts.domains)) {
-            if (signal.source.includes(domain)) {
-              priorityScore += Number(boost);
-            }
-          }
-        }
-        
-        // Keywords matching
-        let keywordMatches = 0;
-        for (const keyword of miConfig.keywords || []) {
-          if (text.includes(keyword.toLowerCase())) {
-            keywordMatches++;
-            priorityScore += 0.05;
-          }
-        }
-        
-        priorityScore = Math.min(1.0, priorityScore);
-        
-        return {
-          ...signal,
-          priority: priorityScore,
-          assigned_to: miConfig.auto_assign?.[signal.category as keyof typeof miConfig.auto_assign] || "COO",
-          high_priority: priorityScore >= (miConfig.priority_threshold || 0.6),
-          keyword_matches: keywordMatches
-        };
-      });
-      
-      // Store signals in the same storage the dashboard reads
-      console.log(`MI Orchestrator: Generated ${signals.length} new signals, ${scoredSignals.filter(s => s.high_priority).length} high priority`);
-      
-      // Return stats that match what dashboard expects
-      const allSignals = await storage.getMarketSignals();
-      const stats = {
-        total: allSignals.length,
-        high_priority: allSignals.filter(s => s.impact === 'high').length,
-        processed_today: allSignals.filter(s => s.actionTaken && 
-          new Date(s.processedAt || s.flaggedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length,
-        assignments: new Set(allSignals.filter(s => s.assignedAgent).map(s => s.assignedAgent)).size,
-        last_run_at: new Date().toISOString()
-      };
+      console.log(`MI Orchestrator: Processed ${raw.length} raw signals → ${scored.length} scored → Stats: ${stats.total} total, ${stats.high_priority} high priority`);
       
       res.json({ 
         ok: true, 
         stats,
-        message: `Collected and scored ${signals.length} new intelligence signals from Life Sciences ecosystem`
+        message: `Collected and scored ${scored.length} new intelligence signals from ${cfg.feeds.length} RSS feeds`
       });
     } catch (error) {
       console.error("MI Orchestrator error:", error);
@@ -1023,17 +973,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Stats - what dashboard queries
   app.get("/api/mi/stats", async (req, res) => {
     try {
-      const allSignals = await storage.getMarketSignals();
-      const stats = {
-        total: allSignals.length,
-        high_priority: allSignals.filter(s => s.impact === 'high').length,
-        processed_today: allSignals.filter(s => s.actionTaken && 
-          new Date(s.processedAt || s.flaggedAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length,
-        assignments: new Set(allSignals.filter(s => s.assignedAgent).map(s => s.assignedAgent)).size,
-        last_run_at: new Date().toISOString()
-      };
+      const { MiStore, ensureStores } = await import('./services/mi/store.js');
+      await ensureStores();
+      const stats = await MiStore.stats();
       res.json(stats);
     } catch (error) {
+      console.error("MI Stats error:", error);
       res.status(500).json({ message: "Failed to get MI stats", error: error instanceof Error ? error.message : String(error) });
     }
   });
@@ -1041,37 +986,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Config endpoint
   app.get("/api/mi/config", async (req, res) => {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
-      const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
-      
-      if (fs.existsSync(configPath)) {
-        const configData = fs.readFileSync(configPath, 'utf8');
-        const config = JSON.parse(configData);
-        res.json(config);
-      } else {
-        res.json({ empty: true, message: "No watchlist configured" });
-      }
+      const { loadConfig } = await import('./services/mi/config.js');
+      const cfg = await loadConfig();
+      res.json(cfg ?? { empty: true });
     } catch (error) {
+      console.error("MI Config get error:", error);
       res.status(500).json({ message: "Failed to fetch MI config", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
   app.post("/api/mi/config", async (req, res) => {
     try {
-      const fs = await import('fs');
-      const path = await import('path');
-      const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
-      
-      // Ensure config directory exists
-      const configDir = path.dirname(configPath);
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
-      
-      fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
-      res.json({ ok: true, message: "MI config updated successfully" });
+      const { saveConfig } = await import('./services/mi/config.js');
+      const savedConfig = await saveConfig(req.body || {});
+      res.json({ ok: true, message: "MI config updated successfully", config: savedConfig });
     } catch (error) {
+      console.error("MI Config save error:", error);
       res.status(500).json({ message: "Failed to update MI config", error: error instanceof Error ? error.message : String(error) });
     }
   });
@@ -1079,9 +1009,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Active Signals - what dashboard queries
   app.get("/api/mi/active", async (req, res) => {
     try {
-      const signals = await storage.getMarketSignals();
+      const { MiStore, ensureStores } = await import('./services/mi/store.js');
+      await ensureStores();
+      const signals = await MiStore.listActive();
       res.json(signals);
     } catch (error) {
+      console.error("MI Active signals error:", error);
       res.status(500).json({ message: "Failed to fetch active MI signals", error: error instanceof Error ? error.message : String(error) });
     }
   });
