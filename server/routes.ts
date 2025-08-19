@@ -922,11 +922,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'application/json');
     
     try {
-      // Run MI collectors to gather raw data
+      // Load Life Sciences Compliance watchlist configuration
+      const fs = await import('fs');
+      const path = await import('path');
+      
+      let miConfig;
+      try {
+        const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
+        const configData = fs.readFileSync(configPath, 'utf8');
+        miConfig = JSON.parse(configData);
+        console.log(`MI Config loaded: ${miConfig.keywords.length} keywords, ${miConfig.competitors.length} competitors`);
+      } catch (configError) {
+        console.warn("Using default MI config:", configError);
+        miConfig = {
+          keywords: ["FDA warning letter", "CSV validation", "deviation risk", "SOP update", "21 CFR Part 11"],
+          competitors: ["flinn.ai", "valgenesis.com", "workiva.com"],
+          regulators: [
+            { "name": "FDA", "domains": ["fda.gov"] },
+            { "name": "EMA", "domains": ["ema.europa.eu"] }
+          ],
+          auto_assign: { regulatory: "CCO", competitive: "CRO", market: "CEO", technology: "COO" }
+        };
+      }
+
+      // Run MI collectors with Life Sciences domain focus
       const signals = await marketIntelligenceAgent.gatherMarketIntelligence();
       
+      // Enhanced scoring based on Life Sciences Compliance ecosystem
+      const scoredSignals = signals.map(signal => {
+        const text = `${signal.title} ${signal.summary || ''}`.toLowerCase();
+        let priorityScore = signal.impact === 'high' ? 0.8 : signal.impact === 'medium' ? 0.6 : 0.4;
+        
+        // Boost priority for regulatory signals
+        if (miConfig.boosts?.severity_terms) {
+          for (const [term, boost] of Object.entries(miConfig.boosts.severity_terms)) {
+            if (text.includes(term.toLowerCase())) {
+              priorityScore += Number(boost);
+            }
+          }
+        }
+        
+        // Domain-specific boosting for regulatory sources
+        if (signal.source && miConfig.boosts?.domains) {
+          for (const [domain, boost] of Object.entries(miConfig.boosts.domains)) {
+            if (signal.source.includes(domain)) {
+              priorityScore += Number(boost);
+            }
+          }
+        }
+        
+        // Keywords matching
+        let keywordMatches = 0;
+        for (const keyword of miConfig.keywords || []) {
+          if (text.includes(keyword.toLowerCase())) {
+            keywordMatches++;
+            priorityScore += 0.05;
+          }
+        }
+        
+        priorityScore = Math.min(1.0, priorityScore);
+        
+        return {
+          ...signal,
+          priority: priorityScore,
+          assigned_to: miConfig.auto_assign?.[signal.category as keyof typeof miConfig.auto_assign] || "COO",
+          high_priority: priorityScore >= (miConfig.priority_threshold || 0.6),
+          keyword_matches: keywordMatches
+        };
+      });
+      
       // Store signals in the same storage the dashboard reads
-      console.log(`MI Orchestrator: Generated ${signals.length} new signals`);
+      console.log(`MI Orchestrator: Generated ${signals.length} new signals, ${scoredSignals.filter(s => s.high_priority).length} high priority`);
       
       // Return stats that match what dashboard expects
       const allSignals = await storage.getMarketSignals();
@@ -942,7 +1008,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         ok: true, 
         stats,
-        message: `Collected and scored ${signals.length} new intelligence signals`
+        message: `Collected and scored ${signals.length} new intelligence signals from Life Sciences ecosystem`
       });
     } catch (error) {
       console.error("MI Orchestrator error:", error);
@@ -969,6 +1035,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to get MI stats", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Market Intelligence Config endpoint
+  app.get("/api/mi/config", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
+      
+      if (fs.existsSync(configPath)) {
+        const configData = fs.readFileSync(configPath, 'utf8');
+        const config = JSON.parse(configData);
+        res.json(config);
+      } else {
+        res.json({ empty: true, message: "No watchlist configured" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch MI config", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.post("/api/mi/config", async (req, res) => {
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const configPath = path.join(process.cwd(), 'server/config/mi-watchlist.json');
+      
+      // Ensure config directory exists
+      const configDir = path.dirname(configPath);
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+      
+      fs.writeFileSync(configPath, JSON.stringify(req.body, null, 2));
+      res.json({ ok: true, message: "MI config updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update MI config", error: error instanceof Error ? error.message : String(error) });
     }
   });
 

@@ -162,17 +162,23 @@ export function MarketIntelligence() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Market Intelligence</h2>
           <p className="text-muted-foreground">
-            AI-powered monitoring of regulatory, competitive, and market signals
+            AI-powered monitoring of regulatory, competitive, and market signals from Life Sciences Compliance ecosystem
           </p>
         </div>
-        <Button 
-          onClick={() => gatherIntelligence.mutate()}
-          disabled={gatherIntelligence.isPending}
-          className="flex items-center gap-2"
-        >
-          <Search className="h-4 w-4" />
-          {gatherIntelligence.isPending ? 'Gathering...' : 'Gather Intelligence'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => gatherIntelligence.mutate()}
+            disabled={gatherIntelligence.isPending}
+            className="flex items-center gap-2"
+            data-testid="button-gather-intelligence"
+          >
+            <Search className="h-4 w-4" />
+            {gatherIntelligence.isPending ? 'Gathering...' : 'Gather Intelligence'}
+          </Button>
+          <div className="text-xs text-muted-foreground">
+            Life Sciences Compliance Focus
+          </div>
+        </div>
       </div>
 
       {/* Stats Overview */}
