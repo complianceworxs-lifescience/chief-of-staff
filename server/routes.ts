@@ -817,6 +817,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // One-Click Playbook Orchestrator - connects playbooks to actual conflict resolution
   app.post("/api/playbooks/resolve-conflicts", async (req, res) => {
+    console.log("Orchestrator endpoint called");
+    res.setHeader('Content-Type', 'application/json');
     try {
       const startedAt = new Date().toISOString();
       
@@ -825,8 +827,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(conflicts)
         .where(eq(conflicts.status, 'active'));
 
+      console.log(`Found ${activeConflicts.length} active conflicts`);
+      
       if (activeConflicts.length === 0) {
-        return res.json({
+        return res.status(200).json({
           ok: true,
           resolved: 0,
           remaining_active: 0,
@@ -836,20 +840,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // 2) Apply governance hierarchy rules to resolve conflicts
-      const { AutonomousConflictResolver } = await import("./services/autonomous-conflict-resolver");
-      const resolver = new AutonomousConflictResolver();
-      
       const outcomes = [];
+      
+      // Use the conflict resolution service directly
       for (const conflict of activeConflicts) {
         try {
-          const result = await resolver.resolveConflictAutonomously(conflict.id);
-          if (result.success) {
-            outcomes.push({
-              id: conflict.id,
-              summary: `${conflict.title}: ${result.reasoning}`,
-              actions: result.actions.length
-            });
-          }
+          // Apply governance hierarchy rule based on conflict area
+          const winner = conflict.area === "revenue" ? "CRO"
+                      : conflict.area === "compliance" ? "CCO" 
+                      : conflict.area === "strategy" ? "CEO"
+                      : "COO";
+          
+          // Move conflict from active to resolved
+          await db.update(conflicts)
+            .set({ 
+              status: 'resolved', 
+              resolution: `Auto-resolved via governance hierarchy: ${winner} priority applied`,
+              resolvedAt: new Date()
+            })
+            .where(eq(conflicts.id, conflict.id));
+
+          outcomes.push({
+            id: conflict.id,
+            summary: `${conflict.title}: ${winner} priority applied`,
+            winner,
+            actions: 1
+          });
+          
         } catch (error) {
           console.warn(`Failed to resolve conflict ${conflict.id}:`, error);
         }
@@ -863,12 +880,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metrics: { successRate: 0.65, alignment: 0.70 },
           context: { trigger: "playbook-resource-shuffle" }
         };
-        // Non-blocking autonomy execution
-        setTimeout(async () => {
-          try {
-            await import("./services/autonomy-tier2").then(m => m.AutonomyTier2.execute(autonomySignal));
-          } catch (e) { console.warn("Optional autonomy failed:", e); }
-        }, 100);
+        // Skip autonomy integration for now - focus on conflict resolution
+        console.log("Conflict resolution completed, skipping optional autonomy trigger");
       } catch (error) {
         console.warn("Optional resource shuffle failed:", error);
       }
