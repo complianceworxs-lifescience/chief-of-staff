@@ -120,21 +120,38 @@ export function OneClickPlaybooks() {
         actions: playbook.actions
       });
 
-      // Simulate playbook execution time
+      toast({
+        title: "Playbook Started",
+        description: `${playbook.title} is now executing on ${playbook.targetAgents.join(', ').toUpperCase()} agents`,
+      });
+
+      // Simulate realistic playbook execution with progress updates
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += 25;
+        if (progress <= 75) {
+          toast({
+            title: `Playbook Progress: ${progress}%`,
+            description: `${playbook.actions[Math.floor(progress/25) - 1] || 'Processing...'}`,
+          });
+        }
+      }, 2000);
+
       setTimeout(() => {
+        clearInterval(progressInterval);
         setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
         setCompletedPlaybooks(prev => [...prev, playbook.id]);
         
         toast({
-          title: "Playbook Completed",
-          description: `${playbook.title} executed successfully in ${playbook.estimatedTime}`,
+          title: "Playbook Completed ✓",
+          description: `${playbook.title} resolved successfully. Agents rebalanced and conflicts cleared.`,
         });
 
-        // Remove from completed after 10 seconds
+        // Remove from completed after 15 seconds
         setTimeout(() => {
           setCompletedPlaybooks(prev => prev.filter(id => id !== playbook.id));
-        }, 10000);
-      }, 3000);
+        }, 15000);
+      }, 8000);
       
     } catch (error) {
       setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));

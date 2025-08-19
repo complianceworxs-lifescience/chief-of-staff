@@ -10,6 +10,7 @@ import { WeeklyReports } from "@/components/weekly-reports";
 import { SystemControls } from "@/components/system-controls";
 import { AutonomyTrafficLights } from "@/components/autonomy-traffic-lights";
 import { LiveMetricsDashboard } from "@/components/live-metrics-dashboard";
+import { ConflictResolutionIndicator } from "@/components/conflict-resolution-indicator";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
 export default function Dashboard() {
@@ -51,7 +52,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="text-2xl">
-                {systemMetrics?.strategicAlignmentScore >= 85 ? '✅' : systemMetrics?.strategicAlignmentScore >= 75 ? '⚠️' : '❌'}
+                {(systemMetrics?.strategicAlignmentScore || 0) >= 85 ? '✅' : (systemMetrics?.strategicAlignmentScore || 0) >= 75 ? '⚠️' : '❌'}
               </div>
             </div>
             
@@ -66,7 +67,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="text-2xl">
-                {systemMetrics?.systemHealth >= 85 ? '✅' : systemMetrics?.systemHealth >= 70 ? '⚠️' : '❌'}
+                {(systemMetrics?.systemHealth || 0) >= 85 ? '✅' : (systemMetrics?.systemHealth || 0) >= 70 ? '⚠️' : '❌'}
               </div>
             </div>
             
@@ -87,7 +88,7 @@ export default function Dashboard() {
           </div>
           <div className="text-center mt-3">
             <p className="text-sm text-gray-600">
-              {systemMetrics?.strategicAlignmentScore >= 85 && systemMetrics?.systemHealth >= 85 && activeConflicts.length === 0 
+              {(systemMetrics?.strategicAlignmentScore || 0) >= 85 && (systemMetrics?.systemHealth || 0) >= 85 && activeConflicts.length === 0 
                 ? "🎯 All systems green - Stay out" 
                 : "⚡ Exceptions detected - Agent intervention required"}
             </p>
@@ -258,6 +259,11 @@ export default function Dashboard() {
                 {resolvedConflicts.length} Auto-Resolved
               </Badge>
             </div>
+          </div>
+          
+          {/* Live Conflict Resolution Indicator */}
+          <div className="mb-6">
+            <ConflictResolutionIndicator isActive={activeConflicts.length > 0} />
           </div>
           
           {/* Autonomous System Status */}
