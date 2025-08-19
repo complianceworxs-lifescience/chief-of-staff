@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 
 interface Playbook {
   id: string;
@@ -107,6 +108,17 @@ export function OneClickPlaybooks() {
   const { toast } = useToast();
   const [runningPlaybooks, setRunningPlaybooks] = useState<string[]>([]);
   const [completedPlaybooks, setCompletedPlaybooks] = useState<string[]>([]);
+  
+  // Get real-time conflict data
+  const { data: activeConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/conflicts/active"],
+    refetchInterval: 2000
+  });
+  
+  const { data: resolvedConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/conflicts/resolved"],
+    refetchInterval: 2000
+  });
 
   const handleRunPlaybook = async (playbook: Playbook) => {
     setRunningPlaybooks(prev => [...prev, playbook.id]);
@@ -206,10 +218,25 @@ export function OneClickPlaybooks() {
             const isRunning = runningPlaybooks.includes(playbook.id);
             const isCompleted = completedPlaybooks.includes(playbook.id);
             
+            // Check if this playbook's conflict type has been resolved
+            const recentResolution = resolvedConflicts.find((conflict: any) => 
+              conflict.resolution?.includes('redistributed resources') ||
+              conflict.resolution?.includes('priority weights') ||
+              conflict.title?.includes('Resource Overallocation')
+            );
+            
+            const isConflictResolved = playbook.id === 'resolve-agent-conflict' && 
+              activeConflicts.length === 0 && 
+              recentResolution;
+            
+            // Show resolved status for conflict playbooks
+            const displayStatus = isConflictResolved ? 'resolved' : isCompleted ? 'completed' : isRunning ? 'running' : 'ready';
+            
             return (
               <div
                 key={playbook.id}
                 className={`border rounded-lg p-4 transition-all ${
+                  isConflictResolved ? 'bg-green-50 border-green-200' :
                   isCompleted ? 'bg-green-50 border-green-200' :
                   isRunning ? 'bg-blue-50 border-blue-200' : 
                   'bg-white border-gray-200 hover:border-gray-300'
@@ -223,7 +250,13 @@ export function OneClickPlaybooks() {
                     </div>
                     <div>
                       <h4 className="font-medium">{playbook.title}</h4>
-                      <p className="text-sm text-gray-600">{playbook.description}</p>
+                      {isConflictResolved && recentResolution ? (
+                        <p className="text-sm text-green-700 font-medium">
+                          ✅ Resolved: {recentResolution.resolution || 'Resource rebalancing completed'}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-600">{playbook.description}</p>
+                      )}
                     </div>
                   </div>
                   
@@ -249,7 +282,7 @@ export function OneClickPlaybooks() {
                   </div>
                   
                   <Progress 
-                    value={isRunning ? 65 : isCompleted ? 100 : 0} 
+                    value={isConflictResolved ? 100 : isRunning ? 65 : isCompleted ? 100 : 0} 
                     className="h-2"
                   />
                 </div>
@@ -259,12 +292,17 @@ export function OneClickPlaybooks() {
                     <TooltipTrigger asChild>
                       <Button
                         onClick={() => handleRunPlaybook(playbook)}
-                        disabled={isRunning || isCompleted}
+                        disabled={isRunning || isCompleted || isConflictResolved}
                         className="w-full"
-                        variant={isCompleted ? "outline" : "default"}
+                        variant={isCompleted || isConflictResolved ? "outline" : "default"}
                         data-testid={`button-run-playbook-${playbook.id}`}
                       >
-                        {isCompleted ? (
+                        {isConflictResolved ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                            CONFLICT RESOLVED
+                          </>
+                        ) : isCompleted ? (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Completed
