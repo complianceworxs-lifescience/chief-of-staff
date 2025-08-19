@@ -59,7 +59,7 @@ export function ConflictResolutionPanel({ conflict, onResolve }: ConflictResolut
       
       switch (strategy) {
         case 'priority-rules':
-          result = await apiRequest('/api/conflicts/resolve', 'POST', {
+          result = await apiRequest('POST', '/api/conflicts/resolve', {
             action: 'auto-resolve',
             predictionId: conflict.id,
             priorityWeights,
@@ -72,7 +72,7 @@ export function ConflictResolutionPanel({ conflict, onResolve }: ConflictResolut
           break;
           
         case 'auto-reallocation':
-          result = await apiRequest('/api/workflows/execute', 'POST', {
+          result = await apiRequest('POST', '/api/workflows/execute', {
             workflow: 'Resource Reallocation',
             targetAgents: conflict.agents,
             conflictId: conflict.id
@@ -84,7 +84,7 @@ export function ConflictResolutionPanel({ conflict, onResolve }: ConflictResolut
           break;
           
         case 'workflow-optimization':
-          result = await apiRequest('/api/workflows/execute', 'POST', {
+          result = await apiRequest('POST', '/api/workflows/execute', {
             workflow: 'Workflow Optimization',
             targetAgents: ['coo'],
             conflictId: conflict.id
@@ -96,7 +96,7 @@ export function ConflictResolutionPanel({ conflict, onResolve }: ConflictResolut
           break;
           
         case 'escalate-ceo':
-          result = await apiRequest('/api/conflicts/resolve', 'POST', {
+          result = await apiRequest('POST', '/api/conflicts/resolve', {
             action: 'escalate',
             predictionId: conflict.id,
             targetAgent: 'ceo',

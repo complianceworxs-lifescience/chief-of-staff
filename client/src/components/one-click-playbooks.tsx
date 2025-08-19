@@ -113,7 +113,7 @@ export function OneClickPlaybooks() {
     
     try {
       // Execute the playbook workflow
-      const result = await apiRequest('/api/workflows/execute', 'POST', {
+      const result = await apiRequest('POST', '/api/workflows/execute', {
         workflow: playbook.title,
         targetAgents: playbook.targetAgents,
         playbookId: playbook.id,
