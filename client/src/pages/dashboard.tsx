@@ -9,6 +9,7 @@ import { StrategicAlignment } from "@/components/strategic-alignment";
 import { WeeklyReports } from "@/components/weekly-reports";
 import { SystemControls } from "@/components/system-controls";
 import { AutonomyTrafficLights } from "@/components/autonomy-traffic-lights";
+import { LiveMetricsDashboard } from "@/components/live-metrics-dashboard";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
 export default function Dashboard() {
@@ -36,6 +37,63 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+        {/* Daily Signal Board - Steve Jobs Signal-to-Noise */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-full">
+                  <Target className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Revenue Hooks</h4>
+                  <p className="text-sm text-gray-600">CTAs Converting</p>
+                </div>
+              </div>
+              <div className="text-2xl">
+                {systemMetrics?.strategicAlignmentScore >= 85 ? '✅' : systemMetrics?.strategicAlignmentScore >= 75 ? '⚠️' : '❌'}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <Cpu className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Autonomy Metrics</h4>
+                  <p className="text-sm text-gray-600">Agents Status</p>
+                </div>
+              </div>
+              <div className="text-2xl">
+                {systemMetrics?.systemHealth >= 85 ? '✅' : systemMetrics?.systemHealth >= 70 ? '⚠️' : '❌'}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Messaging</h4>
+                  <p className="text-sm text-gray-600">Outbound Push Live</p>
+                </div>
+              </div>
+              <div className="text-2xl">
+                {activeConflicts.length === 0 ? '✅' : activeConflicts.length <= 2 ? '⚠️' : '❌'}
+              </div>
+            </div>
+          </div>
+          <div className="text-center mt-3">
+            <p className="text-sm text-gray-600">
+              {systemMetrics?.strategicAlignmentScore >= 85 && systemMetrics?.systemHealth >= 85 && activeConflicts.length === 0 
+                ? "🎯 All systems green - Stay out" 
+                : "⚡ Exceptions detected - Agent intervention required"}
+            </p>
+          </div>
+        </div>
+
         {/* Strategic Execution Loop Overview */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -164,6 +222,9 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Live Metrics & Agent Command Surface */}
+        <LiveMetricsDashboard />
 
         {/* Autonomy Traffic Light KPIs */}
         <AutonomyTrafficLights />

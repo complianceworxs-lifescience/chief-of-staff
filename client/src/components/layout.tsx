@@ -24,7 +24,7 @@ export function Layout({ children }: LayoutProps) {
 
   const navigationItems = [
     { path: "/", label: "Dashboard", icon: BarChart3 },
-    { path: "/goals", label: "Goals & Priorities", icon: TrendingUp },
+    { path: "/goals", label: "Strategic Objectives", icon: TrendingUp },
     { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
     { path: "/directives", label: "Directives", icon: Users },
     { path: "/intervention", label: "Active Intervention", icon: Zap },

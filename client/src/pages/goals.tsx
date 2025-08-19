@@ -37,7 +37,7 @@ const formSchema = insertBusinessGoalSchema.extend({
   deadline: z.date()
 });
 
-export default function GoalsPage() {
+export default function StrategicObjectivesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -139,22 +139,22 @@ export default function GoalsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Goals & Priorities</h1>
-          <p className="text-gray-600 mt-2">Define and track high-level business objectives</p>
+          <h1 className="text-3xl font-bold text-gray-900">Strategic Objectives</h1>
+          <p className="text-gray-600 mt-2">Define high-level outcomes that generate agent directives</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Goal
+              Add Objective
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Goal</DialogTitle>
+              <DialogTitle>Create New Strategic Objective</DialogTitle>
               <DialogDescription>
-                Define a new high-level business objective to track and achieve.
+                Define a high-level outcome that will generate specific directives for agents to execute.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
