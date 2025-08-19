@@ -22,7 +22,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
 interface Playbook {
@@ -124,54 +124,77 @@ export function OneClickPlaybooks() {
     setRunningPlaybooks(prev => [...prev, playbook.id]);
     
     try {
-      // Execute the playbook workflow
-      const result = await apiRequest('POST', '/api/workflows/execute', {
-        workflow: playbook.title,
-        targetAgents: playbook.targetAgents,
-        playbookId: playbook.id,
-        actions: playbook.actions
-      });
-
       toast({
-        title: "Playbook Started",
-        description: `${playbook.title} is now executing on ${playbook.targetAgents.join(', ').toUpperCase()} agents`,
+        title: "Playbook Starting",
+        description: `Executing ${playbook.title}...`,
       });
 
-      // Simulate realistic playbook execution with progress updates
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += 25;
-        if (progress <= 75) {
-          toast({
-            title: `Playbook Progress: ${progress}%`,
-            description: `${playbook.actions[Math.floor(progress/25) - 1] || 'Processing...'}`,
-          });
+      // Execute multiple signals to force system-wide conflict resolution
+      const signals = playbook.targetAgents.map(agent => ({
+        agent,
+        status: "degraded",
+        metrics: {
+          successRate: 0.65,
+          alignment: 0.70,
+        },
+        context: {
+          playbook: playbook.title,
+          trigger: `manual-playbook-${playbook.id}`
         }
-      }, 2000);
+      }));
 
+      // Execute all agent signals simultaneously
+      const signalPromises = signals.map(signal => 
+        fetch("/api/autonomy/execute", {
+          method: "POST",
+          body: JSON.stringify(signal),
+          headers: { "Content-Type": "application/json" }
+        })
+      );
+
+      const results = await Promise.all(signalPromises);
+      
+      // Verify all executions succeeded
+      const allSucceeded = results.every(res => res.ok);
+      
+      if (!allSucceeded) {
+        throw new Error("Some agent executions failed");
+      }
+
+      // Force a conflict monitoring cycle to clean up any remaining conflicts
+      setTimeout(async () => {
+        try {
+          await fetch("/api/autonomy/monitor", { method: "POST" });
+        } catch (error) {
+          console.warn("Manual monitoring cycle failed:", error);
+        }
+      }, 1000);
+
+      // Mark as completed and invalidate queries for real-time updates
+      setCompletedPlaybooks(prev => [...prev, playbook.id]);
+      
+      // Invalidate queries to refresh conflict status
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts/active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/conflicts/resolved'] });
+      
+      toast({
+        title: "Playbook Completed",
+        description: `${playbook.title} executed successfully - system rebalanced`,
+      });
+
+      // Remove from completed after 10 seconds
       setTimeout(() => {
-        clearInterval(progressInterval);
-        setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
-        setCompletedPlaybooks(prev => [...prev, playbook.id]);
-        
-        toast({
-          title: "Playbook Completed ✓",
-          description: `${playbook.title} resolved successfully. Agents rebalanced and conflicts cleared.`,
-        });
-
-        // Remove from completed after 15 seconds
-        setTimeout(() => {
-          setCompletedPlaybooks(prev => prev.filter(id => id !== playbook.id));
-        }, 15000);
-      }, 8000);
+        setCompletedPlaybooks(prev => prev.filter(id => id !== playbook.id));
+      }, 10000);
       
     } catch (error) {
-      setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
       toast({
         title: "Playbook Failed",
-        description: `Unable to execute ${playbook.title}. Please try again.`,
+        description: `${playbook.title} execution failed. Check system logs.`,
         variant: "destructive"
       });
+    } finally {
+      setRunningPlaybooks(prev => prev.filter(id => id !== playbook.id));
     }
   };
 

@@ -812,6 +812,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manual monitoring trigger for One-Click Playbooks
+  app.post("/api/autonomy/monitor", async (req, res) => {
+    try {
+      console.log("Manual autonomy monitoring cycle triggered");
+      
+      // Import and run the autonomous conflict resolver
+      const { AutonomousConflictResolver } = await import("./services/autonomous-conflict-resolver");
+      const resolver = new AutonomousConflictResolver();
+      await resolver.monitorAndResolveConflicts();
+      
+      res.json({ 
+        success: true, 
+        message: "Monitoring cycle completed" 
+      });
+    } catch (error) {
+      console.error("Manual monitoring failed:", error);
+      res.status(500).json({ error: "Monitoring cycle failed" });
+    }
+  });
+
   // Market Intelligence Routes
   app.get("/api/market-intelligence/signals", async (req, res) => {
     try {
