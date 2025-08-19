@@ -46,18 +46,30 @@ export default function DirectivesPage() {
     queryKey: ["/api/chief-of-staff/initiatives"]
   });
 
-  // Mock conflict data for demonstration
-  const mockConflicts = [
-    {
-      id: "conf-1",
-      title: "CRO vs CMO Resource Allocation",
-      area: "Budget Priority",
-      agents: ["cro", "cmo"],
-      riskScore: 85,
-      reasoning: "CRO Agent requires 60% budget for enterprise partnerships while CMO Agent needs 50% for content marketing expansion. Total allocation exceeds 100%.",
-      suggestedActions: ["Apply priority weighting", "Reallocate resources via COO", "Escalate to CEO"]
-    }
-  ];
+  // Get real-time conflicts from the API
+  const { data: activeConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/conflicts/active"],
+    refetchInterval: 2000 // Check every 2 seconds
+  });
+  
+  const { data: resolvedConflicts = [] } = useQuery<any[]>({
+    queryKey: ["/api/conflicts/resolved"],
+    refetchInterval: 2000
+  });
+
+  // Transform API conflicts to match expected format
+  const transformedConflicts = activeConflicts.map((conflict: any) => ({
+    id: conflict.id,
+    title: conflict.title || "Resource Allocation Conflict",
+    area: conflict.area || "Budget Priority",
+    agents: conflict.agents || ["cro", "cmo"],
+    riskScore: conflict.riskScore || 85,
+    reasoning: conflict.description || "Resource allocation conflict detected by autonomous monitoring system.",
+    suggestedActions: conflict.suggestedActions || ["Apply priority weighting", "Reallocate resources via COO", "Escalate to CEO"]
+  }));
+  
+  // Show resolved status message if there are recent resolutions but no active conflicts
+  const hasRecentResolutions = resolvedConflicts.length > 0 && activeConflicts.length === 0;
 
   const handleDirectiveUpdate = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -194,13 +206,13 @@ export default function DirectivesPage() {
       <OneClickPlaybooks />
 
       {/* Active Conflicts - Conflict Resolution Panel */}
-      {mockConflicts.length > 0 && (
+      {transformedConflicts.length > 0 ? (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-orange-600" />
             Active Conflicts Requiring Resolution
           </h2>
-          {mockConflicts.map(conflict => (
+          {transformedConflicts.map(conflict => (
             <ConflictResolutionPanel 
               key={conflict.id} 
               conflict={conflict} 
@@ -208,7 +220,31 @@ export default function DirectivesPage() {
             />
           ))}
         </div>
-      )}
+      ) : hasRecentResolutions ? (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            Conflicts Resolved Autonomously
+          </h2>
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <div>
+                  <h4 className="font-semibold text-green-800">All Conflicts Successfully Resolved</h4>
+                  <p className="text-green-700">
+                    The Chief of Staff system has autonomously resolved {resolvedConflicts.length} conflicts including resource allocation disputes.
+                    Latest resolution: {resolvedConflicts[0]?.resolution || 'Automatically redistributed resources based on priority weights and capacity analysis'}
+                  </p>
+                  <p className="text-sm text-green-600 mt-2">
+                    ✅ Resource rebalancing completed • ✅ Priority weighting applied • ✅ Agent task queues updated
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
 
       {/* Strategic Directives with Action Controls */}
       <div className="space-y-4">

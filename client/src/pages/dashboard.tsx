@@ -19,7 +19,8 @@ export default function Dashboard() {
   });
 
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
-    queryKey: ["/api/conflicts/active"]
+    queryKey: ["/api/conflicts/active"],
+    refetchInterval: 2000 // Check every 2 seconds for real-time updates
   });
 
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
