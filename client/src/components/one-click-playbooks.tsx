@@ -129,68 +129,78 @@ export function OneClickPlaybooks() {
         description: `Executing ${playbook.title}...`,
       });
 
-      // Execute multiple signals to force system-wide conflict resolution
-      const signals = playbook.targetAgents.map(agent => ({
-        agent,
-        status: "degraded",
-        metrics: {
-          successRate: 0.65,
-          alignment: 0.70,
-        },
-        context: {
-          playbook: playbook.title,
-          trigger: `manual-playbook-${playbook.id}`
-        }
-      }));
-
-      // Execute all agent signals simultaneously
-      const signalPromises = signals.map(signal => 
-        fetch("/api/autonomy/execute", {
+      // Use the orchestrator endpoint that connects to the actual conflict system
+      if (playbook.id === 'resolve-agent-conflict') {
+        // Connect to the same conflict system the dashboard uses
+        const response = await fetch("/api/playbooks/resolve-conflicts", { 
           method: "POST",
-          body: JSON.stringify(signal),
-          headers: { "Content-Type": "application/json" }
-        })
-      );
+          headers: { 
+            "Content-Type": "application/json",
+            "x-idempotency-key": crypto.randomUUID() 
+          }
+        });
 
-      const results = await Promise.all(signalPromises);
-      
-      // Verify all executions succeeded
-      const allSucceeded = results.every(res => res.ok);
-      
-      if (!allSucceeded) {
-        throw new Error("Some agent executions failed");
+        if (!response.ok) {
+          throw new Error(`Failed to resolve conflicts: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Immediately invalidate queries to refresh dashboard
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/conflicts/active'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/conflicts/resolved'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/conflicts/system-health'] })
+        ]);
+
+        toast({
+          title: "Conflicts Resolved",
+          description: `Resolved ${data.resolved} conflicts • ${data.remaining_active} remaining`,
+        });
+
+      } else {
+        // For other playbooks, execute autonomy signals
+        const signals = playbook.targetAgents.map(agent => ({
+          agent,
+          status: "degraded",
+          metrics: { successRate: 0.65, alignment: 0.70 },
+          context: { playbook: playbook.title, trigger: `manual-playbook-${playbook.id}` }
+        }));
+
+        const signalPromises = signals.map(signal => 
+          fetch("/api/autonomy/execute", {
+            method: "POST",
+            body: JSON.stringify(signal),
+            headers: { "Content-Type": "application/json" }
+          })
+        );
+
+        const results = await Promise.all(signalPromises);
+        const allSucceeded = results.every(res => res.ok);
+        
+        if (!allSucceeded) {
+          throw new Error("Some agent executions failed");
+        }
+
+        toast({
+          title: "Playbook Completed",
+          description: `${playbook.title} executed - system rebalanced`,
+        });
       }
 
-      // Force a conflict monitoring cycle to clean up any remaining conflicts
-      setTimeout(async () => {
-        try {
-          await fetch("/api/autonomy/monitor", { method: "POST" });
-        } catch (error) {
-          console.warn("Manual monitoring cycle failed:", error);
-        }
-      }, 1000);
-
-      // Mark as completed and invalidate queries for real-time updates
+      // Mark as completed
       setCompletedPlaybooks(prev => [...prev, playbook.id]);
-      
-      // Invalidate queries to refresh conflict status
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts/active'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts/resolved'] });
-      
-      toast({
-        title: "Playbook Completed",
-        description: `${playbook.title} executed successfully - system rebalanced`,
-      });
 
-      // Remove from completed after 10 seconds
+      // Remove from completed after 8 seconds
       setTimeout(() => {
         setCompletedPlaybooks(prev => prev.filter(id => id !== playbook.id));
-      }, 10000);
+      }, 8000);
       
     } catch (error) {
+      console.error("Playbook execution failed:", error);
       toast({
         title: "Playbook Failed",
-        description: `${playbook.title} execution failed. Check system logs.`,
+        description: error instanceof Error ? error.message : "Execution failed",
         variant: "destructive"
       });
     } finally {

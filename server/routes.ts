@@ -23,8 +23,11 @@ import {
   insertAgentDirectiveSchema,
   insertCampaignBriefSchema,
   insertBrandAssetSchema,
-  insertContentAssetSchema
+  insertContentAssetSchema,
+  conflicts
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Content Manager
@@ -812,23 +815,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manual monitoring trigger for One-Click Playbooks
-  app.post("/api/autonomy/monitor", async (req, res) => {
+  // One-Click Playbook Orchestrator - connects playbooks to actual conflict resolution
+  app.post("/api/playbooks/resolve-conflicts", async (req, res) => {
     try {
-      console.log("Manual autonomy monitoring cycle triggered");
+      const startedAt = new Date().toISOString();
       
-      // Import and run the autonomous conflict resolver
+      // 1) Get active conflicts from the same source the dashboard uses
+      const activeConflicts = await db.select()
+        .from(conflicts)
+        .where(eq(conflicts.status, 'active'));
+
+      if (activeConflicts.length === 0) {
+        return res.json({
+          ok: true,
+          resolved: 0,
+          remaining_active: 0,
+          message: "No active conflicts to resolve",
+          refreshed_endpoints: ["/api/conflicts/active", "/api/conflicts/resolved"]
+        });
+      }
+
+      // 2) Apply governance hierarchy rules to resolve conflicts
       const { AutonomousConflictResolver } = await import("./services/autonomous-conflict-resolver");
       const resolver = new AutonomousConflictResolver();
-      await resolver.monitorAndResolveConflicts();
       
-      res.json({ 
-        success: true, 
-        message: "Monitoring cycle completed" 
+      const outcomes = [];
+      for (const conflict of activeConflicts) {
+        try {
+          const result = await resolver.resolveConflictAutonomously(conflict.id);
+          if (result.success) {
+            outcomes.push({
+              id: conflict.id,
+              summary: `${conflict.title}: ${result.reasoning}`,
+              actions: result.actions.length
+            });
+          }
+        } catch (error) {
+          console.warn(`Failed to resolve conflict ${conflict.id}:`, error);
+        }
+      }
+
+      // 3) Optional: Trigger autonomy system for resource rebalancing
+      try {
+        const autonomySignal = {
+          agent: "coo",
+          status: "degraded",
+          metrics: { successRate: 0.65, alignment: 0.70 },
+          context: { trigger: "playbook-resource-shuffle" }
+        };
+        // Non-blocking autonomy execution
+        setTimeout(async () => {
+          try {
+            await import("./services/autonomy-tier2").then(m => m.AutonomyTier2.execute(autonomySignal));
+          } catch (e) { console.warn("Optional autonomy failed:", e); }
+        }, 100);
+      } catch (error) {
+        console.warn("Optional resource shuffle failed:", error);
+      }
+
+      // 4) Get remaining active conflicts
+      const remainingConflicts = await db.select()
+        .from(conflicts)
+        .where(eq(conflicts.status, 'active'));
+
+      const finishedAt = new Date().toISOString();
+      
+      res.json({
+        ok: true,
+        resolved: outcomes.length,
+        remaining_active: remainingConflicts.length,
+        outcomes,
+        timing: { startedAt, finishedAt },
+        refreshed_endpoints: ["/api/conflicts/active", "/api/conflicts/resolved"]
       });
+
     } catch (error) {
-      console.error("Manual monitoring failed:", error);
-      res.status(500).json({ error: "Monitoring cycle failed" });
+      console.error("Playbook conflict resolution failed:", error);
+      res.status(500).json({ 
+        ok: false, 
+        error: "Failed to resolve conflicts",
+        message: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

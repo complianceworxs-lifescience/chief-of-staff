@@ -1,0 +1,173 @@
+the fix is to make the One-Click Playbook call the same conflict system your dashboard uses, and then hard-refresh that data. Here’s the cleanest way to wire it up without refactoring everything.
+
+What to change (summary)
+
+Introduce a single “orchestrator” endpoint that the UI hits for this button:
+POST /api/playbooks/resolve-conflicts
+
+The orchestrator invokes the AutonomousConflictResolver (not Tier-2 autonomy) to resolve current items from /api/conflicts/active, writes outcomes to /api/conflicts/resolved, and returns fresh counts.
+
+Invalidate dashboard caches for /api/conflicts/active and /api/conflicts/resolved so the badges drop to 0 immediately.
+
+Keep Tier-2 autonomy optional: if you still want the resource shuffle, call it after conflicts are resolved, not instead of.
+
+Backend: orchestrator (Express/Next API style)
+// /api/playbooks/resolve-conflicts.ts
+import type { Request, Response } from "express";
+import { getActiveConflicts, resolveConflicts } from "@/services/conflict-resolver";
+import { runAutonomyPlaybook } from "@/services/autonomy"; // optional follow-up
+import { emitEvent } from "@/services/events";
+import { withIdempotency } from "@/services/idempotency";
+
+export default async function handler(req: Request, res: Response) {
+  await withIdempotency(req, res, async () => {
+    const startedAt = new Date().toISOString();
+
+    // 1) Pull the same source the dashboard reads
+    const active = await getActiveConflicts(); // ← uses AutonomousConflictResolver’s store
+
+    if (active.length === 0) {
+      await emitEvent("playbook.noop", { type: "resolve_conflicts", startedAt });
+      return res.json({
+        ok: true,
+        resolved: 0,
+        remaining_active: 0,
+        message: "No active conflicts.",
+        refreshed_endpoints: ["/api/conflicts/active", "/api/conflicts/resolved"]
+      });
+    }
+
+    // 2) Resolve using governance rules (your JSON schema from earlier)
+    const outcomes = await resolveConflicts(active); // moves items -> resolved store with summaries
+
+    // 3) (Optional) trigger Tier-2 autonomy actions AFTER resolution
+    try { await runAutonomyPlaybook("coo_resource_shuffle"); } catch { /* non-blocking */ }
+
+    const remaining = await getActiveConflicts();
+
+    // 4) Notify UI(s) to revalidate dashboard data
+    await emitEvent("conflicts.resolved.bulk", {
+      resolved: outcomes.length,
+      remaining_active: remaining.length,
+      startedAt, finishedAt: new Date().toISOString()
+    });
+
+    return res.json({
+      ok: true,
+      resolved: outcomes.length,
+      remaining_active: remaining.length,
+      outcomes, // includes one-line summaries for audit
+      refreshed_endpoints: ["/api/conflicts/active", "/api/conflicts/resolved"]
+    });
+  });
+}
+
+
+Key points
+
+Uses the same store as /api/conflicts/active and /api/conflicts/resolved.
+
+Idempotent (prevents double-click chaos).
+
+Returns counts the UI can show instantly.
+
+Conflict resolver service (thin adapter)
+// /services/conflict-resolver.ts
+import { applyGovernanceRule } from "@/services/governance";
+import { ActiveStore, ResolvedStore } from "@/stores/conflicts";
+
+export async function getActiveConflicts() {
+  return ActiveStore.list(); // source of truth the dashboard already uses
+}
+
+export async function resolveConflicts(conflicts: any[]) {
+  const results = [];
+  for (const c of conflicts) {
+    const decision = applyGovernanceRule(c); // sets winner, action, summary
+    await ResolvedStore.write({ ...c, status: "auto_resolved", decision, resolved_at: new Date().toISOString() });
+    await ActiveStore.delete(c.id);
+    results.push({ id: c.id, summary: c.summary, decision });
+  }
+  return results;
+}
+
+Frontend: wire the button to the orchestrator and refresh dashboard
+
+File: client/src/components/one-click-playbooks.tsx
+
+async function runResolveAgentConflict() {
+  setRunning(true);
+  try {
+    const res = await fetch("/api/playbooks/resolve-conflicts", { method: "POST", headers: { "x-idempotency-key": crypto.randomUUID() }});
+    const data = await res.json();
+
+    // Optimistic UX
+    setResult({ status: "completed", resolved: data.resolved, remaining: data.remaining_active });
+
+    // Hard refresh the exact feeds the dashboard reads
+    await Promise.all([
+      mutate("/api/conflicts/active"),   // SWR/React Query invalidate
+      mutate("/api/conflicts/resolved")
+    ]);
+  } catch (e) {
+    setResult({ status: "error", message: "Failed to resolve conflicts." });
+  } finally {
+    setRunning(false);
+  }
+}
+
+
+UI copy on success (in the card’s status line):
+“Resolved {resolved} conflicts • {remaining} remaining”
+If remaining === 0, show a green check and fade the card.
+
+Minimal governance adapter
+
+(Reuses the hierarchy we defined earlier; returns the one-line summary your card needs.)
+
+// /services/governance.ts
+export function applyGovernanceRule(conflict: any) {
+  const { agents, category, metrics } = conflict;
+  // Order: compliance > revenue > strategy > ops
+  const winner =
+    (conflict.metrics?.compliance_risk_level === "high" ? "CCO" :
+     category === "revenue" ? "CRO" :
+     category === "strategy" ? "CEO" : "COO");
+
+  const summary = `Conflict: ${agents.primary} vs ${agents.counterparty} on ${category}. Resolution: ${winner} priority applied.`;
+  const action = winner === "CRO" ? "Run 1-week enterprise sales sprint"
+              : winner === "CCO" ? "Pause release; complete validation step"
+              : winner === "CEO" ? "Align to enterprise focus"
+              : "Execute most efficient method";
+
+  return { winner, action, summary, rule_id: mapRuleId(winner) };
+}
+
+function mapRuleId(winner: string) {
+  return winner === "CRO" ? "CRO_over_brand"
+       : winner === "CCO" ? "CCO_over_speed"
+       : winner === "CEO" ? "CEO_over_scope"
+       : "COO_over_method";
+}
+
+Eventing (optional but nice)
+
+Emit conflicts.resolved.bulk so other widgets (headers, toasts) update without polling.
+
+Guardrails & UX details
+
+Single source of truth: All conflict reads/writes go through the AutonomousConflictResolver’s stores.
+
+Atomicity: Resolve → move to resolved store → delete from active store in a transaction if you’re on SQL; in NoSQL, simulate with a best-effort batch + idempotency key.
+
+Timeout & partials: If some items fail, return resolved:n and remaining:m; the UI still refreshes.
+
+Access control: Lock this endpoint to privileged roles/agents only.
+
+What you’ll see after this change
+
+Click Resolve Agent Conflict → card shows Completed with “Resolved N conflicts” → dashboard badges drop to 0 because /api/conflicts/active now returns [].
+
+If any remain, you’ll see the exact remaining count and can hit Intercede for edge cases.
+
+If you want, I can also give you a single integration test that proves the button empties /api/conflicts/active and populates /api/conflicts/resolved.
