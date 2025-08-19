@@ -29,23 +29,53 @@ export function SmartRecommendations() {
   });
 
   const implementRecommendation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/recommendations/${id}/implement`, 'POST'),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      console.log('🚀 Implementing recommendation:', id);
+      const response = await apiRequest('POST', `/api/recommendations/${id}/implement`);
+      const result = await response.json();
+      console.log('✅ Implementation response:', result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log('✅ Implementation successful:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/recommendations'] });
       toast({
         title: "Recommendation Implemented",
-        description: "The recommendation has been marked as implemented."
+        description: "The recommendation has been successfully implemented and will take effect immediately."
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Implementation failed:', error);
+      toast({
+        title: "Implementation Failed",
+        description: "Failed to implement recommendation. Please try again.",
+        variant: "destructive"
       });
     }
   });
 
   const dismissRecommendation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/recommendations/${id}/dismiss`, 'POST'),
-    onSuccess: () => {
+    mutationFn: async (id: string) => {
+      console.log('🗑️ Dismissing recommendation:', id);
+      const response = await apiRequest('POST', `/api/recommendations/${id}/dismiss`);
+      const result = await response.json();
+      console.log('✅ Dismissal response:', result);
+      return result;
+    },
+    onSuccess: (data) => {
+      console.log('✅ Dismissal successful:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/recommendations'] });
       toast({
         title: "Recommendation Dismissed",
-        description: "The recommendation has been dismissed."
+        description: "The recommendation has been dismissed and will not be shown again."
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Dismissal failed:', error);
+      toast({
+        title: "Dismissal Failed", 
+        description: "Failed to dismiss recommendation. Please try again.",
+        variant: "destructive"
       });
     }
   });
