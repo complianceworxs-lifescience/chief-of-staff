@@ -23,6 +23,9 @@ export const qk = {
   // Market Intelligence
   marketIntelligence: ["market-intelligence"] as const,
   marketIntelligenceSignals: ["market-intelligence", "signals"] as const,
+  
+  // Notifications
+  notifications: ["ui", "notifications"] as const,
 } as const;
 
 export type QueryKeys = typeof qk;

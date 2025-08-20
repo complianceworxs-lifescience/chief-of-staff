@@ -144,6 +144,15 @@ export function useResolutionTracker() {
             duration: 6000,
           });
 
+          // Also add to notifications for the bell
+          const notificationList = (queryClient.getQueryData<Array<{ id: string; title: string; ts: number }>>(qk.notifications) ?? []);
+          const notification = {
+            id: `resolution-${resolutionId}-${resolvedAt.getTime()}`,
+            title: `Conflict resolved at ${resolvedAt.toLocaleTimeString()}`,
+            ts: resolvedAt.getTime(),
+          };
+          queryClient.setQueryData(qk.notifications, [notification, ...notificationList].slice(0, 50));
+
           // Invalidate queries to refresh UI
           queryClient.invalidateQueries({ queryKey: qk.agents });
           queryClient.invalidateQueries({ queryKey: qk.conflictsActive });

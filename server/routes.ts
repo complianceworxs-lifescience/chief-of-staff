@@ -60,6 +60,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // SSE Event Stream for real-time resolution notifications
+  app.get("/api/agents/events/stream", async (req, res) => {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    const { onEvent } = await import("./state/store");
+    const off = onEvent(({ type, payload }) => {
+      res.write(`event: ${type}\n`);
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    });
+
+    req.on("close", off);
+    req.on("end", off);
+  });
+
   app.put("/api/agents/:id/status", async (req, res) => {
     try {
       const { status } = req.body;
@@ -88,6 +105,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Execute unified autonomy pipeline
       await Autonomy.execute(signal);
       
+      // Set Cache-Control: no-store for resolution tracking
+      res.setHeader("Cache-Control", "no-store");
       res.json(agent);
     } catch (error) {
       res.status(500).json({ message: "Failed to update agent status" });

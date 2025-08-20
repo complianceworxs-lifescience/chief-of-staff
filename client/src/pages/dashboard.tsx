@@ -11,6 +11,7 @@ import { SystemControls } from "@/components/system-controls";
 import { AutonomyTrafficLights } from "@/components/autonomy-traffic-lights";
 import { LiveMetricsDashboard } from "@/components/live-metrics-dashboard";
 import { ConflictResolutionIndicator } from "@/components/conflict-resolution-indicator";
+import { NotificationBell } from "@/components/notification-bell";
 import { useAgents, useAgentMetrics } from "@/hooks/useAgent";
 import { qk } from "@/state/queries";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
@@ -44,6 +45,15 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+        {/* Header with Notification Bell */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Chief of Staff Dashboard</h1>
+            <p className="text-gray-600">Real-time autonomous agent orchestration</p>
+          </div>
+          <NotificationBell />
+        </div>
+
         {/* Daily Signal Board - Steve Jobs Signal-to-Noise */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

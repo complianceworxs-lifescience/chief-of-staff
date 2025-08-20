@@ -50,6 +50,26 @@ export function attachSSE() {
     queryClient.invalidateQueries({ queryKey: qk.autonomyTrafficLights });
   });
 
+  // Enhanced resolution tracking - listen for agent:resolved events
+  eventSource.addEventListener("agent:resolved", (e: MessageEvent) => {
+    const { id, resolvedAt } = JSON.parse(e.data);
+    const list = (queryClient.getQueryData<Array<{ id: string; title: string; ts: number }>>(qk.notifications) ?? []);
+    const note = {
+      id: `${id}-${resolvedAt}`,
+      title: `${id.toUpperCase()} resolved at ${new Date(resolvedAt).toLocaleTimeString()}`,
+      ts: resolvedAt,
+    };
+    queryClient.setQueryData(qk.notifications, [note, ...list].slice(0, 50));
+    
+    // Browser notification for definitive resolution
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(`${id.toUpperCase()} resolved`, { 
+        body: `Time: ${new Date(resolvedAt).toLocaleTimeString()}`,
+        icon: "/favicon.ico"
+      });
+    }
+  });
+
   // Handle connection errors
   eventSource.onerror = (error) => {
     console.warn("SSE connection error:", error);
@@ -78,4 +98,9 @@ export function getSSEStatus(): "connecting" | "open" | "closed" | "error" {
     case EventSource.CLOSED: return "closed";
     default: return "error";
   }
+}
+
+// Request notification permission on app load
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission();
 }
