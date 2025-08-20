@@ -1,0 +1,116 @@
+Here’s the exact fix to make Auto-Resolve actually update the “Conflict Risk Predictions” panel. Share this with your Replit:
+
+Bug
+
+Clicking Auto-Resolve only shows a success popup. The predictions list never refreshes, so the UI stays stale.
+
+Root Cause
+
+The handler doesn’t invalidate/refetch the predictions after the resolve API call (or it “toasts” success regardless of the server response).
+
+Simple Fix (React + React Query)
+
+Server: make sure the resolve route returns the updated conflict and sets no-cache headers.
+
+// POST /api/conflicts/:id/resolve
+// return the updated conflict and a success flag
+res.setHeader("Cache-Control", "no-store");
+return res.status(200).json({ ok: true, conflict: updatedConflict });
+
+
+Client: mutate → optimistic update → invalidate predictions.
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+function AutoResolveButton({ conflictId }: { conflictId: string }) {
+  const qc = useQueryClient();
+
+  const resolveConflict = useMutation({
+    mutationFn: async () => {
+      const r = await fetch(`/api/conflicts/${conflictId}/resolve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!r.ok) throw new Error("Resolve failed");
+      return r.json(); // { ok: true, conflict }
+    },
+    // optimistic UI: mark this conflict resolved immediately
+    onMutate: async () => {
+      await qc.cancelQueries({ queryKey: ["conflicts", "predictions"] });
+      const prev = qc.getQueryData<any>(["conflicts", "predictions"]);
+      qc.setQueryData(["conflicts", "predictions"], (data: any) => {
+        if (!data) return data;
+        return {
+          ...data,
+          items: data.items.map((c: any) =>
+            c.id === conflictId ? { ...c, status: "resolved", riskScore: 0 } : c
+          ),
+        };
+      });
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      // rollback optimistic change
+      if (ctx?.prev) qc.setQueryData(["conflicts", "predictions"], ctx.prev);
+      window.alert("Auto-Resolve failed. Try again.");
+    },
+    onSuccess: () => {
+      // ensures full sync with server side logic/rules
+      qc.invalidateQueries({ queryKey: ["conflicts", "predictions"] });
+      qc.invalidateQueries({ queryKey: ["conflicts", "summary"] });
+    },
+  });
+
+  return (
+    <button
+      disabled={resolveConflict.isPending}
+      onClick={() => resolveConflict.mutate()}
+      className="btn btn-danger"
+    >
+      {resolveConflict.isPending ? "Resolving…" : "Auto-Resolve"}
+    </button>
+  );
+}
+
+
+Where predictions are loaded, the query key must match what you invalidate:
+
+const { data } = useQuery({
+  queryKey: ["conflicts", "predictions"],
+  queryFn: () => fetch("/api/conflicts/predictions").then(r => r.json()),
+  staleTime: 0, // force revalidation
+});
+
+If You’re NOT using React Query
+
+Add a refresh after the fetch:
+
+async function onAutoResolve(conflictId) {
+  const r = await fetch(`/api/conflicts/${conflictId}/resolve`, { method: "POST" });
+  if (!r.ok) return window.alert("Resolve failed");
+  // only show success after the refresh succeeds
+  await refreshPredictions(); // re-fetch GET /api/conflicts/predictions and setState
+  toast.success("Conflict resolved");
+}
+
+async function refreshPredictions() {
+  const r = await fetch("/api/conflicts/predictions", { cache: "no-store" });
+  const data = await r.json();
+  setPredictions(data); // your state setter
+}
+
+Make Caching a Non-Issue
+
+Server responses for predictions & resolve should send:
+
+Cache-Control: no-store
+
+If you proxy through a CDN, disable caching for /api/conflicts/*.
+
+QA Checklist
+
+Click Auto-Resolve → conflict status flips to resolved immediately (optimistic), then finalizes after re-fetch.
+
+The risk chip and delayed outputs update within the same view (no manual reload).
+
+Error path rolls back the optimistic change.

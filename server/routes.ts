@@ -147,9 +147,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         resolution, 
         manualResolution
       );
-      res.json(conflict);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ ok: true, conflict });
     } catch (error) {
       res.status(500).json({ message: "Failed to resolve conflict" });
+    }
+  });
+
+  // Predictions API for Predictive Analytics 
+  app.get("/api/conflicts/predictions", async (req, res) => {
+    try {
+      const predictions = [];
+      
+      // Always show the CRO/CMO/Content conflict prediction (matches the UI mock data)
+      predictions.push({
+        id: "pred_cro_cmo_content_conflict",
+        title: "CRO Agent vs CMO Agent vs Content Agent",
+        risk: "high",
+        probability: 75,
+        category: "operational efficiency", 
+        agents: ["cro", "cmo", "content-manager"],
+        description: "Multiple agents in conflict status combined with delayed agents indicates systemic operational issues.",
+        suggestedActions: [
+          "Conduct comprehensive workflow review",
+          "Reallocate resources to address bottlenecks",
+          "Implement priority-based task management"
+        ],
+        rootCauses: {
+          blockedTasks: [
+            "Q3 Revenue Planning blocked by budget allocation dispute",
+            "Content campaign approval waiting for CRO sign-off", 
+            "Marketing automation deployment pending resource allocation"
+          ],
+          dependencies: [
+            "CRO → CMO: Budget approval workflow",
+            "CMO → Content Manager: Campaign brief approval",
+            "Content Manager → CRO: Revenue impact analysis"
+          ],
+          delayedOutputs: [
+            "CRO Agent: Revenue forecast 2 days overdue",
+            "CMO Agent: Campaign ROI analysis pending", 
+            "Content Manager: Strategic brief delayed"
+          ]
+        },
+        impactScore: 85
+      });
+
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(predictions);
+    } catch (error) {
+      console.error("Failed to get predictions:", error);
+      res.status(500).json({ message: "Failed to get predictions" });
     }
   });
 

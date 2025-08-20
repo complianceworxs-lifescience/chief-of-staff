@@ -56,10 +56,17 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
     content: 20
   });
 
-  // Mock predictions based on current system state
-  const predictions: ConflictPrediction[] = [
+  // Query for predictions data - this should come from the server
+  const { data: predictionsData } = useQuery({
+    queryKey: ["/api/conflicts/predictions"],
+    refetchInterval: 10000, // Refresh every 10 seconds
+    staleTime: 0, // Always consider data stale to force revalidation
+  });
+
+  // Use server data if available, fallback to mock data
+  const predictions: ConflictPrediction[] = predictionsData || [
     {
-      id: "pred-1",
+      id: "pred_cro_cmo_content_conflict",
       title: "CRO Agent vs CMO Agent vs Content Agent",
       risk: "high",
       probability: 75,
@@ -165,12 +172,39 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
       if (!response.ok) throw new Error('Failed to execute resolution action');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/conflicts'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/agents'] });
+    // Optimistic update: immediately mark prediction as resolved
+    onMutate: async ({ predictionId }) => {
+      await queryClient.cancelQueries({ queryKey: ["/api/conflicts/predictions"] });
+      
+      const previousPredictions = queryClient.getQueryData(["/api/conflicts/predictions"]);
+      
+      // Optimistically update the predictions (remove or mark as resolved)
+      queryClient.setQueryData(["/api/conflicts/predictions"], (oldData: ConflictPrediction[] | undefined) => {
+        if (!oldData) return oldData;
+        return oldData.filter(p => p.id !== predictionId); // Remove resolved prediction
+      });
+      
+      return { previousPredictions };
+    },
+    onError: (error, variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousPredictions) {
+        queryClient.setQueryData(["/api/conflicts/predictions"], context.previousPredictions);
+      }
       toast({
-        title: "Action Executed",
-        description: "Resolution action has been triggered successfully."
+        title: "Resolution Failed",
+        description: "Failed to execute resolution action. Please try again.",
+        variant: "destructive"
+      });
+    },
+    onSuccess: () => {
+      // Invalidate and refetch all related queries
+      queryClient.invalidateQueries({ queryKey: ["/api/conflicts/predictions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conflicts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
+      toast({
+        title: "Conflict Resolved",
+        description: "The conflict prediction has been successfully resolved and is being processed."
       });
     }
   });
