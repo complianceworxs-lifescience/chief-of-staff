@@ -10,6 +10,12 @@ Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflic
 Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
+## Recent Changes (August 20, 2025)
+- **Unified State Management Implemented**: Complete real-time state synchronization across all 8 agents (CEO, COO, CMO, CRO, CCO, Content Manager, Chief of Staff, Market Intelligence Agent)
+- **SSE Bridge Active**: Real-time updates via Server-Sent Events with automatic cache invalidation
+- **Auto-Resolve Fixed**: Optimistic UI updates with proper rollback mechanism and instant visual feedback
+- **Query Keys Standardized**: Universal query key system for consistent cache management across all components
+
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.
 
