@@ -1,0 +1,229 @@
+) Shared schema (all agents)
+// /server/models/AgentState.ts
+export type AgentId =
+  | "ceo" | "coo" | "cmo" | "cro" | "cco" | "content" | "cos";
+
+export type AgentStatus = "idle" | "running" | "blocked" | "resolved" | "error";
+
+export interface AgentState {
+  id: AgentId;
+  status: AgentStatus;
+  riskScore: number;              // 0–100
+  blockedTasks: string[];
+  dependencies: string[];
+  delayedOutputs: string[];
+  meta?: Record<string, any>;     // freeform (forecasts, KPIs, etc.)
+  updatedAt: number;              // Date.now()
+  version: number;                // increments on write
+}
+
+2) Minimal server store + endpoints (+SSE)
+// /server/state/store.ts
+import type { AgentId, AgentState } from "../models/AgentState";
+
+type Listener = (state: AgentState) => void;
+
+const _db = new Map<AgentId, AgentState>();
+const _listeners = new Set<Listener>();
+
+export function getAgent(id: AgentId): AgentState | null {
+  return _db.get(id) ?? null;
+}
+
+export function setAgent(next: AgentState) {
+  _db.set(next.id, { ...next, updatedAt: Date.now(), version: (next.version ?? 0) + 1 });
+  _listeners.forEach(fn => fn(_db.get(next.id)!));
+}
+
+export function listAgents(): AgentState[] {
+  return Array.from(_db.values());
+}
+
+export function onChange(fn: Listener) {
+  _listeners.add(fn);
+  return () => _listeners.delete(fn);
+}
+
+// seed once (optional)
+(["ceo","coo","cmo","cro","cco","content","cos"] as AgentId[]).forEach(id => {
+  if (!_db.has(id)) setAgent({
+    id, status: "idle", riskScore: 0,
+    blockedTasks: [], dependencies: [], delayedOutputs: [],
+    updatedAt: Date.now(), version: 0
+  });
+});
+
+// /server/routes/agents.ts (Express or tiny router)
+import express from "express";
+import { getAgent, setAgent, listAgents, onChange } from "../state/store";
+import type { AgentId, AgentState } from "../models/AgentState";
+
+export const agents = express.Router();
+
+agents.get("/", (_req, res) => res.json({ items: listAgents() }));
+agents.get("/:id", (req, res) => {
+  const a = getAgent(req.params.id as AgentId);
+  if (!a) return res.status(404).json({ error: "not found" });
+  res.setHeader("Cache-Control", "no-store");
+  res.json(a);
+});
+
+agents.post("/:id", (req, res) => {
+  const id = req.params.id as AgentId;
+  const current = getAgent(id);
+  if (!current) return res.status(404).json({ error: "not found" });
+  setAgent({ ...current, ...req.body, id });
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true, state: getAgent(id) });
+});
+
+// Simple SSE to push changes to all dashboards
+agents.get("/events/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Connection", "keep-alive");
+  const off = onChange((st) => {
+    res.write(`event: agent:update\n`);
+    res.write(`data: ${JSON.stringify(st)}\n\n`);
+  });
+  req.on("close", off);
+});
+
+
+Hook your existing actions (e.g., “Auto-Resolve”, “Reallocate”) to POST /api/agents/:id with the state changes (e.g., {status:"resolved", riskScore:0, blockedTasks:[]}).
+
+3) Standard client query keys (works for every agent)
+// /web/state/queries.ts
+export const qk = {
+  agent: (id: string) => ["agent", id] as const,
+  agents: ["agents", "list"] as const,
+  conflicts: ["conflicts", "predictions"] as const, // your existing panel
+};
+
+4) React Query setup + SSE cache bridge (1 file)
+// /web/state/queryClient.tsx
+import { QueryClient } from "@tanstack/react-query";
+export const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 0, refetchOnWindowFocus: false } } });
+
+// /web/state/sseBridge.ts
+import { queryClient } from "./queryClient";
+import { qk } from "./queries";
+
+export function attachSSE() {
+  const ev = new EventSource("/api/agents/events/stream");
+  ev.addEventListener("agent:update", (e: MessageEvent) => {
+    const st = JSON.parse(e.data);
+    // Update individual agent cache
+    queryClient.setQueryData(qk.agent(st.id), st);
+    // Also refresh aggregated lists/panels that derive from agent state:
+    queryClient.invalidateQueries({ queryKey: qk.agents });
+    queryClient.invalidateQueries({ queryKey: qk.conflicts });
+  });
+  return () => ev.close();
+}
+
+// /web/App.tsx (top-level)
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./state/queryClient";
+import { useEffect } from "react";
+import { attachSSE } from "./state/sseBridge";
+
+export default function App() {
+  useEffect(() => attachSSE(), []);
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* your routes / dashboard */}
+    </QueryClientProvider>
+  );
+}
+
+5) Universal hooks (fetch + mutate) used by all buttons
+// /web/hooks/useAgent.ts
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { qk } from "../state/queries";
+
+export function useAgent(id: string) {
+  const query = useQuery({
+    queryKey: qk.agent(id),
+    queryFn: async () => fetch(`/api/agents/${id}`, { cache: "no-store" }).then(r => r.json()),
+  });
+
+  const update = useMutation({
+    mutationFn: async (partial: any) => {
+      const r = await fetch(`/api/agents/${id}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(partial)
+      });
+      if (!r.ok) throw new Error("update failed");
+      return r.json();
+    },
+    onMutate: async (partial) => {
+      await queryClient.cancelQueries({ queryKey: qk.agent(id) });
+      const prev = queryClient.getQueryData(qk.agent(id));
+      // optimistic
+      queryClient.setQueryData(qk.agent(id), (cur: any) => ({ ...cur, ...partial, updatedAt: Date.now() }));
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.agent(id), ctx.prev);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: qk.agent(id) });
+      queryClient.invalidateQueries({ queryKey: qk.agents });
+      queryClient.invalidateQueries({ queryKey: qk.conflicts }); // keeps Conflict Risk panel fresh
+    }
+  });
+
+  return { ...query, update };
+}
+
+6) Wire every action button to the same pattern
+
+Example: Auto-Resolve for CRO/CMO/CoS/etc.
+
+// /web/components/AutoResolveButton.tsx
+import { useAgent } from "../hooks/useAgent";
+
+export function AutoResolveButton({ id }: { id: string }) {
+  const { update, isLoading } = useAgent(id);
+  return (
+    <button
+      className="btn btn-danger"
+      disabled={update.isPending}
+      onClick={() => update.mutate({ status: "resolved", riskScore: 0, blockedTasks: [], delayedOutputs: [] })}
+    >
+      {update.isPending ? "Resolving…" : "Auto-Resolve"}
+    </button>
+  );
+}
+
+
+Because all panels (including Conflict Risk Predictions) subscribe via React Query and the SSE bridge invalidates their keys, every agent’s change now flows through the same pipe.
+
+7) Make the Conflict panel derive from agent state
+
+If your “predictions” API already composes from agent states, you’re done. If it’s separate, keep it—but ensure the query key is qk.conflicts so the invalidations above refresh it after any agent update.
+
+// /web/components/ConflictRiskPredictions.tsx
+import { useQuery } from "@tanstack/react-query";
+import { qk } from "../state/queries";
+
+export function ConflictRiskPredictions() {
+  const { data, isLoading } = useQuery({
+    queryKey: qk.conflicts,
+    queryFn: () => fetch("/api/conflicts/predictions", { cache: "no-store" }).then(r => r.json())
+  });
+  // render...
+}
+
+What this gives you (for all agents)
+
+Single schema all agents share.
+
+One server store and one event stream.
+
+Consistent mutation pattern (optimistic update + invalidation).
+
+Conflict panel auto-refreshes after any agent update (incl. Auto-Resolve).
+
+No page reloads, no manual “refresh”.

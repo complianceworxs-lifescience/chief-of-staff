@@ -105,11 +105,11 @@ export function AgentStatusCardWithRemediation({ agent }: AgentStatusCardProps) 
             <Avatar className="h-10 w-10">
               <AvatarImage src={agent.avatar} />
               <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
-                {agent.name.split(' ').map(n => n[0]).join('')}
+                {(agent.displayName || agent.name || '').split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-gray-900">{agent.name}</h3>
+              <h3 className="font-semibold text-gray-900">{agent.displayName || agent.name}</h3>
               <p className="text-sm text-gray-500">
                 Active {agent.lastActive ? formatDistanceToNow(new Date(agent.lastActive), { addSuffix: true }) : 'never'}
               </p>

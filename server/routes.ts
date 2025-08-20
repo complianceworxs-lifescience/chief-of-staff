@@ -14,6 +14,7 @@ import { autonomousGovernance } from "./services/autonomous-governance";
 import { ContentManager } from "./services/content-manager";
 import { marketIntelligenceAgent } from "./services/market-intelligence";
 import { generativeStrategist } from "./services/generative-strategist";
+import { agentsRouter } from "./routes/agents";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
@@ -33,6 +34,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Content Manager
   const contentManager = new ContentManager(storage);
   await contentManager.initializeBrandAssets();
+  
+  // Mount unified state management routes
+  app.use("/api/agents", agentsRouter);
   
   // Agent routes
   app.get("/api/agents", async (req, res) => {

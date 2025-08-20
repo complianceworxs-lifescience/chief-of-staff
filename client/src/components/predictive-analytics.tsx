@@ -23,6 +23,7 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { qk } from "@/state/queries";
 import type { Conflict, Agent } from "@shared/schema";
 
 interface ConflictPrediction {
@@ -56,10 +57,10 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
     content: 20
   });
 
-  // Query for predictions data - this should come from the server
+  // Query for predictions data using unified query keys
   const { data: predictionsData } = useQuery({
-    queryKey: ["/api/conflicts/predictions"],
-    refetchInterval: 10000, // Refresh every 10 seconds
+    queryKey: qk.conflicts,
+    refetchInterval: 10000, // Refresh every 10 seconds  
     staleTime: 0, // Always consider data stale to force revalidation
   });
 
@@ -174,12 +175,12 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
     },
     // Optimistic update: immediately mark prediction as resolved
     onMutate: async ({ predictionId }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/conflicts/predictions"] });
+      await queryClient.cancelQueries({ queryKey: qk.conflicts });
       
-      const previousPredictions = queryClient.getQueryData(["/api/conflicts/predictions"]);
+      const previousPredictions = queryClient.getQueryData(qk.conflicts);
       
       // Optimistically update the predictions (remove or mark as resolved)
-      queryClient.setQueryData(["/api/conflicts/predictions"], (oldData: ConflictPrediction[] | undefined) => {
+      queryClient.setQueryData(qk.conflicts, (oldData: ConflictPrediction[] | undefined) => {
         if (!oldData) return oldData;
         return oldData.filter(p => p.id !== predictionId); // Remove resolved prediction
       });
@@ -187,9 +188,9 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
       return { previousPredictions };
     },
     onError: (error, variables, context) => {
-      // Rollback optimistic update on error
+      // Rollback optimistic update on error  
       if (context?.previousPredictions) {
-        queryClient.setQueryData(["/api/conflicts/predictions"], context.previousPredictions);
+        queryClient.setQueryData(qk.conflicts, context.previousPredictions);
       }
       toast({
         title: "Resolution Failed",
@@ -198,10 +199,11 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
       });
     },
     onSuccess: () => {
-      // Invalidate and refetch all related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/conflicts/predictions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/conflicts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
+      // Invalidate and refetch all related queries using unified keys
+      queryClient.invalidateQueries({ queryKey: qk.conflicts });
+      queryClient.invalidateQueries({ queryKey: qk.conflictsActive });
+      queryClient.invalidateQueries({ queryKey: qk.agents });
+      queryClient.invalidateQueries({ queryKey: qk.agentMetrics });
       toast({
         title: "Conflict Resolved",
         description: "The conflict prediction has been successfully resolved and is being processed."
@@ -567,6 +569,7 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
                         size="sm"
                         onClick={() => handleResolution('auto-resolve', prediction.id)}
                         disabled={resolutionMutation.isPending}
+                        data-testid={`button-auto-resolve-${prediction.id}`}
                       >
                         <Brain className="h-4 w-4 mr-1" />
                         Auto-Resolve

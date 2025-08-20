@@ -1,8 +1,10 @@
 import { Switch, Route } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import Goals from "@/pages/goals";
@@ -37,6 +39,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    const cleanup = attachSSE();
+    return cleanup;
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

@@ -9,13 +9,15 @@ export function StrategicAlignment() {
     queryKey: ["/api/objectives"]
   });
 
-  const { data: agents = [] } = useQuery<Agent[]>({
+  const { data: agentsData } = useQuery({
     queryKey: ["/api/agents"]
   });
+  
+  const agents = agentsData?.items || [];
 
   const getContributingAgentNames = (agentIds: string[]) => {
     return agentIds
-      .map(id => agents.find(a => a.id === id)?.name)
+      .map(id => agents.find(a => a.id === id)?.displayName || agents.find(a => a.id === id)?.name)
       .filter(Boolean)
       .join(", ");
   };

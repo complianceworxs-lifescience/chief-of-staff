@@ -11,25 +11,30 @@ import { SystemControls } from "@/components/system-controls";
 import { AutonomyTrafficLights } from "@/components/autonomy-traffic-lights";
 import { LiveMetricsDashboard } from "@/components/live-metrics-dashboard";
 import { ConflictResolutionIndicator } from "@/components/conflict-resolution-indicator";
+import { useAgents, useAgentMetrics } from "@/hooks/useAgent";
+import { qk } from "@/state/queries";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
 export default function Dashboard() {
-  const { data: agents = [] } = useQuery<Agent[]>({
-    queryKey: ["/api/agents"]
-  });
+  // Use unified state management hooks
+  const { data: agentsData, isLoading: agentsLoading } = useAgents();
+  const { data: agentMetrics } = useAgentMetrics();
+  
+  // Extract agents array from the response structure
+  const agents = agentsData?.items || [];
 
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
-    queryKey: ["/api/conflicts/active"],
+    queryKey: qk.conflictsActive,
     refetchInterval: 2000 // Check every 2 seconds for real-time updates
   });
 
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
-    queryKey: ["/api/conflicts/resolved"],
+    queryKey: qk.conflictsResolved,
     refetchInterval: 5000 // Refresh every 5 seconds to show autonomous activity
   });
 
   const { data: systemHealth } = useQuery<any>({
-    queryKey: ["/api/conflicts/system-health"],
+    queryKey: qk.conflictSystemHealth,
     refetchInterval: 15000 // Monitor autonomous system health
   });
 
@@ -235,9 +240,13 @@ export default function Dashboard() {
         <div className="mb-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Agent Status Monitoring</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {agents.map((agent) => (
-              <AgentStatusCardWithRemediation key={agent.id} agent={agent} />
-            ))}
+            {agentsLoading ? (
+              <div className="col-span-full text-center py-8">Loading agents...</div>
+            ) : (
+              agents.map((agent) => (
+                <AgentStatusCardWithRemediation key={agent.id} agent={agent} />
+              ))
+            )}
           </div>
         </div>
 
