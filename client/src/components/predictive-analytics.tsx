@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { qk } from "@/state/queries";
+import { ResolutionTracker } from "@/components/resolution-tracker";
+import { useResolutionTracker } from "@/hooks/useResolutionTracker";
 import type { Conflict, Agent } from "@shared/schema";
 
 interface ConflictPrediction {
@@ -56,6 +58,9 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
     marketing: 30,
     content: 20
   });
+  
+  // Resolution tracking
+  const { resolutions, startResolution, dismissResolution } = useResolutionTracker();
 
   // Query for predictions data using unified query keys
   const { data: predictionsData } = useQuery({
@@ -567,8 +572,10 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
                       <Button 
                         variant="destructive" 
                         size="sm"
-                        onClick={() => handleResolution('auto-resolve', prediction.id)}
-                        disabled={resolutionMutation.isPending}
+                        onClick={() => startResolution(prediction.id, {
+                          agents: prediction.agents,
+                          description: prediction.description
+                        })}
                         data-testid={`button-auto-resolve-${prediction.id}`}
                       >
                         <Brain className="h-4 w-4 mr-1" />
@@ -649,6 +656,11 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
           </div>
         </CardContent>
       </Card>
+      {/* Resolution Tracker */}
+      <ResolutionTracker 
+        resolutions={resolutions} 
+        onDismiss={dismissResolution} 
+      />
     </div>
   );
 }

@@ -1,0 +1,189 @@
+a generic “action started” popup is useless. Here’s a drop-in upgrade so the CoS dashboard (and every agent) gives you a definitive “Resolved at HH:MM” notification, updates the panel, and logs it.
+
+1) Server: stamp resolvedAt + emit an SSE event
+
+Add a status transition hook so when any agent flips to resolved, the server stamps the time and pushes an event.
+
+// /server/state/store.ts
+import type { AgentId, AgentState } from "../models/AgentState";
+
+type Listener = (evt: { type: string; payload: any }) => void;
+
+const _db = new Map<AgentId, AgentState>();
+const _listeners = new Set<Listener>();
+
+export function onChange(fn: Listener) {
+  _listeners.add(fn);
+  return () => _listeners.delete(fn);
+}
+
+function emit(type: string, payload: any) {
+  _listeners.forEach(fn => fn({ type, payload }));
+}
+
+export function setAgent(next: AgentState) {
+  const prev = _db.get(next.id);
+  const was = prev?.status;
+  const now = next.status;
+
+  const stamped: AgentState = {
+    ...prev,
+    ...next,
+    // set resolvedAt only on the transition -> "resolved"
+    ...(was !== "resolved" && now === "resolved"
+      ? { resolvedAt: Date.now(), riskScore: 0 }
+      : {}),
+    updatedAt: Date.now(),
+    version: (prev?.version ?? 0) + 1,
+  };
+
+  _db.set(next.id, stamped);
+  emit("agent:update", stamped);
+
+  if (was !== "resolved" && stamped.status === "resolved") {
+    emit("agent:resolved", { id: stamped.id, resolvedAt: stamped.resolvedAt });
+  }
+}
+
+
+Expose the event stream:
+
+// /server/routes/agents.ts
+agents.get("/events/stream", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Connection", "keep-alive");
+
+  const off = onChange(({ type, payload }) => {
+    res.write(`event: ${type}\n`);
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  });
+
+  req.on("close", off);
+});
+
+
+Your resolve endpoint should still return the updated state (including resolvedAt) and Cache-Control: no-store.
+
+2) Client SSE bridge: raise a real notification when resolved
+
+Listen for agent:resolved and create a user-visible notification (and keep a small log).
+
+// /web/state/queries.ts
+export const qk = {
+  agent: (id: string) => ["agent", id] as const,
+  agents: ["agents", "list"] as const,
+  conflicts: ["conflicts", "predictions"] as const,
+  notifications: ["ui", "notifications"] as const,
+};
+
+// /web/state/sseBridge.ts
+import { queryClient } from "./queryClient";
+import { qk } from "./queries";
+
+type Note = { id: string; title: string; ts: number };
+
+export function attachSSE() {
+  const ev = new EventSource("/api/agents/events/stream");
+
+  ev.addEventListener("agent:update", (e: MessageEvent) => {
+    const st = JSON.parse(e.data);
+    queryClient.setQueryData(qk.agent(st.id), st);
+    queryClient.invalidateQueries({ queryKey: qk.agents });
+    queryClient.invalidateQueries({ queryKey: qk.conflicts });
+  });
+
+  ev.addEventListener("agent:resolved", (e: MessageEvent) => {
+    const { id, resolvedAt } = JSON.parse(e.data);
+    const list = (queryClient.getQueryData<Note[]>(qk.notifications) ?? []);
+    const note: Note = {
+      id: `${id}-${resolvedAt}`,
+      title: `${id.toUpperCase()} resolved at ${new Date(resolvedAt).toLocaleTimeString()}`,
+      ts: resolvedAt,
+    };
+    queryClient.setQueryData(qk.notifications, [note, ...list].slice(0, 50));
+    // Optional: Browser toast or Notification API
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(`${id.toUpperCase()} resolved`, { body: `Time: ${new Date(resolvedAt).toLocaleTimeString()}` });
+    }
+  });
+
+  return () => ev.close();
+}
+
+
+If you want desktop notifications, request permission once at app load:
+if ("Notification" in window) Notification.requestPermission();
+
+3) Mutation: show exact “Resolved at …” on success
+
+Update your existing Auto-Resolve mutation to surface the timestamp returned by the server:
+
+// /web/components/AutoResolveButton.tsx
+import { useAgent } from "../hooks/useAgent";
+
+export function AutoResolveButton({ id }: { id: string }) {
+  const { update } = useAgent(id);
+
+  async function onClick() {
+    update.mutate(
+      { status: "resolved" }, // server will stamp resolvedAt
+      {
+        onSuccess: (res: any) => {
+          const t = res?.state?.resolvedAt ?? Date.now();
+          alert(`${id.toUpperCase()} resolved at ${new Date(t).toLocaleTimeString()}`);
+          // no need to manually refresh; SSE + invalidations handle it
+        },
+      }
+    );
+  }
+
+  return (
+    <button className="btn btn-danger" onClick={onClick} disabled={update.isPending}>
+      {update.isPending ? "Resolving…" : "Auto-Resolve"}
+    </button>
+  );
+}
+
+4) Tiny Notification Center (for history)
+
+Add a bell with a dropdown so you can see a log of resolutions.
+
+// /web/components/NotificationBell.tsx
+import { useQuery } from "@tanstack/react-query";
+import { qk } from "../state/queries";
+
+export function NotificationBell() {
+  const { data: notes = [] } = useQuery({ queryKey: qk.notifications, queryFn: async () => [] });
+  return (
+    <div className="relative">
+      <button className="btn">🔔 {notes.length}</button>
+      {notes.length > 0 && (
+        <div className="absolute right-0 mt-2 w-80 rounded-xl shadow p-3 bg-white">
+          {notes.slice(0, 8).map(n => (
+            <div key={n.id} className="py-2 border-b last:border-0">
+              <div className="font-medium">{n.title}</div>
+              <div className="text-xs opacity-70">{new Date(n.ts).toLocaleString()}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+Mount it in your dashboard header. It uses the same in-memory cache—no extra backend table needed.
+
+5) Inline proof in the panel
+
+Make the Conflict Risk card reflect resolution and show the timestamp:
+
+// inside ConflictRiskPredictions item renderer
+{conflict.status === "resolved" ? (
+  <span className="badge badge-success">
+    Resolved • {new Date(conflict.resolvedAt).toLocaleTimeString()}
+  </span>
+) : (
+  <span className="badge badge-error">high Risk ({conflict.riskScore}%)</span>
+)}
