@@ -11,12 +11,12 @@ Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (T
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
 ## Recent Changes (August 22, 2025)
-- **Exceptions-Only Mode Implemented**: Complete governance policy enforcement ensuring no founder notification unless policy breach (risk > low, spend > $0, canary failures, missing outcomes >24h, incident thresholds)
-- **Governance Module Created**: TypeScript governance engine with policy decisions, budget tracking, SLA monitoring, and autonomous execution for low-risk zero-spend recommendations
-- **Action Logging System**: Complete audit trail with JSON log format tracking all agent actions, outcomes, escalations, and policy decisions
-- **Job Runner Integration**: Automated governance sweeping for overdue actions and SLA violations with scheduled monitoring
-- **Agent Role Clarification**: Distinguished Chief of Staff (meta-orchestrator/control tower) from COO Agent (operational engine room) with clear separation of responsibilities
-- **COO Dashboard Created**: Dedicated COO operational control center at `/coo` route showing operational metrics, efficiency tracking, and workflow management
+- **Strategic Execution Engine Implemented**: Autonomous agent assignment system that detects overdue strategic goals and automatically assigns specific agents with action plans, deadlines, and Experiment Contracts
+- **Exceptions-Only Execution**: Complete governance enforcement with action assignments for every recommendation including owner, due date, Expected outcome contracts. Auto-executes if risk ≤ low, spend = $0, canary ≥10, within $100/mo budget
+- **Action Assignment System**: Critical/Warning items automatically converted to assigned actions with [Owner | KPI | Expected | Outcome | Result | Next Action | Due] tracking
+- **Agent Ownership Model**: CCO handles customer retention (30% progress critical), CRO handles revenue goals (25% progress urgent), CMO handles content marketing, COO handles operations
+- **Experiment Contract Implementation**: Every action requires Expected outcome with KPI target, time window, success rule, canary description, and confidence percentage before execution
+- **24-Hour Close Requirement**: All actions must record Outcome within 24h or escalate to Chief of Staff incident management
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.

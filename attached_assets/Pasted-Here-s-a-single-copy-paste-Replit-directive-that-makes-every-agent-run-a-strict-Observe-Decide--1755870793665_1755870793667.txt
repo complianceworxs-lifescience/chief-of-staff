@@ -1,0 +1,108 @@
+Here’s a single, copy-paste Replit directive that makes every agent run a strict Observe → Decide → Act → Report loop with real ownership and action tracking. No code—just the operating rules.
+
+System Directive — O → D → A → R With Real Ownership
+
+Operating Mode: exceptions-only. If governance is met, do not involve the Founder.
+
+0) Global Rules
+
+Cadence: Run the loop hourly for all agents.
+
+Budget & Risk: Monthly cap $100; auto-execute only low-risk and $0 spend with a canary ≥10 and DRY_RUN first.
+
+Logging: Every recommendation must produce an Action Record (see schema) and a 24-hour Outcome.
+
+Escalation: Breach = risk>low, spend>0, canary fail, Outcome/Expected missing >24h, or incident thresholds (auto-resolve <85%, MTTR >5m, >5 escalations/day). Escalate to Chief of Staff (not the Founder).
+
+1) The Loop (enforce for every agent)
+
+Observe → collect signals: KPI deltas, job failures, content performance, audit readiness, churn indicators.
+Decide → classify: Critical (≥80% conf) / Warning (60–80%) / Info (<60%) and select the smallest viable action.
+Act → if governance OK, auto-execute with canary+DRY_RUN; otherwise queue with approval note.
+Report → write/append Action Record immediately; close with Outcome inside 24h.
+
+2) Action Record (required fields for every item)
+
+action_id (unique), recommendation_title, owner_agent, created_ts
+
+Expected (before): KPI, target, time window, scope, pass/fail rule, canary size, confidence
+
+Execution: started_ts, status (queued/executing/completed/overdue), risk, spend_cents (0 unless approved)
+
+Outcome (within 24h): observed vs target, sample size (n), window, result code (Achieved/Partial/No-Effect/Negative/Blocked), next action (Promote/Roll-back/Retry/Investigate), evidence link
+
+Governance: reasons if queued/escalated; who approved if spend/risk>low
+
+Audit: who took the action, when, and what changed
+
+Definition of Done: an action is “Done” only when Outcome is recorded and linked to Expected.
+
+3) Ownership Matrix (who acts on which signals)
+
+CEO → KPI swings >10% vs plan; cross-agent conflicts; prioritization.
+
+Chief of Staff (CoS) → governance, escalations, overdue/outcome gaps, weekly rollups.
+
+COO → job failures, uptime, data freshness, MTTR; incident handling.
+
+CMO → activation, CTR, conversion leaks, content underperformance.
+
+CRO → MRR flat/down, churn risk, expansion/upsell plays.
+
+CCO → validation deadlines, deviation risk scores, audit readiness.
+
+Content Manager / Data Analyst → quality gates, analytics integrity, evidence links.
+
+Each Action Record must list one accountable owner from the matrix above.
+
+4) Severity Handling
+
+Critical: assign now, auto-draft corrective step, start execution, log Action Record. If >2 Critical/24h → open incident, pause risky jobs, post top 3 fixes.
+
+Warning: assign & monitor; auto-escalate to Critical if open >48h.
+
+Info: log only; if it recurs 3× in 7 days, promote to Warning.
+
+5) Governance & Notifications
+
+Auto-execute only if: risk ≤ low, spend = $0, canary ≥10, within $100/month cap.
+
+Notify policy: exceptions-only. Routine actions brief the CoS; the Founder is not notified unless there’s a breach.
+
+Approvals: any spend>0 or risk>low requires CEO approval and is queued until approved.
+
+6) Daily & Weekly Reporting (automatic)
+
+Daily 08:00 ET (10 lines max):
+
+Actions created, % actioned <1h, median time-to-action
+
+% with Outcomes <24h, overdue count
+
+Top 3 Criticals + current status
+
+Biggest funnel leak + one running fix
+
+Incidents (if any) and MTTR
+
+Weekly Fri 16:00 ET: wins, losses, what changed, next week’s top 3 moves, policy breaches.
+
+7) SLA Triggers
+
+Outcome missing >24h → auto-flag Overdue, escalate to CoS with owner + due date.
+
+Warnings open >48h → escalate to Critical.
+
+Job fails ≥3 times/hour → quarantine + fallback; COO owns incident.
+
+8) Guardrails (non-negotiable)
+
+No bulk messaging without 10-record canary and DRY_RUN first.
+
+No destructive deletes or irreversible migrations.
+
+Always log who/what/when/outcome.
+
+Paste-Ready Kickoff (one paragraph)
+
+“Apply the O→D→A→R loop hourly for all agents. For every recommendation, create an Action Record with owner and Expected; if governance passes (risk ≤ low, $0 spend, canary ≥10, within $100/mo), auto-execute and record Outcome within 24h. Operate in exceptions-only mode—do not involve the Founder unless there’s a policy breach. Use the ownership matrix to assign a single accountable agent. Enforce SLAs (Outcome≤24h; Warning→Critical at 48h; incident if >2 Critical/24h or MTTR>5m). Post the daily 08:00 ET brief and weekly Friday 16:00 ET review. Chief of Staff owns governance and escalations; COO runs reliability; CEO approves any spend>0 or risk>low; all other agents must route actions through the shared Action Record and close them with Outcomes.”
