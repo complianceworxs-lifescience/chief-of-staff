@@ -1,7 +1,7 @@
 # Chief of Staff AI Agent
 
 ## Overview
-This project develops a sophisticated Chief of Staff AI system for ComplianceWorxs, designed to strategically orchestrate an entire team of AI executive agents. Its core purpose is to enable "Orchestrated Execution" through a proprietary "Strategic Execution Loop," automating the achievement of business goals by coordinating AI teamwork. The system features an "Auto-Remediation Mode," providing true autonomy by detecting, classifying, and resolving agent conflicts, errors, and performance issues without human intervention. The Strategic Execution Loop involves four steps: Goal setting, Orchestration by the Chief of Staff, Execution by specialized Executive Agents, and continuous Learning & Refinement based on results. This system aims to provide a cohesive, intelligent platform for automated business goal attainment, distinguishing ComplianceWorxs in the market.
+This project develops a sophisticated Chief of Staff AI system for ComplianceWorxs, designed as a meta-orchestrator and control tower for specialized AI executive agents. The Chief of Staff serves as the executive enabler, focusing on strategic alignment, information flow coordination, and ensuring all agents work in harmony toward business objectives. The system operates alongside specialized agents including the COO Agent (operational engine room), CMO, CRO, CCO, Content Manager, and Market Intelligence Agent. The Chief of Staff acts as the "control tower" while the COO Agent manages the "operational engine room" - distinct but coordinated roles that enable true autonomous business execution through the Strategic Execution Loop methodology.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -10,11 +10,12 @@ Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflic
 Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
-## Recent Changes (August 20, 2025)
-- **Unified State Management Implemented**: Complete real-time state synchronization across all 8 agents (CEO, COO, CMO, CRO, CCO, Content Manager, Chief of Staff, Market Intelligence Agent)
-- **SSE Bridge Active**: Real-time updates via Server-Sent Events with automatic cache invalidation
-- **Auto-Resolve Fixed**: Optimistic UI updates with proper rollback mechanism and instant visual feedback
-- **Query Keys Standardized**: Universal query key system for consistent cache management across all components
+## Recent Changes (August 22, 2025)
+- **Agent Role Clarification**: Distinguished Chief of Staff (meta-orchestrator/control tower) from COO Agent (operational engine room) with clear separation of responsibilities
+- **COO Dashboard Created**: Dedicated COO operational control center at `/coo` route showing operational metrics, efficiency tracking, and workflow management
+- **Enhanced Resolution Tracking**: Multi-channel notification system with definitive "Resolved at HH:MM" timestamps through toast, bell, and browser notifications
+- **Unified State Management**: Complete real-time synchronization across all 8 agents with SSE bridge and automatic cache invalidation
+- **Auto-Resolve Enhanced**: Optimistic UI updates with comprehensive resolution tracking and notification bell integration
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.
@@ -34,13 +35,14 @@ The application follows a modern full-stack architecture. The frontend is a Reac
     - **Tier 3 Coordination**: Inter-agent coordination with conflict half-life <10min, cooperation efficiency tracking, and sim harness for safe testing.
     - **Chief of Staff Runbook**: 6-tier autonomy rollout with daily KPI monitoring (Auto-resolve ≥85%, MTTR <5min, Cost reduction ≥15%, Escalations ≤5/day), progressive tier enablement via environment toggles, and automatic rollback protocol if KPIs regress >5% in 24h.
     - **Auto-Remediation**: Legacy system maintained for backward compatibility, now integrated with the Unified Autonomy Layer.
-- **Feature Specifications**:
-    - **Agent Orchestration**: Monitors, aligns, and resolves conflicts among specialized Executive Agents (e.g., CRO, CFO, COO, CCO, CEO, CMO, Content Manager, Market Intelligence Agent).
-    - **Content Manager**: Enhanced capabilities for content synthesis and generation, acting as a bridge between strategic directives and campaign execution.
-    - **Market Intelligence Agent**: Specializes in regulatory, competitive, and market signal monitoring, integrating web scraping and NLP analysis.
-    - **Generative Strategist**: Provides multi-agent problem diagnosis and automated strategic plan generation based on cross-agent intelligence correlation.
-    - **Predictive Analytics Command Center**: Transforms diagnostics into actionable controls, featuring a Priority Rule Engine, interactive conflict prediction with drill-down, one-click resolution actions, and escalation controls.
-    - **Strategic Command Center**: Evolves directives into a command-and-control hub with actions like Reassign, Pause/Resume/Cancel, Escalate, Clone & Split directives, and integrated conflict resolution.
+- **Agent Architecture & Roles**:
+    - **Chief of Staff Agent**: Meta-orchestrator and control tower responsible for strategic alignment, information flow coordination, conflict resolution, and ensuring all agents work toward unified objectives. Acts as executive enabler focused on priorities and cross-agent harmony.
+    - **COO Agent**: Operational engine room managing internal operations execution, workflow efficiency, productivity metrics, cost management, sprint execution, and operational blockers. Reports operational status to Chief of Staff.
+    - **Executive Agents**: Specialized agents (CEO, CMO, CRO, CCO) focused on their functional domains, coordinated by Chief of Staff for strategic alignment.
+    - **Content Manager**: Enhanced capabilities for content synthesis and generation, acting as bridge between strategic directives and campaign execution.
+    - **Market Intelligence Agent**: Regulatory, competitive, and market signal monitoring with web scraping and NLP analysis capabilities.
+    - **Predictive Analytics Command Center**: Multi-agent problem diagnosis with automated strategic plan generation and interactive conflict prediction.
+    - **Strategic Command Center**: Command-and-control hub with comprehensive directive management and autonomous conflict resolution.
 - **System Design Choices**:
     - **Clear Separation of Concerns**: Distinct `/client`, `/server`, and `/shared` directories.
     - **Service Layer**: Core business logic is encapsulated in services like Agent Monitor, Conflict Resolver, and Report Generator.

@@ -70,7 +70,7 @@ export default function COODashboard() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">COO Agent Dashboard</h1>
-            <p className="text-gray-600">Chief Operating Officer - Operations Excellence</p>
+            <p className="text-gray-600">Operational Engine Room - Workflow Execution & Efficiency</p>
           </div>
         </div>
         
@@ -319,17 +319,17 @@ export default function COODashboard() {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
               <div>
-                <h4 className="font-medium text-green-900">Outstanding Performance</h4>
+                <h4 className="font-medium text-green-900">Operational Excellence</h4>
                 <p className="text-sm text-green-700 mt-1">
-                  Your COO agent is your top performer with the lowest risk score (1) across all agents. 
-                  It's successfully managing operations with 95% success rate and optimal response times. 
-                  No intervention required - this agent is operating at peak efficiency.
+                  Your COO agent is managing the operational engine room with exceptional efficiency. 
+                  As your "Ops machine," it handles workflow execution, productivity tracking, and cost management 
+                  while the Chief of Staff coordinates strategic alignment. Risk score of 1 indicates optimal operational performance.
                 </p>
                 <div className="flex gap-4 mt-3 text-xs text-green-600">
-                  <span>• Zero blocked tasks</span>
-                  <span>• No dependencies</span>
-                  <span>• Optimal response time</span>
-                  <span>• Autonomous recovery enabled</span>
+                  <span>• Zero operational blockers</span>
+                  <span>• Smooth workflow execution</span>
+                  <span>• Efficient cost management</span>
+                  <span>• Reports to Chief of Staff</span>
                 </div>
               </div>
             </div>
