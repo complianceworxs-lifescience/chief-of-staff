@@ -33,19 +33,25 @@ export function LiveMetricsDashboard() {
   const autonomyHealth = systemMetrics?.systemHealth || 0;
   const escalationsToday = activeConflicts.length;
 
-  const handleResolveAction = (objectiveId: string) => {
-    // Trigger agent workflow for objective resolution
-    console.log('Triggering resolution workflow for objective:', objectiveId);
-  };
-
-  const handleEscalateAction = (objectiveId: string) => {
-    // Move issue to COO agent
-    console.log('Escalating to COO agent:', objectiveId);
-  };
-
-  const handleReassignAction = (fromAgent: string, toAgent: string) => {
-    // Reassign between agents
-    console.log('Reassigning from', fromAgent, 'to', toAgent);
+  // Determine which agent is assigned to handle each objective
+  const getAssignedAgent = (objective: any) => {
+    const title = objective.title?.toLowerCase() || '';
+    
+    if (title.includes('revenue') || title.includes('mrr') || title.includes('sales')) {
+      return { agent: 'CRO', fullName: 'Chief Revenue Officer', color: 'blue' };
+    }
+    if (title.includes('retention') || title.includes('customer') || title.includes('churn')) {
+      return { agent: 'CCO', fullName: 'Chief Customer Officer', color: 'green' };
+    }
+    if (title.includes('marketing') || title.includes('content') || title.includes('reach')) {
+      return { agent: 'CMO', fullName: 'Chief Marketing Officer', color: 'purple' };
+    }
+    if (title.includes('operation') || title.includes('efficiency') || title.includes('cost')) {
+      return { agent: 'COO', fullName: 'Chief Operating Officer', color: 'orange' };
+    }
+    
+    // Default assignment to Chief of Staff for unmatched objectives
+    return { agent: 'COS', fullName: 'Chief of Staff', color: 'gray' };
   };
 
   return (
@@ -219,23 +225,37 @@ export function LiveMetricsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {objectivesAtRisk.map((objective: any) => (
-                <div key={objective.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <div>
-                    <h5 className="font-medium text-red-900">{objective.title}</h5>
-                    <p className="text-sm text-red-700">
-                      Progress: {objective.progress}% - Below 50% threshold
-                    </p>
+              {objectivesAtRisk.map((objective: any) => {
+                const assignment = getAssignedAgent(objective);
+                return (
+                  <div key={objective.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div>
+                      <h5 className="font-medium text-red-900">{objective.title}</h5>
+                      <p className="text-sm text-red-700">
+                        Progress: {objective.progress}% - Below 50% threshold
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        className={
+                          assignment.color === 'blue' ? "bg-blue-100 text-blue-800 border-blue-200" :
+                          assignment.color === 'green' ? "bg-green-100 text-green-800 border-green-200" :
+                          assignment.color === 'purple' ? "bg-purple-100 text-purple-800 border-purple-200" :
+                          assignment.color === 'orange' ? "bg-orange-100 text-orange-800 border-orange-200" :
+                          "bg-gray-100 text-gray-800 border-gray-200"
+                        }
+                      >
+                        <Users className="h-3 w-3 mr-1" />
+                        Agent Assigned
+                      </Badge>
+                      <div className="text-right text-sm">
+                        <div className="font-medium text-gray-900">{assignment.agent}</div>
+                        <div className="text-xs text-gray-600">{assignment.fullName}</div>
+                      </div>
+                    </div>
                   </div>
-                  <Button 
-                    size="sm"
-                    onClick={() => handleResolveAction(objective.id)}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Take Action
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
