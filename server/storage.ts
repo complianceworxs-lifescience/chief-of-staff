@@ -276,6 +276,39 @@ export class DatabaseStorage implements IStorage {
         strategicAlignment: 85,
         icon: "fas fa-pen-fancy",
         color: "bg-teal-600"
+      },
+      {
+        id: "cco",
+        name: "CCO Agent",
+        status: "healthy",
+        lastActive: new Date(Date.now() - 7 * 60 * 1000),
+        lastReport: "Customer Success Review",
+        successRate: 95,
+        strategicAlignment: 88,
+        icon: "fas fa-users",
+        color: "bg-blue-600"
+      },
+      {
+        id: "chief-of-staff",
+        name: "Chief of Staff",
+        status: "healthy",
+        lastActive: new Date(Date.now() - 2 * 60 * 1000),
+        lastReport: "Strategic Coordination",
+        successRate: 98,
+        strategicAlignment: 95,
+        icon: "fas fa-chess-king",
+        color: "bg-gray-800"
+      },
+      {
+        id: "market-intelligence",
+        name: "Market Intelligence Agent",
+        status: "healthy",
+        lastActive: new Date(Date.now() - 15 * 60 * 1000),
+        lastReport: "Market Analysis Update",
+        successRate: 93,
+        strategicAlignment: 87,
+        icon: "fas fa-chart-bar",
+        color: "bg-orange-600"
       }
     ];
 
