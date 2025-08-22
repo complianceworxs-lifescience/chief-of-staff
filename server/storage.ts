@@ -305,9 +305,7 @@ export class DatabaseStorage implements IStorage {
       }
     ];
 
-    for (const conflict of defaultConflicts) {
-      await db.insert(conflicts).values(conflict);
-    }
+    await db.insert(conflicts).values(defaultConflicts);
 
     // Initialize strategic objectives
     const defaultObjectives: InsertStrategicObjective[] = [
@@ -331,9 +329,7 @@ export class DatabaseStorage implements IStorage {
       }
     ];
 
-    for (const objective of defaultObjectives) {
-      await db.insert(strategicObjectives).values(objective);
-    }
+    await db.insert(strategicObjectives).values(defaultObjectives);
 
     // Initialize system metrics
     await db.insert(systemMetrics).values({
