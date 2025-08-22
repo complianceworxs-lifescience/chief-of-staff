@@ -41,17 +41,6 @@ export default function StrategicObjectivesPage() {
     }))
   });
 
-  const executeOverdueGoalsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', "/api/strategic/execute-overdue");
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/objectives"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/actions/recent"] });
-      console.log(`✅ Strategic Executor: ${data.actions_created} agents auto-assigned to overdue goals`);
-    }
-  });
 
   const calculateProgress = (current: string, target: string) => {
     const currentNum = parseFloat(current.replace(/[^0-9.]/g, '')) || 0;
@@ -99,21 +88,10 @@ export default function StrategicObjectivesPage() {
           <p className="text-gray-600 mt-2">Define high-level outcomes that generate agent directives</p>
         </div>
         
-        <div className="flex gap-2">
-          <Button
-            onClick={() => executeOverdueGoalsMutation.mutate()}
-            disabled={executeOverdueGoalsMutation.isPending}
-            variant="outline"
-            className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
-            data-testid="button-auto-assign-agents"
-          >
-            {executeOverdueGoalsMutation.isPending ? "Executing..." : "🎯 Auto-Assign Agents"}
-          </Button>
-          <Button data-testid="button-add-objective">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Objective
-          </Button>
-        </div>
+        <Button data-testid="button-add-objective">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Objective
+        </Button>
       </div>
 
       {/* Goals Overview */}
