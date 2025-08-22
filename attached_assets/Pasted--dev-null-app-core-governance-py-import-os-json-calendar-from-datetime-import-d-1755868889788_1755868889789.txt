@@ -1,0 +1,87 @@
+*** /dev/null
++*** app/core/governance.py
++@@
++import os, json, calendar
++from datetime import datetime, timezone, timedelta
++from pathlib import Path
++
++RISK_ORDER = {"low": 0, "medium": 1, "high": 2}
++
++def _env_int(name, default):
++    try: return int(os.getenv(name, str(default)))
++    except: return default
++
++def _risk_ok(risk: str, allow: str) -> bool:
++    return RISK_ORDER.get(risk, 99) <= RISK_ORDER.get(allow, 0)
++
++def _now_utc(): return datetime.now(timezone.utc)
++
++def month_to_date_spend_cents(log_path: str) -> int:
++    """Sum spend_cents for completed actions in the current UTC month."""
++    p = Path(log_path)
++    if not p.exists(): return 0
++    now = _now_utc()
++    start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
++    total = 0
++    with p.open("r", encoding="utf-8") as f:
++        for line in f:
++            try:
++                evt = json.loads(line)
++            except: 
++                continue
++            if evt.get("type") != "action_completed": 
++                continue
++            ts = evt.get("ts")
++            if not ts: 
++                continue
++            try:
++                t = datetime.fromisoformat(ts)
++            except:
++                continue
++            if t >= start: 
++                total += int(evt.get("spend_cents", 0))
++    return total
++
++def policy_decision(reco: dict, *, log_path: str):
++    """
++    Decide how to handle a recommendation under governance.
++    Returns dict: {auto_execute, requires_approval, violation, reasons, notify_mode}
++    """
++    risk = (reco.get("risk") or "low").lower()
++    canary_n = int(reco.get("canary_n") or _env_int("CANARY_MIN", 10))
++    spend_cents = int(reco.get("spend_cents") or 0)
++    dry = os.getenv("DRY_RUN", "true").lower() == "true"
++
++    allow_auto_risk = (os.getenv("ALLOW_AUTO_RISK") or "low").lower()
++    budget_cap = _env_int("BUDGET_CAP_CENTS", 10000)  # $100 default
++    mtd = month_to_date_spend_cents(log_path)
++    notify_mode = (os.getenv("STAKEHOLDER_NOTIFY") or "exceptions_only").lower()  # exceptions_only|always
++
++    reasons = []
++    violation = False
++
++    if not _risk_ok(risk, allow_auto_risk):
++        reasons.append(f"risk>{allow_auto_risk}")
++    if spend_cents > 0:
++        reasons.append("spend>0")
++    if canary_n < _env_int("CANARY_MIN", 10):
++        reasons.append("canary_too_small")
++    if mtd + spend_cents > budget_cap:
++        reasons.append("budget_cap_exceeded")
++
++    # violation if any hard rule broken
++    violation = len(reasons) > 0
++
++    auto_execute = (not violation) and (dry or risk == "low")
++    requires_approval = violation and (spend_cents > 0 or not _risk_ok(risk, "low"))
++
++    return {
++        "auto_execute": auto_execute,
++        "requires_approval": requires_approval,
++        "violation": violation,
++        "reasons": reasons,
++        "notify_mode": notify_mode
++    }
++
++def overdue_cutoff(hours: int):
++    return _now_utc() - timedelta(hours=hours)

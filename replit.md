@@ -11,11 +11,12 @@ Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (T
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
 ## Recent Changes (August 22, 2025)
+- **Exceptions-Only Mode Implemented**: Complete governance policy enforcement ensuring no founder notification unless policy breach (risk > low, spend > $0, canary failures, missing outcomes >24h, incident thresholds)
+- **Governance Module Created**: TypeScript governance engine with policy decisions, budget tracking, SLA monitoring, and autonomous execution for low-risk zero-spend recommendations
+- **Action Logging System**: Complete audit trail with JSON log format tracking all agent actions, outcomes, escalations, and policy decisions
+- **Job Runner Integration**: Automated governance sweeping for overdue actions and SLA violations with scheduled monitoring
 - **Agent Role Clarification**: Distinguished Chief of Staff (meta-orchestrator/control tower) from COO Agent (operational engine room) with clear separation of responsibilities
 - **COO Dashboard Created**: Dedicated COO operational control center at `/coo` route showing operational metrics, efficiency tracking, and workflow management
-- **Enhanced Resolution Tracking**: Multi-channel notification system with definitive "Resolved at HH:MM" timestamps through toast, bell, and browser notifications
-- **Unified State Management**: Complete real-time synchronization across all 8 agents with SSE bridge and automatic cache invalidation
-- **Auto-Resolve Enhanced**: Optimistic UI updates with comprehensive resolution tracking and notification bell integration
 
 ## System Architecture
 The application follows a modern full-stack architecture. The frontend is a React-based Single Page Application (SPA) using TypeScript, Tailwind CSS, and shadcn/ui components. The backend is an Express.js REST API server built with TypeScript and ESM modules. PostgreSQL serves as the database, managed with Drizzle ORM for type-safe interactions and migrations. Vite is used for frontend bundling and development.

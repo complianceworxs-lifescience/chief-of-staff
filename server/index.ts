@@ -66,11 +66,15 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, () => {
+  }, async () => {
     log(`serving on port ${port}`);
     
     // Start autonomous conflict monitoring
     conflictMonitor.startMonitoring(30000); // Monitor every 30 seconds
+    
+    // Start governance job runner for exceptions-only mode
+    const { startJobRunner } = await import('./jobRunner.js');
+    startJobRunner();
     
     // Start active intervention engine
     import("./services/active-intervention").then(module => {

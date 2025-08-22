@@ -1337,6 +1337,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Governance and Actions Routes - Exceptions-Only Mode
+  app.get("/api/actions/recent", async (req, res) => {
+    try {
+      const { recentActions } = await import('./actions.js');
+      const actions = recentActions(100);
+      res.json(actions);
+    } catch (error) {
+      console.error('Error fetching recent actions:', error);
+      res.status(500).json({ error: 'Failed to fetch recent actions' });
+    }
+  });
+
+  app.get("/api/governance/status", (req, res) => {
+    res.json({
+      notify_mode: process.env.STAKEHOLDER_NOTIFY || "exceptions_only",
+      allow_auto_risk: process.env.ALLOW_AUTO_RISK || "low",
+      budget_cap_cents: parseInt(process.env.BUDGET_CAP_CENTS || "10000"),
+      canary_min: parseInt(process.env.CANARY_MIN || "10"),
+      outcome_sla_hours: parseInt(process.env.OUTCOME_SLA_HOURS || "24"),
+      escalate_owner: process.env.ESCALATE_OWNER || "ChiefOfStaff",
+      dry_run: (process.env.DRY_RUN || "true").toLowerCase() === "true"
+    });
+  });
+
+  app.post("/api/act", async (req, res) => {
+    try {
+      const { actOnRecommendation } = await import('./actions.js');
+      const recommendation = req.body;
+      
+      // Validate required fields
+      if (!recommendation.title || !recommendation.action) {
+        return res.status(400).json({ 
+          error: 'Missing required fields: title and action' 
+        });
+      }
+      
+      const result = actOnRecommendation(recommendation);
+      res.json(result);
+    } catch (error) {
+      console.error('Error processing recommendation:', error);
+      res.status(500).json({ error: 'Failed to process recommendation' });
+    }
+  });
+
   // Auto-remediation routes (legacy)
   app.use("/api/remediation", (await import("./routes/remediation")).remediationRouter);
   

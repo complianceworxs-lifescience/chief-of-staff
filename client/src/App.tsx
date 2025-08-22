@@ -17,6 +17,7 @@ import { MarketIntelligence } from "@/pages/market-intelligence";
 import ActiveInterventionPage from "@/pages/active-intervention";
 import WorkloadsPage from "@/pages/workloads";
 import COODashboard from "@/pages/coo-dashboard";
+import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
         <Route path="/intervention" component={ActiveInterventionPage} />
         <Route path="/workloads" component={WorkloadsPage} />
         <Route path="/coo" component={COODashboard} />
+        <Route path="/governance/dashboard" component={GovernanceDashboard} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

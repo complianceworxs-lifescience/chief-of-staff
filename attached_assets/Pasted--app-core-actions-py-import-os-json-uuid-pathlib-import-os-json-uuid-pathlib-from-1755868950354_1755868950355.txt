@@ -1,0 +1,123 @@
+*** app/core/actions.py
+@@
+-import os, json, uuid, pathlib
++import os, json, uuid, pathlib
+ from datetime import datetime, timezone
+ from app.utils.logging import log
++from app.core.governance import policy_decision, overdue_cutoff
+ 
+ LOG_PATH = os.getenv("ACTION_LOG_PATH", "data/action_log.jsonl")
+ pathlib.Path(os.path.dirname(LOG_PATH) or ".").mkdir(parents=True, exist_ok=True)
+@@
+ def act_on_recommendation(reco: dict) -> dict:
+@@
+-    action_id = str(uuid.uuid4())
++    action_id = str(uuid.uuid4())
+     agent = reco.get("owner", "unknown_agent")
+     action = reco.get("action", "unspecified")
+     risk = (reco.get("risk") or "low").lower()
+     canary_n = int(reco.get("canary_n") or 10)
++    spend_cents = int(reco.get("spend_cents") or 0)
+     dry = os.getenv("DRY_RUN", "true").lower() == "true"
+ 
++    policy = policy_decision(reco, log_path=LOG_PATH)
++
+     start_evt = {
+         "type": "action_started",
+         "action_id": action_id,
+         "ts": _now_iso(),
+         "agent": agent,
+         "action": action,
+         "risk": risk,
+         "canary_n": canary_n,
++        "spend_cents": spend_cents,
+         "payload": reco.get("payload") or {},
+         "recommendation": {"title": reco.get("title"), "rationale": reco.get("rationale")},
+-        "status": "queued" if not dry and risk != "low" else "executing"
++        "status": "executing" if policy["auto_execute"] else "queued",
++        "policy": policy
+     }
+     _append(start_evt)
+ 
+-    # --- Minimal execution policy ---
+-    # Low-risk or DRY_RUN → execute immediately; otherwise mark queued for approval.
+-    if dry or risk == "low":
+-        outcome = {"result": "executed" if not dry else "simulated", "notes": "auto-exec via policy"}
+-        complete_action(action_id, agent, True, outcome)
+-    else:
+-        outcome = {"result": "queued", "notes": "awaiting approval (risk>low)"}
++    # --- Execute or queue according to governance ---
++    if policy["auto_execute"]:
++        outcome = {"result": "executed" if not dry else "simulated", "notes": "auto-exec via governance"}
++        complete_action(action_id, agent, True, outcome, spend_cents=spend_cents)
++    else:
++        outcome = {"result": "queued", "notes": ("awaiting approval" if policy["requires_approval"] else "held per policy")}
++        # In exceptions-only mode we **do not** notify the Founder; we just log an escalation for Chief of Staff.
++        if policy["violation"]:
++            _append({
++                "type": "escalation",
++                "action_id": action_id,
++                "ts": _now_iso(),
++                "agent": agent,
++                "to": os.getenv("ESCALATE_OWNER", "ChiefOfStaff"),
++                "reasons": policy["reasons"]
++            })
+ 
+     return {"action_id": action_id, "agent": agent, "date": start_evt["ts"], "action": action, "outcome": outcome["result"]}
+ 
+-def complete_action(action_id: str, agent: str, success: bool, outcome: dict):
++def complete_action(action_id: str, agent: str, success: bool, outcome: dict, *, spend_cents: int = 0):
+     """Log completion (call this after the agent finishes work)."""
+     evt = {
+         "type": "action_completed",
+         "action_id": action_id,
+         "ts": _now_iso(),
+         "agent": agent,
+         "success": bool(success),
+-        "outcome": outcome,  # e.g., {"result":"success","delta":{...}} or {"result":"no_effect"}
++        "outcome": outcome,  # e.g., {"result":"success","delta":{...}} or {"result":"no_effect"}
++        "spend_cents": int(spend_cents),
+     }
+     _append(evt)
+@@
+ def recent_actions(limit: int = 50):
+@@
+     except FileNotFoundError:
+         return []
++
++def sweep_overdue_actions(sla_hours: int = 24):
++    """Emit 'action_overdue' for actions that never recorded a completion within SLA."""
++    cutoff = overdue_cutoff(sla_hours)
++    try:
++        lines = []
++        with open(LOG_PATH, "r", encoding="utf-8") as f:
++            lines = f.readlines()
++    except FileNotFoundError:
++        return 0
++    started = {}
++    completed = set()
++    for line in lines:
++        try: evt = json.loads(line)
++        except: continue
++        if evt.get("type") == "action_started":
++            started[evt["action_id"]] = evt
++        elif evt.get("type") == "action_completed":
++            completed.add(evt["action_id"])
++    overdue = 0
++    for aid, evt in started.items():
++        if aid in completed: 
++            continue
++        try: ts = datetime.fromisoformat(evt["ts"])
++        except: 
++            continue
++        if ts < cutoff:
++            overdue += 1
++            _append({
++                "type": "action_overdue",
++                "action_id": aid,
++                "ts": _now_iso(),
++                "agent": evt.get("agent"),
++                "to": os.getenv("ESCALATE_OWNER", "ChiefOfStaff"),
++                "note": f"Outcome missing >{sla_hours}h"
++            })
++    return overdue
