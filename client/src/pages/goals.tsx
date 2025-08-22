@@ -81,6 +81,19 @@ export default function StrategicObjectivesPage() {
     }
   });
 
+  const executeOverdueGoalsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', "/api/strategic/execute-overdue");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/objectives"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/actions/recent"] });
+      // Show success notification
+      console.log(`✅ Strategic Executor: ${data.actions_created} agents auto-assigned to overdue goals`);
+    }
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -143,20 +156,29 @@ export default function StrategicObjectivesPage() {
           <p className="text-gray-600 mt-2">Define high-level outcomes that generate agent directives</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Objective
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New Strategic Objective</DialogTitle>
-              <DialogDescription>
-                Define a high-level outcome that will generate specific directives for agents to execute.
-              </DialogDescription>
-            </DialogHeader>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => executeOverdueGoalsMutation.mutate()}
+            disabled={executeOverdueGoalsMutation.isPending}
+            variant="outline"
+            className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+          >
+            {executeOverdueGoalsMutation.isPending ? "Executing..." : "🎯 Auto-Assign Agents"}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Objective
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create New Strategic Objective</DialogTitle>
+                <DialogDescription>
+                  Define a high-level outcome that will generate specific directives for agents to execute.
+                </DialogDescription>
+              </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -314,9 +336,9 @@ export default function StrategicObjectivesPage() {
                 </DialogFooter>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </DialogContent>
+          </Dialog>
+        </div>
 
       {/* Goals Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

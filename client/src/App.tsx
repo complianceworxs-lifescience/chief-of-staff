@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
-import Goals from "@/pages/goals";
+import Goals from "@/pages/goals-fixed";
 import Initiatives from "@/pages/initiatives";
 import Directives from "@/pages/directives";
 import AnalyticsPage from "@/pages/analytics";

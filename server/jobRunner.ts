@@ -1,4 +1,5 @@
 import { sweepOverdueActions } from './actions.js';
+import { strategyExecutor } from './services/strategic-executor.js';
 
 const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "60") * 1000;
 const DRY_RUN = (process.env.DRY_RUN || "true").toLowerCase() === "true";
@@ -7,7 +8,7 @@ function log(message: string, data?: any) {
   console.log(`[job] ${message}`, data ? JSON.stringify(data) : '');
 }
 
-export function tick() {
+export async function tick() {
   log("tick", { dry_run: DRY_RUN });
   
   // Governance: flag actions that are missing outcomes beyond SLA
@@ -17,6 +18,19 @@ export function tick() {
   if (overdue > 0) {
     log("overdue_actions", { count: overdue, sla_hours: sla });
   }
+  
+  // Strategic Execution: Auto-assign agents to overdue goals
+  try {
+    const strategicActions = await strategyExecutor.executeOverdueGoalActions();
+    if (strategicActions.length > 0) {
+      log("strategic_executor", { 
+        actions_created: strategicActions.length,
+        assigned_agents: strategicActions.map(a => `${a.assignedAgent}:${a.actionType}`)
+      });
+    }
+  } catch (error) {
+    log("strategic_executor_error", { error: error instanceof Error ? error.message : String(error) });
+  }
 }
 
 export function startJobRunner() {
@@ -25,6 +39,6 @@ export function startJobRunner() {
   // Run immediately
   tick();
   
-  // Then run on interval
+  // Then run on interval  
   setInterval(tick, INTERVAL);
 }

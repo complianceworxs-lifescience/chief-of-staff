@@ -1337,6 +1337,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Strategic Execution Routes
+  app.post("/api/strategic/execute-overdue", async (req, res) => {
+    try {
+      const { strategyExecutor } = await import('./services/strategic-executor.js');
+      const actions = await strategyExecutor.executeOverdueGoalActions();
+      res.json({ 
+        success: true, 
+        actions_created: actions.length,
+        actions: actions.map(a => ({
+          goal: a.goalTitle,
+          agent: a.assignedAgent,
+          action: a.actionType,
+          priority: a.priority
+        }))
+      });
+    } catch (error) {
+      console.error('Strategic execution error:', error);
+      res.status(500).json({ error: 'Failed to execute strategic actions' });
+    }
+  });
+
+  app.get("/api/strategic/overdue-goals", async (req, res) => {
+    try {
+      const { strategyExecutor } = await import('./services/strategic-executor.js');
+      const overdueGoals = await strategyExecutor.getOverdueGoals();
+      res.json(overdueGoals);
+    } catch (error) {
+      console.error('Error fetching overdue goals:', error);
+      res.status(500).json({ error: 'Failed to fetch overdue goals' });
+    }
+  });
+
   // Governance and Actions Routes - Exceptions-Only Mode
   app.get("/api/actions/recent", async (req, res) => {
     try {
