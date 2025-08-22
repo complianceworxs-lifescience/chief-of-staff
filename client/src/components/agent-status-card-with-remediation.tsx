@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Link } from "wouter";
 import { 
   User, 
   CheckCircle, 
@@ -11,7 +12,8 @@ import {
   RefreshCw, 
   Zap,
   FileText,
-  Activity
+  Activity,
+  BarChart3
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -203,15 +205,29 @@ export function AgentStatusCardWithRemediation({ agent }: AgentStatusCardProps) 
             </Button>
           )}
           
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-            data-testid={`view-remediation-log-${agent.id}`}
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            View Remediation Log
-          </Button>
+          {agent.id === 'coo' ? (
+            <Link href="/coo">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                data-testid="view-coo-dashboard"
+              >
+                <BarChart3 className="h-3 w-3 mr-1" />
+                COO Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1"
+              data-testid={`view-remediation-log-${agent.id}`}
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              View Remediation Log
+            </Button>
+          )}
         </div>
 
         {/* Recovery Success Message */}
