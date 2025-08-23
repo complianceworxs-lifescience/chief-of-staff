@@ -1,0 +1,170 @@
+{
+  "version": "1.0",
+  "app": {
+    "name": "ComplianceWorxs-Intent-System",
+    "mode": "production"
+  },
+
+  "security": {
+    "webhook_token": "cw-webhook-7f9a3f92-2025",
+    "admin_token": "cw-admin-4b8c7e61-2025",
+    "allowed_origins": ["https://complianceworxs.com"]
+  },
+
+  "endpoints": {
+    "events": { "path": "/events", "method": "POST" },
+    "health": { "path": "/", "method": "GET" }
+  },
+
+  "envelope_schema": {
+    "type": ["signal", "decision"],
+    "required_fields": ["version","event_id","seq","type","occurred_at","produced_at","actor","subject","payload"],
+    "actor": { "agent_id": ["cmo-agent","cro-agent","ceo-agent","chief-of-staff-agent","system"] },
+    "subject": { "email": "string", "contact_id": "string|null" },
+    "context": { "page_url": "string?", "utm_source": "string?", "utm_campaign": "string?", "session_id": "string?" },
+    "meta": { "agent_truth": "boolean", "idempotency_key": "string", "priority": ["normal","high","reconcile"], "ttl_seconds": "number" },
+    "payload_signal": {
+      "kind": ["web_click","pricing_click","download","video_watch","webinar_attended","chat_topic","purchase","cancel","reply","custom"],
+      "value": {
+        "title": "string?",
+        "topic": "string?",
+        "duration_sec": "number?",
+        "url_path": "string?",
+        "product_sku": "string?"
+      },
+      "weights": { "base_points": "number?", "time_on_page_boost": "number?" }
+    },
+    "payload_decision": {
+      "decision_kind": ["intent_update","stage_update","offer_recommendation","meta_directive"],
+      "intent_update": {
+        "new_intent": "string",
+        "confidence": "number?",
+        "scores": "object?",
+        "guardrails": { "min_abs": "number?","min_delta": "number?","min_ratio": "number?","cooldown_days": "number?","hard_override": "boolean?" },
+        "previous_intent_seen": "string?",
+        "state_seen": { "tags": "string[]?", "last_switch_at": "string?" },
+        "state_expected": { "tags": "string[]?" }
+      },
+      "stage_update": { "new_stage": "string", "reason": "string?" },
+      "offer_recommendation": { "offer_id": "string", "valid_for_days": "number?" },
+      "meta_directive": { "priority_intents": "string[]?", "status": "string?", "reason": "string?", "next_retry_at": "string?" }
+    }
+  },
+
+  "intent_model": {
+    "intents": [
+      "Intent: Active-Auditing",
+      "Intent: Active-Validation",
+      "Intent: Active-Risk Management",
+      "Intent: Active-Executive Management",
+      "Intent: Undetermined"
+    ],
+    "stages": ["Lead","Conversion","Paying Customer","Partner"],
+
+    "scoring": {
+      "halfLifeDays": 14,
+      "lookbackDays": 30,
+      "timeOnPageBoostThresholdSec": 45,
+      "kindWeights": {
+        "pricing_click":    { "auditing": 2, "validation": 2, "risk": 2, "executive": 1 },
+        "webinar_attended": { "auditing": 7, "validation": 7, "risk": 5, "executive": 4 },
+        "chat_topic":       { "auditing": 8, "validation": 8, "risk": 6, "executive": 5 },
+        "download":         { "auditing": 5, "validation": 5, "risk": 4, "executive": 2 },
+        "video_watch":      { "auditing": 4, "validation": 4, "risk": 4, "executive": 3 },
+        "web_click":        { "auditing": 3, "validation": 3, "risk": 3, "executive": 2 },
+        "purchase":         { "auditing": 12, "validation": 12, "risk": 10, "executive": 8, "hardOverride": true },
+        "cancel":           { "auditing": -6, "validation": -6, "risk": -6, "executive": -6 },
+        "reply":            { "auditing": 4, "validation": 4, "risk": 4, "executive": 4 },
+        "custom":           {}
+      }
+    },
+
+    "guardrails": {
+      "minAbs": 10,
+      "minDelta": 7,
+      "minRatio": 1.3,
+      "cooldownDays": 7
+    }
+  },
+
+  "reconciliation": {
+    "agent_truth_wins": true,
+    "write_back_queue": { "max_retries": 5, "base_backoff_seconds": 2, "jitter": true },
+    "max_switches_per_7d": 1,
+    "hard_override_kinds": ["purchase","booked_audit","contract_signed"],
+    "cold_start_intent": "Intent: Undetermined",
+    "dropoff_tag_after_days": 60
+  },
+
+  "telemetry": {
+    "log_level": "info",
+    "audit_files": {
+      "decisions": "logs/decisions.jsonl",
+      "reconciliations": "logs/reconcile.jsonl"
+    }
+  },
+
+  "scheduler": {
+    "daily_scoring_sweep_utc": "02:00",
+    "dashboard_review_utc": "02:15"
+  },
+
+  "dashboards": {
+    "clarity_rubric": {
+      "rubric_version": "1.0",
+      "owner_agent": "chief-of-staff-agent",
+      "review_cadence": { "frequency": "daily", "time_utc": "02:15" },
+      "principles": [
+        "Intent-first: dashboards organized by current user Intent",
+        "Action over archaeology: every element suggests a next step",
+        "Signal-to-noise: hide/merge low-utility metrics",
+        "Consistency: naming, colors, and units are uniform",
+        "Speed & legibility: fast load, readable at a glance"
+      ],
+      "weights": {
+        "signal_to_noise": 0.30,
+        "actionability": 0.25,
+        "intent_alignment": 0.25,
+        "consistency": 0.10,
+        "performance": 0.10
+      },
+      "thresholds": {
+        "min_overall_score": 0.80,
+        "min_category_score": 0.70,
+        "deprecation_days_no_click": 14,
+        "auto_fix_max_diff_lines": 120,
+        "require_HITL_if_over": 0.10
+      },
+      "intent_taxonomy": [
+        "Intent: Active-Auditing",
+        "Intent: Active-Validation",
+        "Intent: Active-Risk Management",
+        "Intent: Active-Executive Management",
+        "Intent: Undetermined"
+      ],
+      "required_views": [
+        { "id": "intent-overview", "title": "Intent Overview", "must_contain": ["intent_distribution","delta_7d","top_opportunities"] },
+        { "id": "funnel-by-intent", "title": "Funnel by Intent", "must_contain": ["lead→conversion→customer","dropoffs"] },
+        { "id": "revenue-by-intent", "title": "Revenue by Intent", "must_contain": ["ARPA","LTV","win_rate"] }
+      ],
+      "naming_rules": {
+        "tiles": { "prefixes": ["Intent:","Stage:","Revenue","Source:","Agent:"], "disallow": ["Misc","Other","Temp"] },
+        "units": { "currency": "USD", "time_format": "UTC_ISO", "percent_format": "0.0%" }
+      },
+      "performance_budget": { "max_ttfb_ms": 500, "max_first_paint_ms": 1200, "max_bundle_kb": 600 },
+      "actions": {
+        "auto_hide_rules": [
+          { "if": "no_clicks_days >= 14", "then": "hide" },
+          { "if": "intent_alignment_score < 0.5", "then": "hide" }
+        ],
+        "auto_merge_rules": [
+          { "if": "tiles_same_intent > 3 AND click_share_top2 < 0.85", "then": "merge_to_two" }
+        ],
+        "auto_promote_rules": [
+          { "if": "tile_actionability_score >= 0.9 AND click_share >= 0.3", "then": "promote_above_the_fold" }
+        ],
+        "fix_order": ["auto_hide_rules","auto_merge_rules","auto_promote_rules"]
+      }
+    }
+  }
+}

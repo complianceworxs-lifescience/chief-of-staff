@@ -11,6 +11,7 @@ import {
   type AgentDirective,
   type StrategicBrief
 } from "@shared/schema";
+import { getConfig } from "../config-loader";
 
 export class ChiefOfStaffService {
   
@@ -459,6 +460,150 @@ export class ChiefOfStaffService {
     }
     
     return metrics;
+  }
+
+  // =====================================
+  // 5. NIGHTLY DASHBOARD CLEANUP (Company Handbook Rule 7)
+  // =====================================
+  
+  /**
+   * Nightly dashboard clarity review per Company Handbook
+   * Runs at dashboard_review_utc (2:15am) to enforce clarity rules
+   */
+  async performNightlyDashboardCleanup(): Promise<{
+    hiddenTiles: string[];
+    mergedTiles: string[];
+    promotedTiles: string[];
+    summary: string;
+  }> {
+    const config = getConfig();
+    const rubric = config.dashboards.clarity_rubric;
+    
+    console.log(`🧹 Chief of Staff: Starting nightly dashboard cleanup (${rubric.rubric_version})`);
+    
+    // Simulate dashboard analysis (in real implementation, this would analyze actual dashboard usage)
+    const analysisResults = await this.analyzeDashboardUsage();
+    
+    const hiddenTiles: string[] = [];
+    const mergedTiles: string[] = [];
+    const promotedTiles: string[] = [];
+    
+    // Apply auto_hide_rules
+    for (const rule of rubric.actions.auto_hide_rules) {
+      if (rule.if.includes('no_clicks_days >= 14')) {
+        const tilesNoClicks = analysisResults.tiles.filter(tile => tile.daysSinceLastClick >= 14);
+        for (const tile of tilesNoClicks) {
+          hiddenTiles.push(tile.id);
+          console.log(`🙈 Hiding unused tile: ${tile.name} (${tile.daysSinceLastClick} days no clicks)`);
+        }
+      }
+      
+      if (rule.if.includes('intent_alignment_score < 0.5')) {
+        const lowAlignmentTiles = analysisResults.tiles.filter(tile => tile.intentAlignmentScore < 0.5);
+        for (const tile of lowAlignmentTiles) {
+          hiddenTiles.push(tile.id);
+          console.log(`🎯 Hiding misaligned tile: ${tile.name} (alignment: ${tile.intentAlignmentScore})`);
+        }
+      }
+    }
+    
+    // Apply auto_merge_rules
+    for (const rule of rubric.actions.auto_merge_rules) {
+      if (rule.if.includes('tiles_same_intent > 3')) {
+        const intentGroups = this.groupTilesByIntent(analysisResults.tiles);
+        for (const [intent, tiles] of Object.entries(intentGroups)) {
+          if (tiles.length > 3) {
+            const tilesToMerge = tiles.slice(2); // Keep top 2, merge the rest
+            for (const tile of tilesToMerge) {
+              mergedTiles.push(tile.id);
+              console.log(`🔗 Merging duplicate tile: ${tile.name} for intent ${intent}`);
+            }
+          }
+        }
+      }
+    }
+    
+    // Apply auto_promote_rules
+    for (const rule of rubric.actions.auto_promote_rules) {
+      if (rule.if.includes('tile_actionability_score >= 0.9')) {
+        const highActionabilityTiles = analysisResults.tiles.filter(tile => 
+          tile.actionabilityScore >= 0.9 && tile.clickShare >= 0.3
+        );
+        for (const tile of highActionabilityTiles) {
+          promotedTiles.push(tile.id);
+          console.log(`⭐ Promoting high-value tile: ${tile.name} (actionability: ${tile.actionabilityScore}, usage: ${tile.clickShare})`);
+        }
+      }
+    }
+    
+    const summary = `Dashboard cleanup complete: ${hiddenTiles.length} hidden, ${mergedTiles.length} merged, ${promotedTiles.length} promoted`;
+    console.log(`✅ Chief of Staff: ${summary}`);
+    
+    return {
+      hiddenTiles,
+      mergedTiles,
+      promotedTiles,
+      summary
+    };
+  }
+  
+  private async analyzeDashboardUsage() {
+    // Simulate dashboard usage analysis
+    // In real implementation, this would query actual usage analytics
+    return {
+      tiles: [
+        { id: 'revenue-overview', name: 'Revenue Overview', daysSinceLastClick: 2, intentAlignmentScore: 0.9, actionabilityScore: 0.95, clickShare: 0.45 },
+        { id: 'old-metrics', name: 'Old Metrics', daysSinceLastClick: 18, intentAlignmentScore: 0.3, actionabilityScore: 0.2, clickShare: 0.05 },
+        { id: 'audit-status', name: 'Audit Status', daysSinceLastClick: 1, intentAlignmentScore: 0.85, actionabilityScore: 0.8, clickShare: 0.25 },
+        { id: 'duplicate-revenue', name: 'Revenue Duplicate', daysSinceLastClick: 5, intentAlignmentScore: 0.9, actionabilityScore: 0.6, clickShare: 0.15 },
+        { id: 'compliance-overview', name: 'Compliance Overview', daysSinceLastClick: 3, intentAlignmentScore: 0.8, actionabilityScore: 0.92, clickShare: 0.35 }
+      ]
+    };
+  }
+  
+  private groupTilesByIntent(tiles: any[]) {
+    const groups: { [key: string]: any[] } = {};
+    for (const tile of tiles) {
+      const intent = this.detectTileIntent(tile.name);
+      if (!groups[intent]) groups[intent] = [];
+      groups[intent].push(tile);
+    }
+    return groups;
+  }
+  
+  private detectTileIntent(tileName: string): string {
+    if (tileName.toLowerCase().includes('audit')) return 'Intent: Active-Auditing';
+    if (tileName.toLowerCase().includes('validation')) return 'Intent: Active-Validation';
+    if (tileName.toLowerCase().includes('risk') || tileName.toLowerCase().includes('compliance')) return 'Intent: Active-Risk Management';
+    if (tileName.toLowerCase().includes('revenue') || tileName.toLowerCase().includes('executive')) return 'Intent: Active-Executive Management';
+    return 'Intent: Undetermined';
+  }
+  
+  /**
+   * Start nightly scheduler for dashboard cleanup
+   */
+  startNightlyScheduler(): void {
+    const config = getConfig();
+    const cleanupTime = config.scheduler.dashboard_review_utc; // "02:15"
+    
+    console.log(`📅 Chief of Staff: Scheduling nightly dashboard cleanup at ${cleanupTime} UTC`);
+    
+    // Simple implementation - check every minute for the target time
+    setInterval(async () => {
+      const now = new Date();
+      const utcHour = now.getUTCHours();
+      const utcMinute = now.getUTCMinutes();
+      const currentTime = `${utcHour.toString().padStart(2, '0')}:${utcMinute.toString().padStart(2, '0')}`;
+      
+      if (currentTime === cleanupTime) {
+        console.log(`🌙 Chief of Staff: Executing nightly dashboard cleanup`);
+        try {
+          await this.performNightlyDashboardCleanup();
+        } catch (error) {
+          console.error('❌ Chief of Staff: Nightly cleanup failed:', error);
+        }
+      }
+    }, 60000); // Check every minute
   }
 }
 

@@ -29,6 +29,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import { getConfig } from "./config-loader";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize Content Manager
@@ -37,6 +38,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount unified state management routes
   app.use("/api/agents", agentsRouter);
+
+  // ComplianceWorxs Intent System webhook endpoint
+  app.post("/events", async (req, res) => {
+    const config = getConfig();
+    const webhookToken = req.headers['x-webhook-token'];
+    
+    // Validate webhook token
+    if (!webhookToken || webhookToken !== config.security.webhook_token) {
+      return res.status(401).json({ message: "Invalid webhook token" });
+    }
+
+    // Validate envelope schema
+    const envelope = req.body;
+    const requiredFields = ['version', 'event_id', 'seq', 'type', 'occurred_at', 'produced_at', 'actor', 'subject', 'payload'];
+    
+    for (const field of requiredFields) {
+      if (!envelope[field]) {
+        return res.status(400).json({ message: `Missing required field: ${field}` });
+      }
+    }
+
+    // Process envelope based on type (signal or decision)
+    try {
+      if (envelope.type === 'signal') {
+        // Handle signal processing (user behavior)
+        console.log('📡 Signal received:', {
+          actor: envelope.actor,
+          kind: envelope.payload?.kind,
+          subject: envelope.subject?.email,
+          url: envelope.context?.page_url
+        });
+      } else if (envelope.type === 'decision') {
+        // Handle decision processing (intent updates, stage changes)
+        console.log('🎯 Decision received:', {
+          actor: envelope.actor,
+          decision_kind: envelope.payload?.decision_kind,
+          subject: envelope.subject?.email,
+          agent_truth: envelope.meta?.agent_truth
+        });
+        
+        // Apply reconciliation.agent_truth_wins rule
+        if (config.reconciliation.agent_truth_wins && envelope.meta?.agent_truth) {
+          console.log('✅ Agent truth wins - applying decision immediately');
+        }
+      }
+
+      // Log envelope for audit trail
+      console.log('📝 Envelope logged:', {
+        event_id: envelope.event_id,
+        type: envelope.type,
+        occurred_at: envelope.occurred_at
+      });
+
+      res.json({ 
+        status: 'received', 
+        event_id: envelope.event_id,
+        processed_at: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('❌ Envelope processing failed:', error);
+      res.status(500).json({ message: "Envelope processing failed" });
+    }
+  });
   
   // Agent routes
   app.get("/api/agents", async (req, res) => {

@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { conflictMonitor } from "./services/conflict-monitor";
+import { loadConfig } from "./config-loader";
 
 const app = express();
 app.use(express.json());
@@ -38,6 +39,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Load configuration at startup
+  const config = loadConfig();
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -80,6 +84,12 @@ app.use((req, res, next) => {
     import("./services/active-intervention").then(module => {
       module.activeInterventionEngine.start();
       log("Active intervention engine started - Taking preventive actions");
+    });
+    
+    // Start Chief of Staff nightly dashboard cleanup scheduler
+    import("./services/chief-of-staff").then(module => {
+      module.chiefOfStaff.startNightlyScheduler();
+      log("Chief of Staff nightly scheduler started - Dashboard cleanup at 02:15 UTC");
     });
     
     log("Autonomous conflict monitoring started - No HITL required");
