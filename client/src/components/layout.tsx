@@ -1,9 +1,10 @@
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap, ChevronDown } from "lucide-react";
+import { Bell, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap, ChevronDown, Bot } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import chiefOfStaffIcon from "@assets/Screenshot (7)_1756066733450.png";
 
 interface Conflict {
   id: string;
@@ -43,7 +44,7 @@ export function Layout({ children }: LayoutProps) {
       icon: Search,
       submenu: [
         { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp },
-        { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
+        { path: "/ai-assistant", label: "AI Assistant", icon: Bot }
       ]
     }
   ];
@@ -71,7 +72,7 @@ export function Layout({ children }: LayoutProps) {
             <div className="flex items-center space-x-4">
               <Link href="/">
                 <div className="flex items-center space-x-2 cursor-pointer">
-                  <Brain className="h-8 w-8 text-primary" />
+                  <img src={chiefOfStaffIcon} alt="Chief of Staff" className="h-8 w-8 object-contain" />
                   <h1 className="text-xl font-bold text-gray-900">Chief of Staff</h1>
                 </div>
               </Link>
