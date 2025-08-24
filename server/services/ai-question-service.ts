@@ -119,7 +119,7 @@ export class AiQuestionService {
       const systemContext = this.buildSystemContext(data);
       
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        model: "gpt-3.5-turbo", // Using GPT-3.5-turbo as user's API key doesn't have GPT-4 access
         messages: [
           {
             role: "system",
