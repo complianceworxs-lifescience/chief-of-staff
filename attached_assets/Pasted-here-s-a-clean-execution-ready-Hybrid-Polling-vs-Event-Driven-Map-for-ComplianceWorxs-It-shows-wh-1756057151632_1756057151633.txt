@@ -1,0 +1,146 @@
+here’s a clean, execution-ready Hybrid Polling vs. Event-Driven Map for ComplianceWorxs. It shows what should be webhook/push-driven (no polling), what can safely run at 10 polls/day, and where you need higher-urgency fallbacks.
+
+Hybrid Trigger Map (by Agent)
+CRO Agent — Revenue & Upsells (Keep responsive)
+
+Event-driven (use webhooks; no polling):
+
+Stripe: checkout.session.completed, invoice.payment_succeeded/failed, customer.subscription.updated/deleted
+
+MemberPress / WP: “subscription created/updated/canceled,” “member status changed” (use WP hooks or MemberPress webhooks)
+
+Fluent Forms: “lead submitted,” “quiz completed,” “segment assigned”
+
+Polling fallback (max 10/day):
+
+Revenue attribution reconciliation (Stripe ↔ MemberPress ↔ internal).
+
+Partner referral checks if no webhook available.
+
+If only 10/day: Slower attribution and upsell trigger latency (2–3h).
+SLA: Payment & cancellation actions must arrive via webhooks → 0–5 min reaction; reconciliation OK at ~2–3h.
+
+CMO Agent — Marketing & Nurture (OK at 10/day)
+
+Event-driven:
+
+MailerLite: subscriber added/updated, campaign sent, automation step completed
+
+Fluent Forms: segmentation outcomes, content requests
+
+WordPress: post published/updated (hook)
+
+Polling fallback (10/day):
+
+Channel analytics pulls (LinkedIn, blog traffic snapshots), UTMs, share metrics.
+
+Creative A/B rollups.
+
+If only 10/day: Nurture steps based purely on analytics timestamps lag; email series still instant if automation is MailerLite-driven.
+SLA: Nurture sends via MailerLite automations = instant; analytics rollups q2.5h fine.
+
+COO Agent — Onboarding & Ops (Mix: webhooks + faster fallback)
+
+Event-driven:
+
+Fluent Forms: onboarding step submissions
+
+MemberPress/Stripe: activation, plan change
+
+WP: role changed, access granted
+
+Polling fallback:
+
+Onboarding health check every 30–60 min (exception to 10/day) until step-3 bug is fully eliminated.
+
+Daily SLA sweeps: missing access, failed provisioning, stuck steps (10/day OK).
+
+If only 10/day: Onboarding breakages could linger 2–3h.
+SLA: Critical onboarding validation every 30–60 min (or event-driven); routine sweeps 10/day.
+
+CCO Agent — Compliance & Governance (10/day OK)
+
+Event-driven:
+
+SOP/version update events, validation checklist submissions (via forms/hooks)
+
+Polling fallback (10/day):
+
+Audit-trail integrity scans, diff checks, evidence packaging status.
+If only 10/day: Fine—compliance artifacts aren’t minute-critical.
+SLA: Evidence completeness checks daily; exception alerts via webhooks immediately.
+
+CEO Agent — Strategy & OKR pacing (10/day ideal)
+
+Event-driven:
+
+Signals from CRO/COO/CMO when KPIs cross thresholds (push a “pacing_updated” event)
+
+Polling fallback (10/day):
+
+Recompute glidepaths, deltas, forecast risk.
+If only 10/day: Perfectly fine for exec pacing.
+SLA: Update OKR pacing every ~2–3h or on push.
+
+Content Manager Agent — Publishing Flow (10/day)
+
+Event-driven:
+
+WP post/page publish/update, asset upload complete
+Polling fallback (10/day):
+
+Link checks, image alt/a11y audits, metadata QA
+If only 10/day: Fine; content QA not time-critical.
+SLA: Pre-publish checks at event time; post-publish sweep within 2–3h.
+
+Market Intelligence Agent — External Signals (10/day)
+
+Event-driven:
+
+If any third-party sends push notifications (rare)
+
+Polling fallback (10/day):
+
+Trends, competitor pages, partner listings, keyword ranks (where allowed)
+If only 10/day: Fine for weekly reporting.
+SLA: At most every 2–3h; high-cost jobs can be 2–4/day.
+
+Chief of Staff — Orchestration (10/day)
+
+Event-driven:
+
+Listen to all agents’ “state_changed” / “error_raised” / “kpi_crossed” events
+Polling fallback (10/day):
+
+Produce weekly JSON + dashboard refreshes, reconcile missing events.
+SLA: Decision queues and escalations fire on push; weekly compilation runs on schedule.
+
+Alerting & SLOs (keep these even at 10/day)
+
+Payments & Cancels (CRO): webhook → alert if not processed in <5 min.
+
+Onboarding criticals (COO): webhook or ≤60 min poll; alert if step fails twice.
+
+MTTR Targets: CRO <30 min, COO <60 min, others <2–3h.
+
+Autonomy Health: Auto-resolve ≥ 85%, escalation ≤ 5/day.
+
+Cost Guardrails: If token/compute > +20% WoW, scale back Market Intel sampling before anything revenue-touching.
+
+Cron/Scheduler Layout (10/day baseline)
+
+Even spacing across local time (America/New_York):
+
+02:00  Chief-of-Staff sweep  (weekly JSON build if Sunday)
+04:30  COO onboarding sweep (fast check if no webhook)
+07:00  CRO revenue recon rollup
+09:30  CMO analytics rollup
+12:00  CEO OKR recalculation
+14:30  Market Intel daily slice
+17:00  CRO partner/referral reconciliation
+19:30  CCO evidence completeness check
+22:00  Dashboard refresh + cache warm
+23:59  Final day closeout + anomaly scan
+
+
+Keep webhooks active at all hours for Stripe, MemberPress/WP, MailerLite, Fluent Forms.
