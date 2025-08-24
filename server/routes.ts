@@ -1488,6 +1488,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/recommendations", (await import("./routes/recommendations")).default);
   app.use("/api/tier2", (await import("./routes/tier2")).default);
   app.use("/api/tier3", (await import("./routes/tier3")).default);
+  
+  // Experiment OS integration
+  app.use("/experiments", (await import("./routes/experiments")).default);
 
   const httpServer = createServer(app);
   return httpServer;

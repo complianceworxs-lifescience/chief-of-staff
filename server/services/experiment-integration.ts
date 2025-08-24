@@ -1,16 +1,17 @@
-import fetch from 'node-fetch';
+import fs from "fs";
+import path from "path";
 
+// Types for experiment data structures
 export interface ExperimentDefinition {
   id: string;
   page_slug: string;
   hypothesis: string;
-  metric: string;
   variants: Record<string, any>;
   run_until?: {
     min_sessions?: number;
     min_days?: number;
   };
-  guardrails?: Record<string, any>;
+  created_at?: string;
 }
 
 export interface ExperimentReport {
@@ -34,99 +35,238 @@ export interface ExperimentAlert {
   msg: string;
 }
 
-class ExperimentIntegrationService {
-  private readonly baseUrl: string;
-  private readonly adminToken: string;
+export class ExperimentIntegrationService {
+  private dataPath: string;
 
   constructor() {
-    this.baseUrl = `http://localhost:${process.env.EXP_PORT || 3001}`;
-    this.adminToken = process.env.ADMIN_TOKEN || "cw-chief-of-staff-2025";
+    this.dataPath = path.join(process.cwd(), "data");
+    this.ensureDataDirectory();
   }
 
-  private async makeRequest(endpoint: string, options: any = {}): Promise<any> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${this.adminToken}`,
-      ...options.headers
+  private ensureDataDirectory() {
+    if (!fs.existsSync(this.dataPath)) {
+      fs.mkdirSync(this.dataPath, { recursive: true });
+    }
+    
+    // Initialize default files if they don't exist
+    const files = {
+      experiments: path.join(this.dataPath, "experiments.json"),
+      ledger: path.join(this.dataPath, "attribution_ledger.json"),
+      playbook: path.join(this.dataPath, "playbook.md"),
+      alerts: path.join(this.dataPath, "alerts.json")
     };
 
-    try {
-      const response = await fetch(url, { ...options, headers });
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    for (const [key, filePath] of Object.entries(files)) {
+      if (!fs.existsSync(filePath)) {
+        if (key === "playbook") {
+          fs.writeFileSync(filePath, "# ComplianceWorxs Growth Playbook\n\n");
+        } else {
+          fs.writeFileSync(filePath, "[]");
+        }
       }
-      return await response.json();
-    } catch (error) {
-      console.error(`Experiment OS API error: ${(error as Error).message}`);
-      throw error;
     }
   }
 
+  private readJSON(filename: string): any[] {
+    const filePath = path.join(this.dataPath, filename);
+    try {
+      return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch {
+      return [];
+    }
+  }
+
+  private writeJSON(filename: string, data: any): void {
+    const filePath = path.join(this.dataPath, filename);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  }
+
+  // Thompson-sampling helpers
+  private ensurePosteriors(exp: any) {
+    exp.post = exp.post || {};
+    for (const key of Object.keys(exp.variants)) {
+      if (!exp.post[key]) {
+        exp.post[key] = { 
+          alpha: 1, 
+          beta: 1, 
+          revenue: 0, 
+          purchases: 0, 
+          clicks: 0, 
+          sessions: 0 
+        };
+      }
+    }
+    return exp;
+  }
+
   async createExperiment(experiment: ExperimentDefinition): Promise<any> {
-    return this.makeRequest('/xp/define', {
-      method: 'POST',
-      body: JSON.stringify(experiment)
-    });
+    const experiments = this.readJSON("experiments.json");
+    experiment.created_at = experiment.created_at || new Date().toISOString();
+    
+    const existingIndex = experiments.findIndex((e: any) => e.id === experiment.id);
+    if (existingIndex >= 0) {
+      experiments[existingIndex] = { ...experiments[existingIndex], ...experiment };
+    } else {
+      experiments.push(experiment);
+    }
+    
+    this.writeJSON("experiments.json", experiments);
+    return { ok: true, experiment };
   }
 
   async getExperimentReport(experimentId: string): Promise<ExperimentReport> {
-    return this.makeRequest(`/xp/report?exp=${encodeURIComponent(experimentId)}`) as Promise<ExperimentReport>;
+    const experiments = this.readJSON("experiments.json");
+    const exp = experiments.find((e: any) => e.id === experimentId);
+    
+    if (!exp) {
+      throw new Error("Experiment not found");
+    }
+
+    const post = exp.post || {};
+    const summary = Object.fromEntries(
+      Object.entries(post).map(([k, v]: [string, any]) => [
+        k,
+        {
+          sessions: v.sessions || 0,
+          clicks: v.clicks || 0,
+          purchases: v.purchases || 0,
+          revenue: v.revenue || 0,
+          purchase_rate: v.sessions ? (v.purchases / v.sessions) : 0,
+          ctr: v.sessions ? (v.clicks / v.sessions) : 0
+        }
+      ])
+    );
+
+    return {
+      id: exp.id,
+      page: exp.page_slug,
+      hypothesis: exp.hypothesis,
+      summary
+    };
   }
 
   async listExperiments(): Promise<any[]> {
-    return this.makeRequest('/xp/overview') as Promise<any[]>;
+    const experiments = this.readJSON("experiments.json");
+    return experiments.map((e: any) => ({
+      id: e.id,
+      page: e.page_slug,
+      created_at: e.created_at,
+      variants: Object.keys(e.variants || {})
+    }));
   }
 
   async promoteWinner(experimentId: string, winner: string): Promise<any> {
-    return this.makeRequest('/xp/promote', {
-      method: 'POST',
-      body: JSON.stringify({ exp: experimentId, winner })
-    });
+    const experiments = this.readJSON("experiments.json");
+    const exp = experiments.find((e: any) => e.id === experimentId);
+    
+    if (!exp) {
+      throw new Error("Experiment not found");
+    }
+    
+    if (!exp.post || !exp.post[winner]) {
+      throw new Error("Invalid winner variant");
+    }
+
+    const w = exp.post[winner];
+    const playbookEntry = `## ${experimentId}
+- Page: /${exp.page_slug}
+- Winner: **${winner} – ${exp.variants[winner]?.label || ""}**
+- Revenue: $${(w.revenue || 0).toFixed(2)} | Purchases: ${w.purchases} | CTR: ${(w.clicks / (w.sessions || 1) * 100).toFixed(1)}%
+- Hypothesis: ${exp.hypothesis || ""}
+- Next: iterate on message/placement that drove uplift.
+\n`;
+
+    const playbookPath = path.join(this.dataPath, "playbook.md");
+    fs.appendFileSync(playbookPath, playbookEntry);
+    
+    return { ok: true, appended_to_playbook: true };
   }
 
   async getAlerts(): Promise<ExperimentAlert[]> {
-    return this.makeRequest('/alerts') as Promise<ExperimentAlert[]>;
+    return this.readJSON("alerts.json");
   }
 
   async checkHealth(): Promise<any> {
-    return this.makeRequest('/health');
+    return { 
+      status: "healthy", 
+      service: "experiment-os-integrated", 
+      timestamp: new Date().toISOString() 
+    };
   }
 
-  // Auto-create experiment from strategic plan
-  async createExperimentFromPlan(plan: any): Promise<string> {
-    const experimentId = `exp_${new Date().getFullYear()}_${String(new Date().getMonth() + 1).padStart(2, '0')}_${plan.title.toLowerCase().replace(/\s+/g, '_')}`;
-    
-    const experiment: ExperimentDefinition = {
-      id: experimentId,
-      page_slug: this.inferPageSlug(plan),
-      hypothesis: `Implementation of "${plan.title}" will improve key performance metrics`,
-      metric: 'revenue',
-      variants: {
-        A: { label: 'Control', description: 'Current approach' },
-        B: { label: 'Strategic Plan', description: plan.description }
-      },
-      run_until: {
-        min_sessions: 120,
-        min_days: 7
-      },
-      guardrails: {
-        max_bounce_increase: 0.10,
-        max_revenue_decrease: 0.05
+  // Integration methods for autonomous agent system
+  async createAbTestFromStrategy(plan: any): Promise<void> {
+    // Automatically create A/B tests for strategies involving marketing
+    if (plan.assignedAgents && plan.assignedAgents.includes('cmo') && plan.priority === 'high') {
+      const experimentDef: ExperimentDefinition = {
+        id: `auto_${plan.id}`,
+        page_slug: "strategy-implementation",
+        hypothesis: `Implementation of ${plan.title} will improve key performance metrics`,
+        variants: {
+          "control": { 
+            label: "Current Approach", 
+            description: "Continue with existing strategy" 
+          },
+          "strategic": { 
+            label: "Strategic Plan", 
+            description: plan.description 
+          }
+        }
+      };
+      
+      await this.createExperiment(experimentDef);
+      console.log(`🧪 Auto-created experiment for strategic plan: ${plan.title}`);
+    }
+  }
+
+  // CMO Agent integration for marketing campaigns
+  async createMarketingExperiment(campaign: any): Promise<string> {
+    const experimentDef: ExperimentDefinition = {
+      id: `marketing_${campaign.id}_${Date.now()}`,
+      page_slug: campaign.targetPage || "homepage",
+      hypothesis: `${campaign.hypothesis} will increase ${campaign.targetMetric}`,
+      variants: campaign.variants || {
+        "control": { label: "Original", description: "Current version" },
+        "test": { label: "Optimized", description: campaign.description }
       }
     };
 
-    await this.createExperiment(experiment);
-    return experimentId;
+    await this.createExperiment(experimentDef);
+    return experimentDef.id;
   }
 
-  private inferPageSlug(plan: any): string {
-    // Simple inference based on plan content
-    const title = plan.title.toLowerCase();
-    if (title.includes('revenue') || title.includes('pricing')) return 'pricing';
-    if (title.includes('marketing') || title.includes('content')) return 'home';
-    if (title.includes('retention') || title.includes('customer')) return 'dashboard';
-    return 'home';
+  // Revenue attribution for CRO Agent
+  async getRevenueAttribution(timeframe: string = "30d"): Promise<any> {
+    const ledger = this.readJSON("attribution_ledger.json");
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - (timeframe === "30d" ? 30 : 7));
+
+    const recentEvents = ledger.filter((event: any) => 
+      new Date(event.ts) > cutoff && event.event === "purchase"
+    );
+
+    const byExperiment = recentEvents.reduce((acc: any, event: any) => {
+      if (!acc[event.exp]) {
+        acc[event.exp] = { revenue: 0, purchases: 0, variants: {} };
+      }
+      acc[event.exp].revenue += event.value || 0;
+      acc[event.exp].purchases += 1;
+      
+      if (!acc[event.exp].variants[event.variant]) {
+        acc[event.exp].variants[event.variant] = { revenue: 0, purchases: 0 };
+      }
+      acc[event.exp].variants[event.variant].revenue += event.value || 0;
+      acc[event.exp].variants[event.variant].purchases += 1;
+      
+      return acc;
+    }, {});
+
+    return {
+      timeframe,
+      totalRevenue: Object.values(byExperiment).reduce((sum: number, exp: any) => sum + exp.revenue, 0),
+      totalPurchases: Object.values(byExperiment).reduce((sum: number, exp: any) => sum + exp.purchases, 0),
+      byExperiment
+    };
   }
 }
 
