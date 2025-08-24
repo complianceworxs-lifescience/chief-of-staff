@@ -36,7 +36,6 @@ export function Layout({ children }: LayoutProps) {
         { path: "/directives", label: "Directives", icon: Users }
       ]
     },
-    { path: "/intervention", label: "Active Intervention", icon: Zap },
     { 
       path: "/market-intelligence", 
       label: "Market Intelligence", 

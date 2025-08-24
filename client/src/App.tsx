@@ -14,7 +14,6 @@ import AnalyticsPage from "@/pages/analytics";
 import AiAssistant from "@/pages/ai-assistant";
 import GovernancePage from "@/pages/governance";
 import { MarketIntelligence } from "@/pages/market-intelligence";
-import ActiveInterventionPage from "@/pages/active-intervention";
 import COODashboard from "@/pages/coo-dashboard";
 import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
@@ -31,7 +30,6 @@ function Router() {
         <Route path="/ai-assistant" component={AiAssistant} />
         <Route path="/governance" component={GovernancePage} />
         <Route path="/market-intelligence" component={MarketIntelligence} />
-        <Route path="/intervention" component={ActiveInterventionPage} />
         <Route path="/coo" component={COODashboard} />
         <Route path="/governance/dashboard" component={GovernanceDashboard} />
         <Route component={NotFound} />
