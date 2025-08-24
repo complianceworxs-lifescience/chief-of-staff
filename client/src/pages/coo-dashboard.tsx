@@ -306,36 +306,6 @@ export default function COODashboard() {
         </CardContent>
       </Card>
 
-      {/* Performance Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            COO Excellence Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-green-900">Operational Excellence</h4>
-                <p className="text-sm text-green-700 mt-1">
-                  Your COO agent is managing the operational engine room with exceptional efficiency. 
-                  As your "Ops machine," it handles workflow execution, productivity tracking, and cost management 
-                  while the Chief of Staff coordinates strategic alignment. Risk score of 1 indicates optimal operational performance.
-                </p>
-                <div className="flex gap-4 mt-3 text-xs text-green-600">
-                  <span>• Zero operational blockers</span>
-                  <span>• Smooth workflow execution</span>
-                  <span>• Efficient cost management</span>
-                  <span>• Reports to Chief of Staff</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { AgentStatusCardWithRemediation } from "@/components/agent-status-card-w
 import { ConflictCard } from "@/components/conflict-card";
 import { StrategicAlignment } from "@/components/strategic-alignment";
 import { WeeklyReports } from "@/components/weekly-reports";
-import { SystemControls } from "@/components/system-controls";
 import { AutonomyTrafficLights } from "@/components/autonomy-traffic-lights";
 import { LiveMetricsDashboard } from "@/components/live-metrics-dashboard";
 import { ConflictResolutionIndicator } from "@/components/conflict-resolution-indicator";
@@ -401,10 +400,6 @@ export default function Dashboard() {
           <WeeklyReports />
         </div>
 
-        {/* System Controls */}
-        <div className="mb-8">
-          <SystemControls />
-        </div>
     </div>
   );
 }
