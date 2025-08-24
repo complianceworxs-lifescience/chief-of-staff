@@ -33,7 +33,8 @@ export function Layout({ children }: LayoutProps) {
       icon: TrendingUp,
       submenu: [
         { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
-        { path: "/directives", label: "Directives", icon: Users }
+        { path: "/directives", label: "Directives", icon: Users },
+        { path: "/governance", label: "Governance", icon: Settings }
       ]
     },
     { 
@@ -44,7 +45,6 @@ export function Layout({ children }: LayoutProps) {
         { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp }
       ]
     },
-    { path: "/governance", label: "Governance", icon: Settings },
     { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
   ];
 
