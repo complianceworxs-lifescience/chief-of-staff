@@ -1,0 +1,114 @@
+// ComplianceWorxs Experiment OS (single-file, Replit-ready)
+// Agents run daily tests, tie actions to revenue, evolve playbooks, and predict drift.
+// Owner: Chief of Staff. CEO sets KPIs/guardrails (not clicking buttons).
+
+const express = require("express");
+const fetch = require("node-fetch");
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+const app = express();
+app.use(express.json({ limit: "1mb" }));
+
+// ----- Config (Replit Secrets) -----
+// ADMIN_TOKEN: protects admin endpoints
+// (Optional) WP_* only if you later want the service to promote winners into WP automatically.
+const PORT = process.env.PORT || 3000;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+
+// ----- Data store (flat files) -----
+const DATA = path.join(__dirname, "data");
+const F = (n) => path.join(DATA, n);
+if (!fs.existsSync(DATA)) fs.mkdirSync(DATA);
+
+const FILES = {
+  exps: F("experiments.json"),
+  ledger: F("attribution_ledger.json"),
+  playbook: F("playbook.md"),
+  alerts: F("alerts.json")
+};
+for (const [k, v] of Object.entries(FILES)) {
+  if (!fs.existsSync(v)) fs.writeFileSync(v, k === "playbook" ? "# ComplianceWorxs Growth Playbook\n\n" : (k === "exps" ? "[]" : "[]"));
+}
+
+// ----- Utils -----
+const readJSON = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
+const writeJSON = (f, x) => fs.writeFileSync(f, JSON.stringify(x, null, 2));
+const nowISO = () => new Date().toISOString();
+
+function requireAdmin(req, res, next) {
+  if (!ADMIN_TOKEN) return res.status(500).json({ error: "ADMIN_TOKEN not set" });
+  if ((req.headers.authorization || "") !== `Bearer ${ADMIN_TOKEN}`) return res.status(403).json({ error: "Forbidden" });
+  next();
+}
+
+// Thompson-sampling helpers
+function ensurePosteriors(exp) {
+  exp.post = exp.post || {};
+  for (const key of Object.keys(exp.variants)) {
+    if (!exp.post[key]) exp.post[key] = { alpha: 1, beta: 1, revenue: 0, purchases: 0, clicks: 0, sessions: 0 };
+  }
+  return exp;
+}
+function sampleVariant(exp) {
+  ensurePosteriors(exp);
+  let best = null, bestScore = -1;
+  for (const [k, p] of Object.entries(exp.post)) {
+    // simple beta mean + tiny revenue tie-breaker
+    const score = p.alpha / (p.alpha + p.beta) + (p.revenue || 0) * 1e-9;
+    if (score > bestScore) { best = k; bestScore = score; }
+  }
+  return best || Object.keys(exp.variants)[0];
+}
+
+// ----- API: Experiments -----
+
+// Define or update an experiment
+// Body: { id, page_slug, hypothesis, metric:"revenue", variants:{A:{...},B:{...}}, run_until:{min_sessions,min_days}, guardrails:{...} }
+app.post("/xp/define", requireAdmin, (req, res) => {
+  const exps = readJSON(FILES.exps);
+  const incoming = req.body || {};
+  if (!incoming.id || !incoming.variants || Object.keys(incoming.variants).length < 2)
+    return res.status(400).json({ error: "id and >=2 variants required" });
+
+  incoming.created_at ||= nowISO();
+  const i = exps.findIndex(e => e.id === incoming.id);
+  if (i >= 0) exps[i] = { ...exps[i], ...incoming };
+  else exps.push(incoming);
+  writeJSON(FILES.exps, exps);
+  res.json({ ok: true, experiment: incoming });
+});
+
+// Assign a variant (called from page snippet)
+app.get("/xp/assign", (req, res) => {
+  const { exp: id, sid } = req.query;
+  const exps = readJSON(FILES.exps);
+  const exp = exps.find(e => e.id === id);
+  if (!exp) return res.status(404).json({ error: "experiment not found" });
+
+  ensurePosteriors(exp);
+  const variant = sampleVariant(exp);
+  exp.post[variant].sessions += 1;
+
+  // persist session increment
+  writeJSON(FILES.exps, exps.map(e => e.id === id ? exp : e));
+
+  res.json({ variant, payload: exp.variants[variant] });
+});
+
+// Log events (view, click, checkout_start, purchase)
+app.post("/xp/event", (req, res) => {
+  const { exp: id, var: variant, event, value = 0, currency = "USD", session_id, path: pagePath } = req.body || {};
+  const exps = readJSON(FILES.exps);
+  const exp = exps.find(e => e.id === id);
+  if (!exp) return res.status(404).json({ error: "experiment not found" });
+  ensurePosteriors(exp);
+
+  const p = exp.post[variant];
+  if (!p) return res.status(400).json({ error: "invalid variant" });
+
+  if (event === "click") p.clicks += 1;
+  if (event === "purchase") { p.purchases += 1; p.revenue += Number(value || 0); p.alpha += 1; }
+  if (event === "checkout_start") { p.beta += 0.2; } // gentle pressure
+  // views already counted via /ass
