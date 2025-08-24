@@ -65,7 +65,7 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
   // Query for predictions data using unified query keys
   const { data: predictionsData } = useQuery({
     queryKey: qk.conflicts,
-    refetchInterval: 10000, // Refresh every 10 seconds  
+    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
     staleTime: 0, // Always consider data stale to force revalidation
   });
 
@@ -108,7 +108,7 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
   // Add recommendations query
   const { data: recommendationsData } = useQuery({
     queryKey: ['/api/recommendations'],
-    refetchInterval: 30000,
+    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
   });
 
   const implementMutation = useMutation({

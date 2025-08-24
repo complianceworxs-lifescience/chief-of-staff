@@ -25,7 +25,7 @@ export function SmartRecommendations() {
   
   const { data: recommendations, isLoading } = useQuery<SmartRecommendation[]>({
     queryKey: ['/api/recommendations'],
-    refetchInterval: 30000
+    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
   });
 
   const implementRecommendation = useMutation({

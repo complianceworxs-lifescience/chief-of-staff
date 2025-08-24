@@ -51,13 +51,13 @@ export function MarketIntelligence() {
 
   const { data: allSignals = [], isLoading, error } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals'],
-    refetchInterval: 30000, // 30 seconds for faster updates
+    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
     staleTime: 0 // Always fetch fresh data
   });
 
   const { data: highPrioritySignals = [] } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals/high-priority'],
-    refetchInterval: 30000, // 30 seconds for high priority
+    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
     staleTime: 0 // Always fetch fresh data
   });
 

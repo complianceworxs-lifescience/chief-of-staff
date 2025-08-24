@@ -26,17 +26,17 @@ export default function Dashboard() {
 
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
     queryKey: qk.conflictsActive,
-    refetchInterval: 30000 // Check every 30 seconds - cost optimized
+    refetchInterval: 1800000 // Check every 30 minutes - maximum cost savings
   });
 
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
     queryKey: qk.conflictsResolved,
-    refetchInterval: 60000 // Refresh every 60 seconds - cost optimized
+    refetchInterval: 1800000 // Refresh every 30 minutes - maximum cost savings
   });
 
   const { data: systemHealth } = useQuery<any>({
     queryKey: qk.conflictSystemHealth,
-    refetchInterval: 60000 // Monitor every 60 seconds - cost optimized
+    refetchInterval: 1800000 // Monitor every 30 minutes - maximum cost savings
   });
 
   const { data: systemMetrics } = useQuery<SystemMetrics>({

@@ -29,12 +29,12 @@ export function CommunicationDashboard() {
   
   const { data: communications, isLoading: isLoadingComms } = useQuery<AgentCommunication[]>({
     queryKey: ['/api/communications'],
-    refetchInterval: 10000
+    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
   });
 
   const { data: patterns, isLoading: isLoadingPatterns } = useQuery<CollaborationPatterns>({
     queryKey: ['/api/communications/patterns'],
-    refetchInterval: 30000
+    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
   });
 
   const simulateActivity = useMutation({
