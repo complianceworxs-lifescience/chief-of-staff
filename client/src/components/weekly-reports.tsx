@@ -244,28 +244,6 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
         </CardContent>
       </Card>
 
-      {/* Strategic Objectives */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardContent className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Strategic Objectives</h2>
-          <div className="space-y-3">
-            {objectives.map((o, i) => (
-              <div key={i} className="p-4 border rounded-xl">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{o.objective}</div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${o.pace_vs_plan === "behind" || o.pace_vs_plan === "at_risk" ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"}`}>{o.pace_vs_plan}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">Target: {o.target} · Owners: {o.owner_agents.join(", ")}</div>
-                <div className="mt-2">
-                  <Progress value={pct(o.progress_pct)} className="h-2" />
-                </div>
-                <div className="text-sm mt-2">Progress: {o.progress_value} ({pct(o.progress_pct)}%)</div>
-                {o.notes && <div className="text-sm text-muted-foreground mt-1">{o.notes}</div>}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Agent Performance */}
       <Card className="rounded-2xl shadow-sm">
