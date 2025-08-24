@@ -159,15 +159,6 @@ export function Layout({ children }: LayoutProps) {
                   </span>
                 )}
               </button>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">SA</span>
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">System Admin</p>
-                  <p className="text-xs text-gray-500">Chief of Staff</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
