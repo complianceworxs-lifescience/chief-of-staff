@@ -37,9 +37,15 @@ export function Layout({ children }: LayoutProps) {
       ]
     },
     { path: "/intervention", label: "Active Intervention", icon: Zap },
-    { path: "/market-intelligence", label: "Market Intelligence", icon: Search },
+    { 
+      path: "/market-intelligence", 
+      label: "Market Intelligence", 
+      icon: Search,
+      submenu: [
+        { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp }
+      ]
+    },
     { path: "/governance", label: "Governance", icon: Settings },
-    { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp },
     { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
   ];
 
