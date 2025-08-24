@@ -1,7 +1,15 @@
 import { storage } from "../storage";
 import { type InsertAiQuestion, type AiQuestion } from "@shared/schema";
+import OpenAI from "openai";
 
 export class AiQuestionService {
+  private openai: OpenAI;
+
+  constructor() {
+    this.openai = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY 
+    });
+  }
   
   async askQuestion(question: string, context?: string): Promise<AiQuestion> {
     // Determine question category based on keywords
@@ -100,25 +108,127 @@ export class AiQuestionService {
   private async generateResponse(question: string, category: string, data: any): Promise<{ answer: string, relatedIds: string[] }> {
     const relatedIds: string[] = [];
     
-    switch (category) {
-      case 'agent_status':
-        return this.generateAgentStatusResponse(question, data, relatedIds);
-        
-      case 'conflicts':
-        return this.generateConflictResponse(question, data, relatedIds);
-        
-      case 'performance':
-        return this.generatePerformanceResponse(question, data, relatedIds);
-        
-      case 'strategy':
-        return this.generateStrategyResponse(question, data, relatedIds);
-        
-      case 'workload':
-        return this.generateWorkloadResponse(question, data, relatedIds);
-        
-      default:
-        return this.generateGeneralResponse(question, data, relatedIds);
+    // Extract relevant IDs from data
+    if (data.agents) relatedIds.push(...data.agents.map((a: any) => a.id));
+    if (data.conflicts) relatedIds.push(...data.conflicts.map((c: any) => c.id));
+    if (data.objectives) relatedIds.push(...data.objectives.map((o: any) => o.id));
+    if (data.workloads) relatedIds.push(...data.workloads.map((w: any) => w.id));
+
+    try {
+      // Create a comprehensive context for the AI
+      const systemContext = this.buildSystemContext(data);
+      
+      const response = await this.openai.chat.completions.create({
+        model: "gpt-4", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are the Chief of Staff AI for ComplianceWorxs, an autonomous agent management system. You provide intelligent analysis and actionable insights about agent performance, conflicts, strategic objectives, and system operations.
+
+CONTEXT: You are analyzing a system with autonomous agents that handle business operations. The system operates on a $25/day budget constraint and requires complete autonomy with no human intervention.
+
+CURRENT SYSTEM STATE:
+${systemContext}
+
+RESPONSE GUIDELINES:
+- Provide specific, actionable insights based on the actual data
+- Focus on business impact and ROI
+- Address the user's specific question directly
+- Include relevant metrics and performance indicators
+- Suggest concrete next steps when appropriate
+- Keep responses concise but comprehensive
+- Use a professional, strategic tone appropriate for executive-level decisions
+
+QUESTION CATEGORY: ${category}`
+          },
+          {
+            role: "user",
+            content: question
+          }
+        ],
+        max_tokens: 1000,
+        temperature: 0.3
+      });
+
+      const answer = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response at this time. Please try again.";
+      return { answer, relatedIds };
+
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      
+      // Fallback to rule-based responses if API fails
+      switch (category) {
+        case 'agent_status':
+          return this.generateAgentStatusResponse(question, data, relatedIds);
+        case 'conflicts':
+          return this.generateConflictResponse(question, data, relatedIds);
+        case 'performance':
+          return this.generatePerformanceResponse(question, data, relatedIds);
+        case 'strategy':
+          return this.generateStrategyResponse(question, data, relatedIds);
+        case 'workload':
+          return this.generateWorkloadResponse(question, data, relatedIds);
+        default:
+          return this.generateGeneralResponse(question, data, relatedIds);
+      }
     }
+  }
+
+  private buildSystemContext(data: any): string {
+    let context = "";
+    
+    if (data.agents && data.agents.length > 0) {
+      const healthyAgents = data.agents.filter((a: any) => a.status === 'healthy').length;
+      const conflictAgents = data.agents.filter((a: any) => a.status === 'conflict').length;
+      const avgSuccessRate = data.agents.reduce((sum: number, a: any) => sum + (a.successRate || 0), 0) / data.agents.length;
+      
+      context += `AGENTS (${data.agents.length} total):
+- ${healthyAgents} healthy, ${conflictAgents} in conflict
+- Average success rate: ${Math.round(avgSuccessRate)}%
+- Agents: ${data.agents.map((a: any) => `${a.name} (${a.status}, ${a.successRate || 0}% success)`).join(', ')}
+
+`;
+    }
+
+    if (data.systemMetrics) {
+      context += `SYSTEM METRICS:
+- System health: ${data.systemMetrics.systemHealth}%
+- Active tasks: ${data.systemMetrics.activeTasks || 0}
+- Completed tasks: ${data.systemMetrics.completedTasks || 0}
+- Response time: ${data.systemMetrics.averageResponseTime || 'N/A'}ms
+
+`;
+    }
+
+    if (data.conflicts && data.conflicts.length > 0) {
+      const activeConflicts = data.conflicts.filter((c: any) => c.status === 'active').length;
+      context += `CONFLICTS:
+- ${activeConflicts} active conflicts out of ${data.conflicts.length} total
+- Recent conflicts: ${data.conflicts.slice(0, 3).map((c: any) => c.description || 'Unnamed conflict').join(', ')}
+
+`;
+    }
+
+    if (data.objectives && data.objectives.length > 0) {
+      const avgProgress = data.objectives.reduce((sum: number, o: any) => sum + o.progress, 0) / data.objectives.length;
+      context += `STRATEGIC OBJECTIVES (${data.objectives.length} total):
+- Average progress: ${Math.round(avgProgress)}%
+- Objectives: ${data.objectives.map((o: any) => `"${o.title}" (${o.progress}%)`).join(', ')}
+
+`;
+    }
+
+    if (data.workloads && data.workloads.length > 0) {
+      const avgUtilization = data.workloads.reduce((sum: number, w: any) => sum + w.utilizationRate, 0) / data.workloads.length;
+      const overloaded = data.workloads.filter((w: any) => w.utilizationRate > 85).length;
+      context += `WORKLOADS:
+- Average utilization: ${Math.round(avgUtilization)}%
+- ${overloaded} agents overloaded (>85% capacity)
+
+`;
+    }
+
+    return context;
   }
   
   private generateAgentStatusResponse(question: string, data: any, relatedIds: string[]): { answer: string, relatedIds: string[] } {
