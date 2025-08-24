@@ -76,9 +76,6 @@ export function Layout({ children }: LayoutProps) {
                   <h1 className="text-xl font-bold text-gray-900">Chief of Staff</h1>
                 </div>
               </Link>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-600">
-                Strategic AI Orchestrator
-              </Badge>
             </div>
             
             {/* Navigation */}
