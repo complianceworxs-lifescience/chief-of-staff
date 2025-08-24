@@ -110,6 +110,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Weekly Reports */}
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Intelligence Reports</h3>
+          <WeeklyReports />
+        </div>
+
         {/* Strategic Execution Loop Overview */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -394,11 +400,6 @@ export default function Dashboard() {
           <StrategicAlignment />
         </div>
 
-        {/* Weekly Reports */}
-        <div className="mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">Weekly Intelligence Reports</h3>
-          <WeeklyReports />
-        </div>
 
     </div>
   );
