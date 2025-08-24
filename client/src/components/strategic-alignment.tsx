@@ -58,6 +58,30 @@ export function StrategicAlignment() {
     return "behind";
   };
 
+  const getAutonomousAction = (objective: any) => {
+    const title = objective.title?.toLowerCase() || '';
+    const daysSinceUpdate = Math.floor((Date.now() - new Date(objective.lastUpdate).getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Only show actions for stale or behind objectives
+    if (daysSinceUpdate <= 7 && objective.progress >= 50) return null;
+    
+    if (title.includes('revenue') || title.includes('mrr') || title.includes('sales')) {
+      return { agent: 'CRO', action: 'Emergency Revenue Campaign', color: 'bg-blue-100 text-blue-800' };
+    }
+    if (title.includes('retention') || title.includes('customer') || title.includes('churn')) {
+      return { agent: 'CCO', action: 'Customer Engagement Boost', color: 'bg-green-100 text-green-800' };
+    }
+    if (title.includes('marketing') || title.includes('content') || title.includes('reach')) {
+      return { agent: 'CMO', action: 'Targeted Marketing Push', color: 'bg-purple-100 text-purple-800' };
+    }
+    if (title.includes('operation') || title.includes('efficiency') || title.includes('cost')) {
+      return { agent: 'COO', action: 'Operational Excellence Drive', color: 'bg-orange-100 text-orange-800' };
+    }
+    
+    // Default to Chief of Staff for unmatched objectives
+    return { agent: 'COS', action: 'Strategic Recovery Plan', color: 'bg-gray-100 text-gray-800' };
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -98,6 +122,22 @@ export function StrategicAlignment() {
                   </span>
                 </span>
               </div>
+              
+              {/* Autonomous Action Indicator */}
+              {(() => {
+                const action = getAutonomousAction(objective);
+                if (!action) return null;
+                
+                return (
+                  <div className="mt-3 flex items-center gap-2">
+                    <span className="text-xs text-gray-500">🤖 Agent Acting:</span>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${action.color}`}>
+                      {action.agent} • {action.action}
+                    </span>
+                    <span className="text-xs text-gray-400">• Autonomous (No HITL)</span>
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
