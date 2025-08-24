@@ -29,7 +29,6 @@ export function Layout({ children }: LayoutProps) {
     { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
     { path: "/directives", label: "Directives", icon: Users },
     { path: "/intervention", label: "Active Intervention", icon: Zap },
-    { path: "/workloads", label: "Workloads", icon: Users },
     { path: "/market-intelligence", label: "Market Intelligence", icon: Search },
     { path: "/governance", label: "Governance", icon: Settings },
     { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp },
