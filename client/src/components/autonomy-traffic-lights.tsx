@@ -39,13 +39,13 @@ interface KPIResponse {
 export function AutonomyTrafficLights() {
   const { data: kpiData } = useQuery<KPIResponse>({
     queryKey: ['/api/autonomy/traffic-lights'],
-    refetchInterval: 10000,
+    refetchInterval: 60000, // Cost optimized: 60 seconds
   });
 
   // Fallback to current autonomy KPIs if traffic lights endpoint not available
   const { data: fallbackKPIs } = useQuery({
     queryKey: ['/api/autonomy/kpis'],
-    refetchInterval: 10000,
+    refetchInterval: 60000, // Cost optimized: 60 seconds
   });
 
   // Transform current KPI data to traffic light format if needed

@@ -64,7 +64,7 @@ export function Tier3CoordinationDashboard() {
 
   const { data: kpis } = useQuery<Tier3KPIs>({
     queryKey: ['/api/tier3/kpis'],
-    refetchInterval: 10000,
+    refetchInterval: 60000, // Cost optimized: 60 seconds
   });
 
   const { data: coordinations } = useQuery<{
@@ -73,7 +73,7 @@ export function Tier3CoordinationDashboard() {
     sessions: CoordinationSession[];
   }>({
     queryKey: ['/api/tier3/coordinations'],
-    refetchInterval: 5000,
+    refetchInterval: 45000, // Cost optimized: 45 seconds
   });
 
   const handleToggleMode = async (mode: 'simulation' | 'canary', enabled: boolean) => {

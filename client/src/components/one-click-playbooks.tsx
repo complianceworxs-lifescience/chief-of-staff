@@ -109,15 +109,15 @@ export function OneClickPlaybooks() {
   const [runningPlaybooks, setRunningPlaybooks] = useState<string[]>([]);
   const [completedPlaybooks, setCompletedPlaybooks] = useState<string[]>([]);
   
-  // Get real-time conflict data
+  // Get conflict data - cost optimized polling
   const { data: activeConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/active"],
-    refetchInterval: 2000
+    refetchInterval: 60000 // Cost optimized: 60 seconds
   });
   
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/resolved"],
-    refetchInterval: 2000
+    refetchInterval: 60000 // Cost optimized: 60 seconds
   });
 
   const handleRunPlaybook = async (playbook: Playbook) => {

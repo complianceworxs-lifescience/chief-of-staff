@@ -26,7 +26,7 @@ import type { Agent } from "@shared/schema";
 export default function COODashboard() {
   const { data: agentsData } = useQuery({
     queryKey: qk.agents,
-    refetchInterval: 5000
+    refetchInterval: 60000 // Cost optimized: 60 seconds
   });
 
   const { data: cooRemediationState } = useQuery({

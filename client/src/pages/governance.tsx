@@ -96,12 +96,12 @@ export default function GovernancePage() {
 
   const { data: playbooks, isLoading: isLoadingPlaybooks } = useQuery<AutonomousPlaybook[]>({
     queryKey: ['/api/governance/playbooks'],
-    refetchInterval: 10000
+    refetchInterval: 60000 // Cost optimized: 60 seconds
   });
 
   const { data: pendingApprovals } = useQuery<PlaybookExecution[]>({
     queryKey: ['/api/governance/pending-approvals'],
-    refetchInterval: 5000
+    refetchInterval: 45000 // Cost optimized: 45 seconds
   });
 
   const createRuleMutation = useMutation({

@@ -16,12 +16,12 @@ export function ConflictResolutionIndicator({ isActive = false }: ConflictResolu
 
   const { data: activeConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/active"],
-    refetchInterval: 2000
+    refetchInterval: 45000 // Cost optimized: 45 seconds
   });
 
   const { data: systemHealth } = useQuery({
     queryKey: ["/api/conflicts/system-health"],
-    refetchInterval: 2000
+    refetchInterval: 45000 // Cost optimized: 45 seconds
   });
 
   const resolutionActions = [

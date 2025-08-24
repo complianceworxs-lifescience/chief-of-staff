@@ -46,15 +46,15 @@ export default function DirectivesPage() {
     queryKey: ["/api/chief-of-staff/initiatives"]
   });
 
-  // Get real-time conflicts from the API
+  // Get conflicts from the API - cost optimized
   const { data: activeConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/active"],
-    refetchInterval: 2000 // Check every 2 seconds
+    refetchInterval: 45000 // Cost optimized: 45 seconds
   });
   
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/resolved"],
-    refetchInterval: 2000
+    refetchInterval: 45000 // Cost optimized: 45 seconds
   });
 
   // Transform API conflicts to match expected format
