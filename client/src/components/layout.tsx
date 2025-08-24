@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap } from "lucide-react";
+import { Bell, Brain, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 interface Conflict {
@@ -15,6 +16,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
     queryKey: ["/api/conflicts/active"]
@@ -25,9 +27,15 @@ export function Layout({ children }: LayoutProps) {
   const navigationItems = [
     { path: "/", label: "Dashboard", icon: BarChart3 },
     { path: "/coo", label: "COO Agent", icon: Settings },
-    { path: "/goals", label: "Strategic Objectives", icon: TrendingUp },
-    { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
-    { path: "/directives", label: "Directives", icon: Users },
+    { 
+      path: "/goals", 
+      label: "Strategic Objectives", 
+      icon: TrendingUp,
+      submenu: [
+        { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
+        { path: "/directives", label: "Directives", icon: Users }
+      ]
+    },
     { path: "/intervention", label: "Active Intervention", icon: Zap },
     { path: "/market-intelligence", label: "Market Intelligence", icon: Search },
     { path: "/governance", label: "Governance", icon: Settings },
@@ -38,6 +46,14 @@ export function Layout({ children }: LayoutProps) {
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
     if (path !== "/" && location.startsWith(path)) return true;
+    return false;
+  };
+
+  const isParentActive = (item: any) => {
+    if (isActive(item.path)) return true;
+    if (item.submenu) {
+      return item.submenu.some((subItem: any) => isActive(subItem.path));
+    }
     return false;
   };
 
@@ -63,21 +79,69 @@ export function Layout({ children }: LayoutProps) {
             <nav className="hidden md:flex items-center space-x-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                return (
-                  <Link key={item.path} href={item.path}>
-                    <Button
-                      variant={isActive(item.path) ? "default" : "ghost"}
-                      className={`flex items-center gap-2 ${
-                        isActive(item.path) 
-                          ? "bg-primary text-primary-foreground" 
-                          : "text-gray-600 hover:text-primary"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  </Link>
-                );
+                
+                if (item.submenu) {
+                  return (
+                    <div key={item.path} className="relative">
+                      <Button
+                        variant={isParentActive(item) ? "default" : "ghost"}
+                        className={`flex items-center gap-2 ${
+                          isParentActive(item) 
+                            ? "bg-primary text-primary-foreground" 
+                            : "text-gray-600 hover:text-primary"
+                        }`}
+                        onMouseEnter={() => setDropdownOpen(true)}
+                        onMouseLeave={() => setDropdownOpen(false)}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                      
+                      {dropdownOpen && (
+                        <div 
+                          className="absolute top-full left-0 mt-1 bg-white shadow-lg border border-gray-200 rounded-md py-1 z-50"
+                          onMouseEnter={() => setDropdownOpen(true)}
+                          onMouseLeave={() => setDropdownOpen(false)}
+                        >
+                          <Link href={item.path}>
+                            <div className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-primary cursor-pointer">
+                              <Icon className="h-4 w-4 inline mr-2" />
+                              {item.label}
+                            </div>
+                          </Link>
+                          {item.submenu.map((subItem) => {
+                            const SubIcon = subItem.icon;
+                            return (
+                              <Link key={subItem.path} href={subItem.path}>
+                                <div className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-primary cursor-pointer">
+                                  <SubIcon className="h-4 w-4 inline mr-2" />
+                                  {subItem.label}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <Link key={item.path} href={item.path}>
+                      <Button
+                        variant={isActive(item.path) ? "default" : "ghost"}
+                        className={`flex items-center gap-2 ${
+                          isActive(item.path) 
+                            ? "bg-primary text-primary-foreground" 
+                            : "text-gray-600 hover:text-primary"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Button>
+                    </Link>
+                  );
+                }
               })}
             </nav>
 
@@ -110,22 +174,29 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex space-x-1 py-2 overflow-x-auto">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              return (
-                <Link key={item.path} href={item.path}>
-                  <Button
-                    variant={isActive(item.path) ? "default" : "ghost"}
-                    size="sm"
-                    className={`flex items-center gap-1 whitespace-nowrap ${
-                      isActive(item.path) 
-                        ? "bg-primary text-primary-foreground" 
-                        : "text-gray-600 hover:text-primary"
-                    }`}
-                  >
-                    <Icon className="h-3 w-3" />
-                    {item.label}
-                  </Button>
-                </Link>
-              );
+              
+              // For mobile, show all items including submenu items as individual buttons
+              const items = item.submenu ? [item, ...item.submenu] : [item];
+              
+              return items.map((navItem) => {
+                const NavIcon = navItem.icon;
+                return (
+                  <Link key={navItem.path} href={navItem.path}>
+                    <Button
+                      variant={isActive(navItem.path) ? "default" : "ghost"}
+                      size="sm"
+                      className={`flex items-center gap-1 whitespace-nowrap ${
+                        isActive(navItem.path) 
+                          ? "bg-primary text-primary-foreground" 
+                          : "text-gray-600 hover:text-primary"
+                      }`}
+                    >
+                      <NavIcon className="h-3 w-3" />
+                      {navItem.label}
+                    </Button>
+                  </Link>
+                );
+              });
             })}
           </div>
         </div>
