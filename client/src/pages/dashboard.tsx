@@ -386,18 +386,6 @@ export default function Dashboard() {
               </Card>
             ) : null}
             
-            {/* Show monitoring status when no data yet */}
-            {activeConflicts.length === 0 && resolvedConflicts.length === 0 && (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <Cpu className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                  <h4 className="font-medium text-blue-900 mb-2">Autonomous Monitoring Active</h4>
-                  <p className="text-gray-600">
-                    Chief of Staff AI system is continuously monitoring for conflicts and will resolve them automatically when detected.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
 
