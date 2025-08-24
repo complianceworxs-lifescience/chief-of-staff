@@ -9,16 +9,29 @@ export class WorkloadBalancer {
     for (const agent of agents) {
       const existingWorkload = await storage.getAgentWorkload(agent.id);
       if (!existingWorkload) {
+        // Create new workload
         const workload: InsertAgentWorkload = {
           agentId: agent.id,
           currentTasks: this.getRandomTaskCount(agent.status),
-          capacity: this.getAgentCapacity(agent.name),
+          capacity: this.getAgentCapacity(agent.id),
           utilizationRate: 0,
-          priority: this.getAgentPriority(agent.name)
+          priority: this.getAgentPriority(agent.id)
         };
         
         workload.utilizationRate = Math.round((workload.currentTasks / workload.capacity) * 100);
         await storage.createAgentWorkload(workload);
+      } else {
+        // Update existing workload with correct capacity
+        const correctCapacity = this.getAgentCapacity(agent.id);
+        const correctTasks = this.getRandomTaskCount(agent.status);
+        const correctUtilization = Math.round((correctTasks / correctCapacity) * 100);
+        
+        await storage.updateAgentWorkload(agent.id, {
+          capacity: correctCapacity,
+          currentTasks: correctTasks,
+          utilizationRate: correctUtilization,
+          priority: this.getAgentPriority(agent.id)
+        });
       }
     }
   }
@@ -32,26 +45,32 @@ export class WorkloadBalancer {
     }
   }
   
-  private getAgentCapacity(agentName: string): number {
+  private getAgentCapacity(agentId: string): number {
     const capacities = {
-      'CEO Agent': 12,
-      'CRO Agent': 15,
-      'CMO Agent': 14,
-      'COO Agent': 16,
-      'Content Agent': 18
+      'ceo': 12,
+      'cro': 15, 
+      'cmo': 14,
+      'coo': 16,
+      'content-manager': 18,
+      'chief-of-staff': 14,
+      'cco': 13,
+      'market-intelligence': 10
     };
-    return capacities[agentName as keyof typeof capacities] || 12;
+    return capacities[agentId as keyof typeof capacities] || 12;
   }
   
-  private getAgentPriority(agentName: string): string {
+  private getAgentPriority(agentId: string): string {
     const priorities = {
-      'CEO Agent': 'critical',
-      'CRO Agent': 'high',
-      'CMO Agent': 'high', 
-      'COO Agent': 'high',
-      'Content Agent': 'medium'
+      'ceo': 'critical',
+      'cro': 'high',
+      'cmo': 'high', 
+      'coo': 'high',
+      'content-manager': 'medium',
+      'chief-of-staff': 'critical',
+      'cco': 'high',
+      'market-intelligence': 'medium'
     };
-    return priorities[agentName as keyof typeof priorities] || 'medium';
+    return priorities[agentId as keyof typeof priorities] || 'medium';
   }
   
   async updateWorkloads(): Promise<void> {
@@ -133,7 +152,7 @@ export class WorkloadBalancer {
     
     const totalCapacity = workloads.reduce((sum, w) => sum + w.capacity, 0);
     const totalCurrentTasks = workloads.reduce((sum, w) => sum + w.currentTasks, 0);
-    const overallUtilization = Math.round((totalCurrentTasks / totalCapacity) * 100);
+    const overallUtilization = totalCapacity > 0 ? Math.round((totalCurrentTasks / totalCapacity) * 100) : 0;
     
     // Simple projection based on current trends
     const growthRate = 0.15; // 15% growth assumption
