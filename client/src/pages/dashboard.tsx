@@ -49,7 +49,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Chief of Staff Dashboard</h1>
-            <p className="text-gray-600">Meta-Orchestrator Control Tower - Strategic Alignment & Information Flow</p>
+            <p className="text-gray-600">Facilitating communication across Agents, driving key projects, and acting as a strategic advisor.</p>
           </div>
           <NotificationBell />
         </div>
