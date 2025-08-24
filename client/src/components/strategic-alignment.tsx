@@ -22,16 +22,40 @@ export function StrategicAlignment() {
       .join(", ");
   };
 
-  const getProgressColor = (progress: number) => {
+  const getProgressColor = (progress: number, lastUpdate: string) => {
+    const daysSinceUpdate = Math.floor((Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If data is stale (>7 days), show as warning regardless of progress
+    if (daysSinceUpdate > 7) return "bg-orange-500";
+    
+    // Normal progress-based coloring for fresh data
     if (progress >= 70) return "bg-green-500";
     if (progress >= 50) return "bg-yellow-500";
     return "bg-red-500";
   };
 
-  const getProgressLabel = (progress: number) => {
+  const getProgressLabel = (progress: number, lastUpdate: string) => {
+    const daysSinceUpdate = Math.floor((Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If data is stale, show stale status regardless of progress
+    if (daysSinceUpdate > 7) return "text-orange-600";
+    
+    // Normal progress-based labeling for fresh data
     if (progress >= 70) return "text-green-600";
     if (progress >= 50) return "text-yellow-600";
     return "text-red-600";
+  };
+
+  const getStatusText = (progress: number, lastUpdate: string) => {
+    const daysSinceUpdate = Math.floor((Date.now() - new Date(lastUpdate).getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If data is stale, show stale status regardless of progress
+    if (daysSinceUpdate > 7) return "stale";
+    
+    // Normal progress-based status for fresh data
+    if (progress >= 70) return "aligned";
+    if (progress >= 50) return "at risk";
+    return "behind";
   };
 
   return (
@@ -49,8 +73,8 @@ export function StrategicAlignment() {
                 <span className="text-sm font-medium text-gray-900">
                   {objective.title}
                 </span>
-                <span className={`text-sm font-semibold ${getProgressLabel(objective.progress)}`}>
-                  {objective.progress}% aligned
+                <span className={`text-sm font-semibold ${getProgressLabel(objective.progress, objective.lastUpdate)}`}>
+                  {objective.progress}% {getStatusText(objective.progress, objective.lastUpdate)}
                 </span>
               </div>
               
