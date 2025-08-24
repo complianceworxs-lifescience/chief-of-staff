@@ -169,37 +169,19 @@ export function LiveMetricsDashboard() {
                   </div>
                 </div>
                 
-                {/* Agent Action Buttons */}
+                {/* Autonomous Status Indicators */}
                 <div className="flex items-center gap-2 ml-4">
                   {objective.progress < 50 && (
-                    <>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleResolveAction(objective.id)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Zap className="h-3 w-3 mr-1" />
-                        Resolve
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleEscalateAction(objective.id)}
-                      >
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Escalate
-                      </Button>
-                    </>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                      <Zap className="h-3 w-3 mr-1" />
+                      Agent Acting
+                    </Badge>
                   )}
                   {objective.progress >= 50 && objective.progress < 90 && (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => handleReassignAction('current', 'coo')}
-                    >
-                      <Users className="h-3 w-3 mr-1" />
-                      Reassign
-                    </Button>
+                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                      <Clock className="h-3 w-3 mr-1" />
+                      In Progress
+                    </Badge>
                   )}
                   {objective.progress >= 90 && (
                     <Badge className="bg-green-100 text-green-800">
