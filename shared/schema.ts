@@ -51,6 +51,22 @@ export const weeklyReports = pgTable("weekly_reports", {
   strategicAlignment: json("strategic_alignment").$type<Record<string, string[]>>().notNull(),
   recommendations: json("recommendations").$type<string[]>().notNull(),
   highlights: json("highlights").$type<string[]>().notNull(),
+  // New fields for hybrid polling/event-driven architecture
+  operations: json("operations").$type<{
+    mttr_minutes: number;
+    auto_resolve_pct: number;
+  }>().notNull(),
+  agentBlockers: json("agent_blockers").$type<Record<string, {
+    status: string;
+    blockers: Array<{ type: "awaiting webhook" | "poll-detected" | "processing" | "none"; description: string; }>;
+  }>>().notNull(),
+  topFixes: json("top_fixes").$type<Array<{
+    priority: number;
+    action: string;
+    type: "webhook" | "polling" | "configuration" | "monitoring";
+    impact: "high" | "medium" | "low";
+    agent?: string;
+  }>>().notNull(),
 });
 
 export const systemMetrics = pgTable("system_metrics", {
