@@ -1,0 +1,46 @@
+What you’ve got now
+
+JSON Schema for the new Weekly Executive Intelligence Report
+Download the schema
+
+Filled Example JSON (use as a starting payload for your agents)
+Download the example
+
+Production-ready React UI that renders the report as sleek, glanceable cards, progress bars, and actionable lists.
+I put it in a canvas titled “Weekly Executive Intelligence Report — React UI & Template.” It expects a report prop matching the schema and includes an inline sampleReport so you can preview instantly. It uses Tailwind + shadcn/ui patterns (rounded 2xl cards, soft shadows, clear hierarchy).
+
+What’s different (and better)
+
+Revenue first, always: MRR by tier, week-over-week delta, activation, churn, and upsell are front and center.
+
+Agent accountability: Each agent shows execution score, tasks done/assigned, MTTR, auto-resolve %, blockers, and business impact (no more “HEALTHY/ERROR” vagueness).
+
+Objective tracking that means something: Progress bars with pace vs. plan labels (ahead/on_track/behind/at_risk).
+
+Ops health you can manage: Conflict hotspots, MTTR, auto-resolve %, and a clean list of where friction actually lives.
+
+Decisions & next actions: Three fixes, three wins, and a list of decisions with owner + deadline so nothing stalls.
+
+How to wire it up in Replit
+
+Generate the JSON: Have your weekly job assemble data into the schema shape (use the example as a guide).
+
+Render the UI: Import the React component from the canvas file into your dashboard and pass the report object. The button stub onDownload is there if you want to export JSON/PDF.
+
+Data mapping tips
+
+Activation rate (definition baked in): “% of new members who complete onboarding steps 1→4 within 7 days.”
+
+Execution score: (tasks_done / tasks_assigned) * 100 capped at 100.
+
+Auto-resolve %: auto_resolved_conflicts / total_conflicts * 100.
+
+Pace vs plan: compute weekly glidepath vs. target; label as ahead/on_track/behind/at_risk.
+
+Optional polish (quick wins)
+
+Add a CSV/JSON export for each section.
+
+Gate sections behind role views (CEO vs CMO vs CRO).
+
+Add a light “Compare to last 4 weeks” toggle (simple sparkline per KPI).
