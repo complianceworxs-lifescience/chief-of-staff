@@ -1,0 +1,118 @@
+How your agents should operate (no code, pure operating model)
+Roles
+
+CEO Agent (outcomes): sets quarterly KPIs (e.g., “+20% revenue/visitor; MTTR <5m”); updates guardrails only.
+
+Chief of Staff Agent (ops owner): runs the loop daily, enforces guardrails, escalates per policy.
+
+CMO/CRO Agents (domain owners): propose experiments; accept winners; request follow-ups to compound gains.
+
+Daily Loop (agent-run)
+
+Pick targets (top pages/offers with most revenue potential).
+
+Define experiment (small, fast, high-impact).
+
+Hypothesis, primary metric = revenue; secondary = CTR / checkout start.
+
+Guardrails: stop if bounce ↑ >10% or rev/visit ↓ >5% over 24h.
+
+Allocate traffic with bandit policy (start 50/50, then favor winner).
+
+Attribute events: every view/click/checkout/purchase is logged with {exp_id, variant, session_id, $value}.
+
+Early stops: auto-kill losers quickly (e.g., after 120 sessions if below control and failing guardrails).
+
+Promote winners: ship winning variant, tag it with exp_id for lineage.
+
+Write to Playbook: append “What worked / Where / Why / Evidence / Next test.”
+
+Predictive watch: detect 3-day EMA drift vs 14-day baseline; preemptively open a new experiment when drift > threshold.
+
+What’s tracked (always revenue-tied)
+
+Primary: revenue/visit, total revenue per variant, purchase rate.
+
+Secondary: primary CTA CTR, checkout start rate, time on page, bounce.
+
+Ops: time to detect/stop losers, % auto-promoted winners, experiment cycle time.
+
+Guardrails (own outcomes, stay safe)
+
+Max 3 active experiments/day across site.
+
+No edits to legal/pricing without CEO sign-off.
+
+Stop any variant that drops rev/visit >5% over 24h or bounce >75%.
+
+Enforce mobile first: CLS ≤ 0.1, LCP ≤ 3s.
+
+Artifacts the agents must produce
+1) Experiment Card (one per test)
+
+ID: exp_YYYY_MM_area_goal
+
+Hypothesis: “Benefit-led CTA increases rev/visit.”
+
+Target: /membership-pricing
+
+Primary metric: revenue
+
+Variants: A (control), B (benefit CTA)
+
+Guardrails: see above
+
+Start/Stop: timestamps
+
+Decision: Winner + reason + evidence
+
+2) Attribution Ledger (append-only)
+
+Rows like:
+{ts, exp_id, variant, event, value, session_id, path}
+So you can say “Variant B generated $1,274 this week.”
+
+3) Self-Writing Playbook (living doc)
+
+Each completed experiment adds:
+
+Pattern: “Benefit > Feature in pricing CTAs”
+
+Where it worked: pricing, partners page
+
+Audience notes: Validation Strategist > Rising Leader
+
+Next move: try “risk-reduction” framing on checkout
+
+4) Predictive Alerts
+
+“EMA drift: pricing page purchase rate −18% vs 14-day; launch headline contrast test now.”
+
+5) Weekly CEO Brief (1 page)
+
+Revenue impact from last week’s winners
+
+Experiments shipped/failed, cycle time
+
+Risks + next week’s focus
+
+Simple responsibilities
+
+CEO Agent: set KPIs + guardrails, review weekly brief.
+
+CoS Agent: run daily loop, enforce rules, escalate per triggers.
+
+CMO/CRO Agents: design next experiments from the playbook, accept/promote winners, queue follow-ups.
+
+Templates (copy these into your agent directives)
+Outcome charter
+
+North Star: increase revenue/visit by +20% this quarter.
+
+Daily cap: ≤3 experiments, ≤1 on any single page.
+
+Stop rules: loser after 120 sessions or guardrail breach.
+
+Promote rules: winner after p≈0.9 or +10% rev/visit for 48h.
+
+Playbook rule: every decision updates the playbook with pattern + next test.
