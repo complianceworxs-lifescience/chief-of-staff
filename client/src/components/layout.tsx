@@ -42,10 +42,10 @@ export function Layout({ children }: LayoutProps) {
       label: "Market Intelligence", 
       icon: Search,
       submenu: [
-        { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp }
+        { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp },
+        { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
       ]
-    },
-    { path: "/ai-assistant", label: "AI Assistant", icon: Brain }
+    }
   ];
 
   const isActive = (path: string) => {
