@@ -51,13 +51,13 @@ export function MarketIntelligence() {
 
   const { data: allSignals = [], isLoading, error } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 28800000, // Optimized for 3-4 daily checks: 8 hours
     staleTime: 0 // Always fetch fresh data
   });
 
   const { data: highPrioritySignals = [] } = useQuery<MarketSignal[]>({
     queryKey: ['/api/market-intelligence/signals/high-priority'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 28800000, // Optimized for 3-4 daily checks: 8 hours
     staleTime: 0 // Always fetch fresh data
   });
 
@@ -79,7 +79,7 @@ export function MarketIntelligence() {
       queryClient.invalidateQueries({ queryKey: ['/api/mi/active'] });
       toast({
         title: "Intelligence Gathered",
-        description: data?.message || "New market signals have been collected and analyzed"
+        description: (data as any)?.message || "New market signals have been collected and analyzed"
       });
     },
     onError: () => {

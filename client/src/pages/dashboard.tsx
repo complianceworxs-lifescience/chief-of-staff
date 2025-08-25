@@ -25,17 +25,17 @@ export default function Dashboard() {
 
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
     queryKey: qk.conflictsActive,
-    refetchInterval: 1800000 // Check every 30 minutes - maximum cost savings
+    refetchInterval: 21600000 // Check every 6 hours - optimized for 3-4 daily checks
   });
 
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
     queryKey: qk.conflictsResolved,
-    refetchInterval: 1800000 // Refresh every 30 minutes - maximum cost savings
+    refetchInterval: 21600000 // Refresh every 6 hours - optimized for 3-4 daily checks
   });
 
   const { data: systemHealth } = useQuery<any>({
     queryKey: qk.conflictSystemHealth,
-    refetchInterval: 1800000 // Monitor every 30 minutes - maximum cost savings
+    refetchInterval: 21600000 // Monitor every 6 hours - optimized for 3-4 daily checks
   });
 
   const { data: systemMetrics } = useQuery<SystemMetrics>({
@@ -258,7 +258,7 @@ export default function Dashboard() {
             {agentsLoading ? (
               <div className="col-span-full text-center py-8">Loading agents...</div>
             ) : (
-              agents.map((agent) => (
+              agents.map((agent: any) => (
                 <AgentStatusCardWithRemediation key={agent.id} agent={agent} />
               ))
             )}

@@ -84,8 +84,8 @@ function computeDrift() {
   writeJSON(FILES.alerts, alerts);
 }
 
-// Run drift detection every 10 minutes
-setInterval(computeDrift, 10 * 60 * 1000);
+// Run drift detection every 6 hours - optimized for 3-4 daily checks
+setInterval(computeDrift, 6 * 60 * 60 * 1000);
 
 // ----- Routes -----
 

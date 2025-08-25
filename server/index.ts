@@ -74,7 +74,7 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
     
     // Start autonomous conflict monitoring
-    conflictMonitor.startMonitoring(30000); // Monitor every 30 seconds
+    conflictMonitor.startMonitoring(14400000); // Monitor every 4 hours - optimized for 3-4 daily checks
     
     // Start governance job runner for exceptions-only mode
     const { startJobRunner } = await import('./jobRunner.js');

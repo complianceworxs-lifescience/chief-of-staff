@@ -35,10 +35,10 @@ class ActiveInterventionEngine {
     
     console.log("ACTIVE_INTERVENTION: Starting real-time conflict prevention engine");
     
-    // Monitor and intervene every 15 seconds
+    // Monitor and intervene every 4 hours - optimized for 3-4 daily checks
     setInterval(() => {
       this.scanAndIntervene();
-    }, 15000);
+    }, 14400000);
   }
 
   // Main intervention loop
@@ -94,8 +94,8 @@ class ActiveInterventionEngine {
         console.log(`ACTIVE_INTERVENTION: ✅ Completed action: ${suggestedAction}`);
       } catch (error) {
         action.status = "failed";
-        action.result = { error: error.message };
-        console.log(`ACTIVE_INTERVENTION: ❌ Failed action: ${suggestedAction} - ${error.message}`);
+        action.result = { error: (error as Error).message };
+        console.log(`ACTIVE_INTERVENTION: ❌ Failed action: ${suggestedAction} - ${(error as Error).message}`);
       }
       
       actions.push(action);
@@ -319,10 +319,10 @@ class ActiveInterventionEngine {
     let completedActions = 0;
     let failedActions = 0;
 
-    for (const actions of this.interventions.values()) {
+    for (const actions of Array.from(this.interventions.values())) {
       totalActions += actions.length;
-      completedActions += actions.filter(a => a.status === "completed").length;
-      failedActions += actions.filter(a => a.status === "failed").length;
+      completedActions += actions.filter((a: any) => a.status === "completed").length;
+      failedActions += actions.filter((a: any) => a.status === "failed").length;
     }
 
     return {

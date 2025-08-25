@@ -26,15 +26,15 @@ import type { Agent } from "@shared/schema";
 export default function COODashboard() {
   const { data: agentsData } = useQuery({
     queryKey: qk.agents,
-    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
+    refetchInterval: 21600000 // Optimized for 3-4 daily checks: 6 hours
   });
 
   const { data: cooRemediationState } = useQuery({
     queryKey: qk.remediation("coo"),
-    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
+    refetchInterval: 21600000 // Optimized for 3-4 daily checks: 6 hours
   });
 
-  const cooAgent = agentsData?.items?.find((agent: Agent) => agent.id === "coo");
+  const cooAgent = (agentsData as any)?.items?.find((agent: Agent) => agent.id === "coo");
 
   if (!cooAgent) {
     return (
@@ -212,14 +212,14 @@ export default function COODashboard() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Remediation Status</span>
                 <span className="text-sm font-medium text-green-600">
-                  {cooRemediationState?.status || 'Healthy'}
+                  {(cooRemediationState as any)?.status || 'Healthy'}
                 </span>
               </div>
               
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Degraded Count</span>
                 <span className="text-sm font-medium">
-                  {cooRemediationState?.degradedCount || 0}
+                  {(cooRemediationState as any)?.degradedCount || 0}
                 </span>
               </div>
               
@@ -258,7 +258,7 @@ export default function COODashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {cooAgent.blockedTasks?.map((task, idx) => (
+                  {cooAgent.blockedTasks?.map((task: any, idx: any) => (
                     <div key={idx} className="p-2 bg-red-50 rounded text-sm text-red-700">
                       {task}
                     </div>
@@ -276,7 +276,7 @@ export default function COODashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {cooAgent.dependencies?.map((dep, idx) => (
+                  {cooAgent.dependencies?.map((dep: any, idx: any) => (
                     <div key={idx} className="p-2 bg-blue-50 rounded text-sm text-blue-700">
                       {dep}
                     </div>
@@ -294,7 +294,7 @@ export default function COODashboard() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {cooAgent.delayedOutputs?.map((output, idx) => (
+                  {cooAgent.delayedOutputs?.map((output: any, idx: any) => (
                     <div key={idx} className="p-2 bg-orange-50 rounded text-sm text-orange-700">
                       {output}
                     </div>

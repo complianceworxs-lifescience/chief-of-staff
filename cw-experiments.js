@@ -175,7 +175,7 @@ app.post("/xp/promote", requireAdmin, (req, res) => {
 });
 
 // Simple drift detection (3h vs 24h baseline over ledger)
-// Runs every 10 minutes; CoS can view /alerts.
+// Runs every 6 hours - optimized for 3-4 daily checks; CoS can view /alerts.
 function computeDrift() {
   const ledger = readJSON(FILES.ledger);
   const now = Date.now();
@@ -203,7 +203,7 @@ function computeDrift() {
   }
   writeJSON(FILES.alerts, alerts);
 }
-setInterval(computeDrift, 10 * 60 * 1000);
+setInterval(computeDrift, 6 * 60 * 60 * 1000); // 6 hours optimized for 3-4 daily checks
 
 // Alerts view
 app.get("/alerts", requireAdmin, (_req, res) => {

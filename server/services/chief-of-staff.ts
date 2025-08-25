@@ -588,7 +588,7 @@ export class ChiefOfStaffService {
     
     console.log(`📅 Chief of Staff: Scheduling nightly dashboard cleanup at ${cleanupTime} UTC`);
     
-    // Simple implementation - check every minute for the target time
+    // Check every 4 hours for the target time - optimized for 3-4 daily checks
     setInterval(async () => {
       const now = new Date();
       const utcHour = now.getUTCHours();
@@ -603,7 +603,7 @@ export class ChiefOfStaffService {
           console.error('❌ Chief of Staff: Nightly cleanup failed:', error);
         }
       }
-    }, 60000); // Check every minute
+    }, 14400000); // Check every 4 hours - optimized for 3-4 daily checks
   }
 }
 

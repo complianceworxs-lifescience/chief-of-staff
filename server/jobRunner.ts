@@ -1,7 +1,7 @@
 import { sweepOverdueActions } from './actions.js';
 import { strategyExecutor } from './services/strategic-executor.js';
 
-const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "60") * 1000;
+const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "14400") * 1000; // 4 hours optimized for 3-4 daily checks
 const DRY_RUN = (process.env.DRY_RUN || "true").toLowerCase() === "true";
 
 function log(message: string, data?: any) {
