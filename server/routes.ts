@@ -61,8 +61,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Process envelope based on type (signal or decision)
     try {
+      // FILTER OUT TEST EMAILS: Skip processing events that trigger test emails
+      if (envelope.meta?.is_test || envelope.payload?.kind === 'test' || 
+          envelope.subject?.email?.includes('test') || 
+          envelope.actor?.includes('test')) {
+        console.log('🚫 Skipping test event to prevent test emails:', envelope.event_id);
+        return res.json({ 
+          status: 'skipped_test', 
+          event_id: envelope.event_id,
+          reason: 'Test events disabled to stop test email notifications'
+        });
+      }
+      
       if (envelope.type === 'signal') {
-        // Handle signal processing (user behavior)
+        // Handle signal processing (user behavior) - production only
         console.log('📡 Signal received:', {
           actor: envelope.actor,
           kind: envelope.payload?.kind,
@@ -70,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           url: envelope.context?.page_url
         });
       } else if (envelope.type === 'decision') {
-        // Handle decision processing (intent updates, stage changes)
+        // Handle decision processing (intent updates, stage changes) - production only
         console.log('🎯 Decision received:', {
           actor: envelope.actor,
           decision_kind: envelope.payload?.decision_kind,
