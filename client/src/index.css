@@ -13,14 +13,51 @@ body{
   background:
     radial-gradient(1200px 800px at 15% -10%, #11456f 0%, var(--bg) 50%),
     linear-gradient(180deg,#0d2e4f 0%, var(--bg) 100%);
-  color:var(--ink);
+  color:var(--ink) !important;
 }
 
-.cw-card{
-  background:var(--panel);
-  border:1px solid var(--divider);
+/* Override Tailwind defaults for ComplianceWorxs branding */
+.bg-white {
+  background: var(--panel) !important;
+}
+
+.text-gray-900, .text-gray-800 {
+  color: var(--ink) !important;
+}
+
+.text-gray-600, .text-gray-700 {
+  color: var(--muted) !important;
+}
+
+.text-gray-500 {
+  color: var(--muted) !important;
+  opacity: 0.8;
+}
+
+.border {
+  border-color: var(--divider) !important;
+}
+
+.bg-gradient-to-r {
+  background: var(--panel) !important;
+  border: 1px solid var(--divider) !important;
+}
+
+.cw-card, .bg-white {
+  background:var(--panel) !important;
+  border:1px solid var(--divider) !important;
   border-radius:16px;
   box-shadow:var(--shadow);
+  color: var(--ink) !important;
+}
+
+/* Ensure all card content is readable */
+.cw-card h1, .cw-card h2, .cw-card h3, .cw-card h4, .cw-card h5, .cw-card h6 {
+  color: var(--ink) !important;
+}
+
+.cw-card p, .cw-card span, .cw-card div {
+  color: var(--ink) !important;
 }
 
 .cw-kpi{
