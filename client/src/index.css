@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ComplianceWorxs Brand Styling - Injected at Runtime */
+/* ComplianceWorxs Brand Styling - HIGH CONTRAST FOR READABILITY */
 :root{
-  --bg:#0b2742;--panel:#0f3353;--ink:#eaf3ff;--muted:#a8c0df;--accent:#2fb3ff;
-  --ok:#10b981;--warn:#f59e0b;--risk:#ef4444;--chip:#0b3a63;--divider:rgba(255,255,255,.08);
+  --bg:#0b2742;--panel:#1a4d6b;--ink:#ffffff;--muted:#e0e7ff;--accent:#2fb3ff;
+  --ok:#10b981;--warn:#f59e0b;--risk:#ef4444;--chip:#0b3a63;--divider:rgba(255,255,255,.2);
   --shadow:0 8px 24px rgba(0,0,0,.35);--radius:16px;--font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
 }
 
@@ -13,25 +13,25 @@ body{
   background:
     radial-gradient(1200px 800px at 15% -10%, #11456f 0%, var(--bg) 50%),
     linear-gradient(180deg,#0d2e4f 0%, var(--bg) 100%);
-  color:var(--ink) !important;
+  color: #ffffff !important;
 }
 
-/* Override Tailwind defaults for ComplianceWorxs branding */
+/* FORCE WHITE TEXT EVERYWHERE */
+* {
+  color: #ffffff !important;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, div, a, button, label {
+  color: #ffffff !important;
+}
+
+.text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500 {
+  color: #ffffff !important;
+}
+
 .bg-white {
   background: var(--panel) !important;
-}
-
-.text-gray-900, .text-gray-800 {
-  color: var(--ink) !important;
-}
-
-.text-gray-600, .text-gray-700 {
-  color: var(--muted) !important;
-}
-
-.text-gray-500 {
-  color: var(--muted) !important;
-  opacity: 0.8;
+  color: #ffffff !important;
 }
 
 .border {
@@ -43,21 +43,22 @@ body{
   border: 1px solid var(--divider) !important;
 }
 
-.cw-card, .bg-white {
+.cw-card, .bg-white, [class*="bg-"] {
   background:var(--panel) !important;
   border:1px solid var(--divider) !important;
   border-radius:16px;
   box-shadow:var(--shadow);
-  color: var(--ink) !important;
+  color: #ffffff !important;
 }
 
-/* Ensure all card content is readable */
-.cw-card h1, .cw-card h2, .cw-card h3, .cw-card h4, .cw-card h5, .cw-card h6 {
-  color: var(--ink) !important;
+/* FORCE WHITE TEXT IN ALL CARD CONTENT */
+.cw-card *, .bg-white *, [class*="Card"] * {
+  color: #ffffff !important;
 }
 
-.cw-card p, .cw-card span, .cw-card div {
-  color: var(--ink) !important;
+/* Secondary text should be slightly dimmed but still visible */
+.text-muted-foreground, .text-xs, [class*="text-gray"] {
+  color: #e0e7ff !important;
 }
 
 .cw-kpi{
