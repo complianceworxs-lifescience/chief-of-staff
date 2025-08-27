@@ -47,23 +47,24 @@ export default function Dashboard() {
         {/* Header with Notification Bell */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Chief of Staff Dashboard</h1>
-            <p className="text-gray-600">Facilitating communication across Agents, driving key projects, and acting as a strategic advisor.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Chief of Staff – Strategic Alignment & Oversight</h1>
+            <p className="text-gray-600">Ensuring executive agents remain aligned to revenue goals, highlighting cross-agent dependencies, and surfacing risks that impact business performance.</p>
           </div>
           <NotificationBell />
         </div>
 
-        {/* Daily Signal Board - Steve Jobs Signal-to-Noise */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Revenue-Focused Headline KPIs */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900">Executive KPI Dashboard</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-full">
                   <Target className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Revenue Hooks</h4>
-                  <p className="text-sm text-gray-600">CTAs Converting</p>
+                  <h4 className="font-semibold text-gray-900">Revenue Alignment</h4>
+                  <p className="text-sm text-gray-600">{(systemMetrics?.strategicAlignmentScore || 0)}% / 100%</p>
                 </div>
               </div>
               <div className="text-2xl">
@@ -74,39 +75,191 @@ export default function Dashboard() {
             <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-full">
-                  <Cpu className="h-5 w-5 text-blue-600" />
+                  <Users className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-gray-900">Autonomy Metrics</h4>
-                  <p className="text-sm text-gray-600">Agents Status</p>
-                </div>
-              </div>
-              <div className="text-2xl">
-                {(systemMetrics?.systemHealth || 0) >= 85 ? '✅' : (systemMetrics?.systemHealth || 0) >= 70 ? '⚠️' : '❌'}
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-full">
-                  <Zap className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Messaging</h4>
-                  <p className="text-sm text-gray-600">Outbound Push Live</p>
+                  <h4 className="font-semibold text-gray-900">Dependencies Cleared</h4>
+                  <p className="text-sm text-gray-600">{activeConflicts.length === 0 ? 'All' : `${activeConflicts.length} pending`}</p>
                 </div>
               </div>
               <div className="text-2xl">
                 {activeConflicts.length === 0 ? '✅' : activeConflicts.length <= 2 ? '⚠️' : '❌'}
               </div>
             </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <CheckCircle className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Initiatives On Track</h4>
+                  <p className="text-sm text-gray-600">Active strategic projects</p>
+                </div>
+              </div>
+              <div className="text-2xl">
+                {(systemMetrics?.activeAgents || 0) >= 6 ? '✅' : (systemMetrics?.activeAgents || 0) >= 4 ? '⚠️' : '❌'}
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-full">
+                  <Cpu className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Agent Reliability</h4>
+                  <p className="text-sm text-gray-600">{(systemMetrics?.systemHealth || 0)}% / 95%+</p>
+                </div>
+              </div>
+              <div className="text-2xl">
+                {(systemMetrics?.systemHealth || 0) >= 95 ? '✅' : (systemMetrics?.systemHealth || 0) >= 85 ? '⚠️' : '❌'}
+              </div>
+            </div>
           </div>
-          <div className="text-center mt-3">
-            <p className="text-sm text-gray-600">
-              {(systemMetrics?.strategicAlignmentScore || 0) >= 85 && (systemMetrics?.systemHealth || 0) >= 85 && activeConflicts.length === 0 
-                ? "🎯 All systems green - Stay out" 
-                : "⚡ Exceptions detected - Agent intervention required"}
-            </p>
+        </div>
+
+        {/* Cross-Agent Executive Summary */}
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Cross-Agent Executive Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 bg-green-100 rounded-full">
+                    <Target className="h-4 w-4 text-green-600" />
+                  </div>
+                  <h4 className="font-semibold text-green-900">CRO Insight</h4>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">
+                  CRO reports 15% shortfall risk in enterprise segment.
+                </p>
+                <div className="text-xs text-gray-500">
+                  Revenue pipeline: $2.3M active deals
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-blue-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-blue-900">CMO Insight</h4>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">
+                  CMO highlights content marketing driving 23% ROI, recommends budget shift.
+                </p>
+                <div className="text-xs text-gray-500">
+                  Conversion rate: 12.3% (target: 15%)
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-orange-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <Cpu className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <h4 className="font-semibold text-orange-900">COO Insight</h4>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">
+                  COO flags 7 unresolved tickets impacting $45K revenue.
+                </p>
+                <div className="text-xs text-gray-500">
+                  System uptime: 99.2% (target: 99.5%)
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-purple-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-2 bg-purple-100 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <h4 className="font-semibold text-purple-900">CCO Insight</h4>
+                </div>
+                <p className="text-sm text-gray-700 mb-2">
+                  CCO confirms compliance risk in validation process, potential $125K exposure.
+                </p>
+                <div className="text-xs text-gray-500">
+                  Compliance score: 94% (target: 98%)
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        {/* Strategic Alignment Tracker */}
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Strategic Initiative Alignment</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-900">ARR Growth Acceleration</h4>
+                  <Badge className="bg-green-100 text-green-800">On Track</Badge>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-sm">
+                    <span className="font-medium">Dependencies:</span>
+                    <ul className="ml-4 mt-1 space-y-1">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        CRO revenue acquisition
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        CMO funnel conversions
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        COO ticket resolution
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Overall Alignment:</span>
+                    <span className="font-medium text-green-600">82%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-gray-900">Churn Reduction</h4>
+                  <Badge className="bg-yellow-100 text-yellow-800">At Risk</Badge>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-sm">
+                    <span className="font-medium">Dependencies:</span>
+                    <ul className="ml-4 mt-1 space-y-1">
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        CRO churn mitigation
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        COO support resolution
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        CCO compliance stability
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Overall Alignment:</span>
+                    <span className="font-medium text-yellow-600">67%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
@@ -116,6 +269,77 @@ export default function Dashboard() {
           <WeeklyReports />
         </div>
 
+        {/* Strategic Alerts */}
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Strategic Alerts</h3>
+          <div className="space-y-4">
+            <Card className="border-l-4 border-l-red-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-red-100 text-red-800 text-xs">HIGH PRIORITY</Badge>
+                      <span className="font-medium text-red-900">Revenue Growth Trajectory</span>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      Revenue growth trajectory behind by 18% — dependency bottleneck at COO agent.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-l-4 border-l-yellow-500">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-yellow-100 text-yellow-800 text-xs">MEDIUM</Badge>
+                      <span className="font-medium text-yellow-900">Initiative Slippage</span>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      Initiative Churn Reduction slipping — dependency COO support resolution unresolved.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        {/* Chief of Staff Insights */}
+        <div className="mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Chief of Staff Strategic Insights</h3>
+          <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-full">
+                    <Target className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <h4 className="font-semibold text-indigo-900">Strategic Assessment</h4>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="bg-white rounded-lg p-4 border">
+                    <span className="font-medium text-gray-900">Revenue alignment:</span>
+                    <span className="ml-2 text-gray-700">CRO and CMO coordination improving, but COO operational bottlenecks creating 15% revenue impact.</span>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border">
+                    <span className="font-medium text-gray-900">Top dependency risk:</span>
+                    <span className="ml-2 text-gray-700">COO support ticket resolution blocking customer retention initiatives across CRO and CCO agents.</span>
+                  </div>
+                  <div className="bg-white rounded-lg p-4 border">
+                    <span className="font-medium text-gray-900">Cross-agent synergy opportunity:</span>
+                    <span className="ml-2 text-gray-700">CMO content marketing success (23% ROI) should be leveraged for CRO enterprise segment pipeline acceleration.</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
         {/* Strategic Execution Loop Overview */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
