@@ -1,0 +1,69 @@
+# Create a Python sender script that fills placeholders and emails the CEO Autonomy Checklist weekly
+from pathlib import Path
+from textwrap import dedent
+
+base = Path("/mnt/data")
+
+script = dedent("""\
+import os, json, base64, datetime
+from email.mime.text import MIMEText
+
+# Google API
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+
+# --- Config ---
+TEMPLATE_PATH = os.environ.get("CEO_AUTONOMY_TEMPLATE_PATH", "/mnt/data/ceo_autonomy_checklist_email.html")
+SENDER = os.environ.get("CEO_AUTONOMY_SENDER", "ceo-agent@complianceworxs.ai")
+RECIPIENTS = os.environ.get("CEO_AUTONOMY_RECIPIENTS", "jon@example.com")  # comma-separated
+CEO_DASHBOARD_URL = os.environ.get("CEO_DASHBOARD_URL", "https://your-ceo-dashboard.example")
+PARTNER_PROGRAM_URL = os.environ.get("PARTNER_PROGRAM_URL", "https://your-partner-program.example")
+SERVICE_ACCOUNT_JSON = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY")  # domain-wide delegation JSON
+SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
+
+def gmail_service():
+    if not SERVICE_ACCOUNT_JSON:
+        raise RuntimeError("Missing GOOGLE_SERVICE_ACCOUNT_KEY secret.")
+    info = json.loads(SERVICE_ACCOUNT_JSON)
+    creds = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+    delegated = creds.with_subject(SENDER)  # send-as via domain-wide delegation
+    return build("gmail", "v1", credentials=delegated)
+
+def render_template(path: str, date=None, timestamp=None):
+    with open(path, "r", encoding="utf-8") as f:
+        html = f.read()
+    now = datetime.datetime.now()
+    date = date or now.strftime("%Y-%m-%d")
+    timestamp = timestamp or now.strftime("%Y-%m-%d %H:%M %p")
+    # simple {{placeholder}} replacement
+    repl = {
+        "date": date,
+        "timestamp": timestamp,
+        "ceo_dashboard_url": CEO_DASHBOARD_URL,
+        "partner_program_url": PARTNER_PROGRAM_URL,
+    }
+    for k, v in repl.items():
+        html = html.replace("{{" + k + "}}", str(v))
+    return html
+
+def send_email(html: str, subject: str):
+    service = gmail_service()
+    msg = MIMEText(html, "html")
+    msg["to"] = RECIPIENTS
+    msg["from"] = SENDER
+    msg["subject"] = subject
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    res = service.users().messages().send(userId="me", body={"raw": raw}).execute()
+    print("Sent message id:", res.get("id"))
+
+def main():
+    html = render_template(TEMPLATE_PATH)
+    subject = "CEO Autonomy Checklist — {}".format(datetime.datetime.now().strftime("%Y-%m-%d"))
+    send_email(html, subject)
+
+if __name__ == "__main__":
+    main()
+""")
+
+(base / "send_ceo_autonomy_checklist.py").write_text(script, encoding="utf-8")
+print(str(base / "send_ceo_autonomy_checklist.py"))
