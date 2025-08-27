@@ -13,11 +13,11 @@ from email.mime.multipart import MIMEMultipart
 from pathlib import Path
 from typing import Dict, Any
 
-# Configuration from environment variables
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+# Configuration from environment variables  
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.complianceworxs.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+SMTP_USER = os.environ.get("ComplianceWorxs_EMAIL", "")
+SMTP_PASSWORD = os.environ.get("ComplianceWorxs_EMAIL_PASSWORD", "")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "chief-of-staff@complianceworxs.ai")
 SENDER_NAME = os.environ.get("SENDER_NAME", "ComplianceWorxs Chief of Staff AI")
 RECIPIENTS = os.environ.get("CEO_RECIPIENTS", "").split(",")
@@ -181,7 +181,7 @@ def generate_checklist_html(metrics: Dict[str, Any]) -> str:
 def send_email(html_content: str, subject: str):
     """Send the email using SMTP"""
     if not SMTP_USER or not SMTP_PASSWORD:
-        print("❌ SMTP credentials not configured. Set SMTP_USER and SMTP_PASSWORD environment variables.")
+        print("❌ SMTP credentials not configured. Set ComplianceWorxs_EMAIL and ComplianceWorxs_EMAIL_PASSWORD environment variables.")
         return False
         
     if not RECIPIENTS or RECIPIENTS == [""]:
