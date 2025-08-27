@@ -2,6 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ComplianceWorxs Brand Styling - Injected at Runtime */
+:root{
+  --bg:#0b2742;--panel:#0f3353;--ink:#eaf3ff;--muted:#a8c0df;--accent:#2fb3ff;
+  --ok:#10b981;--warn:#f59e0b;--risk:#ef4444;--chip:#0b3a63;--divider:rgba(255,255,255,.08);
+  --shadow:0 8px 24px rgba(0,0,0,.35);--radius:16px;--font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+}
+
+body{
+  background:
+    radial-gradient(1200px 800px at 15% -10%, #11456f 0%, var(--bg) 50%),
+    linear-gradient(180deg,#0d2e4f 0%, var(--bg) 100%);
+  color:var(--ink);
+}
+
+.cw-card{
+  background:var(--panel);
+  border:1px solid var(--divider);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+}
+
+.cw-kpi{
+  padding:16px 16px 14px;
+  position:relative;
+  overflow:hidden;
+}
+
+.cw-kpi .label{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.cw-kpi .value{
+  font-weight:800;
+  font-size:22px;
+  margin-top:4px;
+}
+
+.cw-chip{
+  font-size:12px;
+  border-radius:999px;
+  padding:2px 8px;
+  border:1px solid var(--divider);
+}
+
+.cw-chip.ok{
+  background:color-mix(in oklab,var(--ok) 18%,transparent);
+}
+
+.cw-chip.warn{
+  background:color-mix(in oklab,var(--warn) 18%,transparent);
+}
+
+.cw-chip.risk{
+  background:color-mix(in oklab,var(--risk) 18%,transparent);
+}
+
+.cw-alert{
+  border-radius:12px;
+  border:1px solid var(--divider);
+  padding:12px 14px;
+  margin-bottom:10px;
+}
+
+.cw-alert.high{
+  background:color-mix(in oklab,var(--risk) 20%,transparent);
+  border-color:color-mix(in oklab,var(--risk) 45%,var(--divider));
+}
+
+.cw-alert.med{
+  background:color-mix(in oklab,var(--warn) 18%,transparent);
+  border-color:color-mix(in oklab,var(--warn) 40%,var(--divider));
+}
+
+.cw-alert.low{
+  background:color-mix(in oklab,var(--ok) 18%,transparent);
+  border-color:color-mix(in oklab,var(--ok) 40%,var(--divider));
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);
