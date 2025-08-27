@@ -1,0 +1,73 @@
+{
+  "agent": "Chief of Staff Agent – Strategic Alignment & Oversight",
+  "primary_goal": "Ensure executive agents (CEO, CRO, CMO, COO, CCO) remain aligned to revenue goals, highlight cross-agent dependencies, and surface risks that impact business performance.",
+
+  "dashboard": {
+    "headline_kpis": [
+      {
+        "name": "Revenue Alignment",
+        "value": "${{revenue_progress_pct}}%",
+        "target": "100%",
+        "status": "{{revenue_alignment_status}}"
+      },
+      {
+        "name": "Cross-Agent Dependencies Cleared",
+        "value": "{{dependencies_resolved}}",
+        "target": "All",
+        "status": "{{dependencies_status}}"
+      },
+      {
+        "name": "Strategic Initiatives On Track",
+        "value": "{{initiatives_on_track}} / {{total_initiatives}}",
+        "status": "{{initiative_status}}"
+      },
+      {
+        "name": "Executive Agent Reliability",
+        "value": "{{agent_success_rate}}%",
+        "target": "95%+",
+        "status": "{{agent_reliability_status}}"
+      }
+    ],
+
+    "cross_agent_summary": {
+      "cro_insight": "CRO reports {{revenue_gap}} shortfall risk in {{tier}} segment.",
+      "cmo_insight": "CMO highlights {{campaign}} driving {{roi}} ROI, recommends budget shift.",
+      "coo_insight": "COO flags {{ticket_count}} unresolved tickets impacting ${{revenue_at_risk}} revenue.",
+      "cco_insight": "CCO confirms compliance risk in {{process}} area, potential ${{compliance_risk_amount}} exposure."
+    },
+
+    "alignment_tracker": {
+      "aligned_initiatives": [
+        {
+          "initiative": "ARR Growth Acceleration",
+          "status": "{{arr_initiative_status}}",
+          "dependencies": ["CRO revenue acquisition", "CMO funnel conversions", "COO ticket resolution"],
+          "overall_alignment": "{{arr_alignment_status}}"
+        },
+        {
+          "initiative": "Churn Reduction",
+          "status": "{{churn_initiative_status}}",
+          "dependencies": ["CRO churn mitigation", "COO support resolution", "CCO compliance stability"],
+          "overall_alignment": "{{churn_alignment_status}}"
+        }
+      ]
+    },
+
+    "strategic_alerts": [
+      {
+        "priority": "HIGH",
+        "message": "Revenue growth trajectory behind by {{gap_pct}}% — dependency bottleneck at {{agent}} agent."
+      },
+      {
+        "priority": "MEDIUM",
+        "message": "Initiative {{initiative}} slipping — dependency {{blocked_by}} unresolved."
+      }
+    ],
+
+    "cos_insights": [
+      "Revenue alignment: {{revenue_alignment_comment}}.",
+      "Top dependency risk: {{dependency_risk}}.",
+      "Cross-agent synergy opportunity: {{synergy_comment}}."
+    ]
+  }
+}
