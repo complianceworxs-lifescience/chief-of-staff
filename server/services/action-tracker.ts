@@ -242,7 +242,8 @@ export class ActionTracker {
    * Store action record (implement based on storage system)
    */
   private async storeActionRecord(record: ActionRecord): Promise<void> {
-    // Store in database or memory storage
+    // Store action record in storage
+    await storage.createActionRecord(record);
     console.log(`💾 STORED: Action record ${record.action_id}`);
   }
   
@@ -250,8 +251,23 @@ export class ActionTracker {
    * Update action record
    */
   private async updateActionRecord(record: ActionRecord): Promise<void> {
-    // Update in database or memory storage
+    // Update action record in storage
+    await storage.updateActionRecord(record);
     console.log(`🔄 UPDATED: Action record ${record.action_id}`);
+  }
+
+  /**
+   * Get all pending action records
+   */
+  async getPendingActions(): Promise<ActionRecord[]> {
+    return await storage.getActionRecords(['queued', 'executing']);
+  }
+
+  /**
+   * Get recent action records
+   */
+  async getRecentActions(limit: number = 50): Promise<ActionRecord[]> {
+    return await storage.getRecentActionRecords(limit);
   }
   
   /**

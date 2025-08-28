@@ -164,6 +164,12 @@ export interface IStorage {
   getCampaignBriefs(): Promise<CampaignBrief[]>;
   getCampaignBrief(id: string): Promise<CampaignBrief | undefined>;
   updateCampaignBrief(id: string, updates: Partial<InsertCampaignBrief>): Promise<CampaignBrief | undefined>;
+
+  // Action Record Storage Methods
+  createActionRecord(record: any): Promise<any>;
+  updateActionRecord(record: any): Promise<any>;
+  getActionRecords(statuses: string[]): Promise<any[]>;
+  getRecentActionRecords(limit: number): Promise<any[]>;
   
   createBrandAsset(asset: InsertBrandAsset): Promise<BrandAsset>;
   getBrandAssets(type?: string): Promise<BrandAsset[]>;
@@ -997,6 +1003,42 @@ export class DatabaseStorage implements IStorage {
       .where(eq(abTests.id, id))
       .returning();
     return result;
+  }
+
+  // Action Record Storage Methods - In-memory implementation for now
+  private actionRecords: any[] = [];
+
+  async createActionRecord(record: any): Promise<any> {
+    this.actionRecords.push({
+      ...record,
+      created_at: new Date().toISOString()
+    });
+    return record;
+  }
+
+  async updateActionRecord(record: any): Promise<any> {
+    const index = this.actionRecords.findIndex(r => r.action_id === record.action_id);
+    if (index >= 0) {
+      this.actionRecords[index] = {
+        ...this.actionRecords[index],
+        ...record,
+        updated_at: new Date().toISOString()
+      };
+      return this.actionRecords[index];
+    }
+    return record;
+  }
+
+  async getActionRecords(statuses: string[]): Promise<any[]> {
+    return this.actionRecords.filter(record => 
+      statuses.includes(record.execution?.status || 'unknown')
+    );
+  }
+
+  async getRecentActionRecords(limit: number): Promise<any[]> {
+    return this.actionRecords
+      .sort((a, b) => new Date(b.created_ts || b.created_at).getTime() - new Date(a.created_ts || a.created_at).getTime())
+      .slice(0, limit);
   }
 }
 

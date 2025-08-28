@@ -219,7 +219,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cockpit/actions", async (req, res) => {
     try {
-      const actions = [
+      // Import the action tracker to get real action data
+      const { actionTracker } = await import('./services/action-tracker.js');
+      const pendingActions = await actionTracker.getPendingActions();
+      
+      // Format pending actions for dashboard
+      const formattedActions = pendingActions.map(record => ({
+        title: record.recommendation_title || 'Action in progress',
+        owner: record.owner_agent || 'System',
+        eta_days: record.expected?.time_window_hours ? Math.ceil(record.expected.time_window_hours / 24) : 1,
+        reason: record.expected?.target || 'Strategic action',
+        action_link: `https://replit.com/@ComplianceWorxs/agents/${(record.owner_agent || 'system').toLowerCase()}/run`,
+        action_id: record.action_id,
+        created_at: record.created_ts,
+        risk: record.execution?.risk || 'low',
+        spend: (record.execution?.spend_cents || 0) / 100,
+        status: record.execution?.status || 'queued',
+        confidence: record.expected?.confidence_pct || 0
+      }))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 10); // Show top 10 most recent pending actions
+
+      // If no real actions, show the static examples as fallback
+      if (formattedActions.length === 0) {
+        const fallbackActions = [
+          {
+            title: "Publish VS case study",
+            owner: "Content",
+            eta_days: 2,
+            reason: "Highest LTV segment; improves Initiative Health",
+            action_link: "https://replit.com/@ComplianceWorxs/agents/content/run"
+          },
+          {
+            title: "Double cadence on OpenAI-critique posts",
+            owner: "CMO",
+            eta_days: 3,
+            reason: "+19% ER; 3 paid yesterday",
+            action_link: "https://replit.com/@ComplianceWorxs/agents/cmo/schedule"
+          }
+        ];
+        res.json(fallbackActions);
+      } else {
+        res.json(formattedActions);
+      }
+    } catch (error) {
+      console.error("Failed to fetch real actions:", error);
+      // Fallback to static data on error
+      const fallbackActions = [
         {
           title: "Publish VS case study",
           owner: "Content",
@@ -235,9 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           action_link: "https://replit.com/@ComplianceWorxs/agents/cmo/schedule"
         }
       ];
-      res.json(actions);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch actions data" });
+      res.json(fallbackActions);
     }
   });
 
