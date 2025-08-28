@@ -91,6 +91,36 @@ app.use((req, res, next) => {
       module.chiefOfStaff.startNightlyScheduler();
       log("Chief of Staff nightly scheduler started - Dashboard cleanup at 02:15 UTC");
     });
+
+    // Start Market Intelligence 2-hour collection scheduler
+    const MI_COLLECTION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    
+    const collectMarketIntelligence = async () => {
+      try {
+        console.log("🔍 MI: Starting scheduled market intelligence collection...");
+        const response = await fetch(`http://localhost:${port}/api/mi/ingest-and-score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`✅ MI: Collected ${result.stats?.total || 0} signals, ${result.stats?.high_priority || 0} high-priority`);
+        } else {
+          console.error(`❌ MI: Collection failed with status ${response.status}`);
+        }
+      } catch (error) {
+        console.error("❌ MI: Collection error:", error);
+      }
+    };
+
+    // Run initial collection after 5 minutes (startup delay)
+    setTimeout(collectMarketIntelligence, 5 * 60 * 1000);
+    
+    // Then run every 2 hours
+    setInterval(collectMarketIntelligence, MI_COLLECTION_INTERVAL);
+    
+    log("Market Intelligence scheduler started - Collection every 2 hours");
     
     log("Autonomous conflict monitoring started - No HITL required");
   });
