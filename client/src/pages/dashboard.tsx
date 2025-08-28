@@ -13,30 +13,30 @@ import { qk } from "@/state/queries";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
 export default function Dashboard() {
-  // Strategic Cockpit Data Contracts - Live API Integration
+  // Strategic Cockpit Data Contracts - 2-hour polling for 4x daily check-ins
   const { data: scoreboard } = useQuery({
     queryKey: ['/api/cockpit/scoreboard'],
-    refetchInterval: 300000 // 5 minute intervals for real-time executive data
+    refetchInterval: 7200000 // 2 hour intervals optimized for CEO check-in schedule
   });
 
   const { data: initiatives = [] } = useQuery({
     queryKey: ['/api/cockpit/initiatives'],
-    refetchInterval: 900000 // 15 minute intervals for strategic initiatives
+    refetchInterval: 7200000 // 2 hour intervals for strategic initiatives
   });
 
   const { data: decisions = [] } = useQuery({
     queryKey: ['/api/cockpit/decisions'],
-    refetchInterval: 300000 // 5 minute intervals for time-sensitive decisions
+    refetchInterval: 7200000 // 2 hour intervals for decision inbox
   });
 
   const { data: actions = [] } = useQuery({
     queryKey: ['/api/cockpit/actions'],
-    refetchInterval: 600000 // 10 minute intervals for next best actions
+    refetchInterval: 7200000 // 2 hour intervals for next best actions
   });
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['/api/cockpit/meetings'],
-    refetchInterval: 1800000 // 30 minute intervals for meeting summaries
+    refetchInterval: 7200000 // 2 hour intervals for meeting summaries
   });
 
   // Strategic Cockpit KPI Calculations from Live Data
