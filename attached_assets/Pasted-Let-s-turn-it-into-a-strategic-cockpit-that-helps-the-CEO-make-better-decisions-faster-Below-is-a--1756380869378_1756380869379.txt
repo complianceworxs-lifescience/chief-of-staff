@@ -1,0 +1,114 @@
+Let’s turn it into a strategic cockpit that helps the CEO make better decisions, faster. Below is a complete spec you can hand to Replit: what to show, how to score it, what data to collect, and the automations the CoS should run.
+
+CoS Dashboard — Strategic Cockpit Spec
+A. Purpose (one glance = one decision)
+
+The CoS dashboard exists to:
+
+Synthesize cross-agent signals into business KPIs,
+
+Surface decisions, risks, and opportunities,
+
+Drive follow-through with proactive tasking and comms.
+
+B. Top Strip (5 executive KPIs)
+
+Show these five cards at the top—always business-first:
+
+Revenue Pace to Target (Week)
+
+Value: realized_week / target_week (as %).
+
+Color: Green ≥ 90%, Amber 75–89%, Red < 75%.
+
+Subtext: “MRR + Upsells: $X / $Y • Δ vs last week: +Z%”.
+
+Strategic Initiative Health Index
+
+Weighted score (0–100): 0.4 * Milestone On-Time% + 0.3 * Risk Score Inverted + 0.2 * Resource Adequacy + 0.1 * Dependency Clearance.
+
+Subtext: “On-track A/B/C • At-risk D/E”.
+
+Alignment & Autonomy
+
+Alignment (0–100): % of agent work tied to current CEO Objectives (by tokens/effort).
+
+Autonomy (0–100): auto_resolve_rate normalized by MTTR.
+
+Subtext: “Aligned: X% • Auto-resolve: Y% • MTTR: Z min”.
+
+Risk & Compliance Radar
+
+Value: risk score (0–100) computed from open CAPAs, audit clock, SLA breaches.
+
+Subtext: “[#] High • [#] Med • Next deadline in [hh:mm]”.
+
+Narrative Momentum (Go-to-Market)
+
+Composite uplift vs 30-day baseline:
+0.5 * LinkedIn ER Δ + 0.3 * Email CTR Δ + 0.2 * Quiz→Paid Δ.
+
+Subtext: “Top theme: ‘[topic]’ • Conversions: [n]”.
+
+These five cards replace agent “success/failure” counters.
+
+C. CEO Command Surface (decisions-in, actions-out)
+
+A single pane that converts synthesis into action.
+
+Decision Inbox (Requires CEO)
+Rows with: Decision, Context (1-line), Recommended Option (A/B), Impact, Owner, Due.
+Auto-generate from blockers, spend reallocations, pricing tests, and policy approvals.
+
+Next Best Actions (CoS-owned)
+Three highest-leverage moves for today with “Send”, “Assign”, or “Schedule” buttons.
+
+Executive Brief Generator
+One-click: “Generate CEO Email” and “Generate Board Snapshot”.
+
+D. Cross-Functional Initiatives (RAG board)
+
+For each company priority (e.g., “Grow VS Tier,” “Reduce churn,” “Partner motion”):
+
+Health (0–100) with RAG color
+
+Milestone Forecast (plan vs actual)
+
+Path-to-Green (the 1–3 tasks that fix status)
+
+Risks/Dependencies (owner + date)
+
+Attribution (which agent(s) own the next step)
+
+E. Communication Bridge
+
+The CoS should remove friction between agents and the CEO.
+
+Meeting Synth & Actions
+Latest meeting → 3-bullet summary + assigned actions (owner, ETA, status).
+If unowned actions > 0 → auto-assign from matrix and notify in Slack/Email.
+
+Drafts & Outreach
+Ready-to-send drafts: investor update, customer note, partner follow-up, internal directive.
+Buttons: Send as CEO, Send as CoS, Request edit from CMO/CRO.
+
+Escalation Ladder
+If an item misses SLA, CoS escalates per ladder (Owner → Lead → CEO). Timer visible.
+
+F. Intelligence → Insight → Directive
+
+This panel shows why something matters and pushes a directive.
+
+Insight Cards (auto-curated):
+“OpenAI-critique posts +19% ER → +3 paid yesterday.”
+
+Directive Builder:
+“Double cadence on this topic for 72h. Owner: CMO. Budget shift: +$X.” (Send).
+
+G. Alerts & Guardrails
+
+Decision Debt: items needing CEO decision; red if > 3 or any > 24h old.
+
+Runway Actions: if Revenue Pace red for 2 days → propose 2 levers (pricing, promo, partner push).
+
+Compliance Clock: show next audit/SOP due; if < 7 days and not in “Green” → escalate to CCO.

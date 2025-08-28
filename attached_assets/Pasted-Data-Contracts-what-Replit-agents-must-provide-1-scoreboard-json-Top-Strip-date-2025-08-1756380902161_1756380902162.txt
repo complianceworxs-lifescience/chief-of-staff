@@ -1,0 +1,128 @@
+Data Contracts (what Replit agents must provide)
+1) scoreboard.json (Top Strip)
+{
+  "date": "2025-08-28",
+  "revenue": { "realized_week": 5330, "target_week": 7200, "upsells": 594 },
+  "initiatives": { "on_time_pct": 78, "risk_inverted": 72, "resource_ok_pct": 85, "dependency_clear_pct": 64 },
+  "alignment": { "work_tied_to_objectives_pct": 86 },
+  "autonomy": { "auto_resolve_pct": 91, "mttr_min": 4.8 },
+  "risk": { "score": 22, "high": 0, "medium": 3, "next_deadline_hours": 36 },
+  "narrative": { "topic": "OpenAI critique", "linkedin_er_delta_pct": 19, "email_ctr_delta_pct": 11, "quiz_to_paid_delta_pct": 2.4, "conversions": 4 }
+}
+
+2) initiatives.json (RAG board)
+[
+  {
+    "name": "Grow Validation Strategist Tier",
+    "owner": "CRO",
+    "health_score": 82,
+    "rag": "green",
+    "milestones": [{"title": "Case study live", "due": "2025-08-30", "status": "on_track"}],
+    "risks": [{"text": "Ad creative fatigue", "owner": "CMO", "due": "2025-08-29"}],
+    "path_to_green": ["Ship VS case study", "Double cadence on winning topic for 72h"]
+  },
+  {
+    "name": "Reduce RL Churn",
+    "owner": "COO",
+    "health_score": 58,
+    "rag": "amber",
+    "milestones": [{"title": "Welcome revamp", "due": "2025-09-02", "status": "slipping"}],
+    "risks": [{"text": "Onboarding email gaps", "owner": "CMO", "due": "2025-08-29"}],
+    "path_to_green": ["Add 3-email activation series", "In-product checklist for first 72h"]
+  }
+]
+
+3) decisions.json (Decision Inbox)
+[
+  {
+    "decision": "Shift $500 budget to VS topic for 72h",
+    "context": "ER +19%, 3 paid yesterday from this angle",
+    "options": ["Approve", "Hold 24h"],
+    "impact": "Revenue pacing +8–12%",
+    "owner": "CEO",
+    "due": "2025-08-28T14:00:00Z"
+  },
+  {
+    "decision": "Authorize Architect brief fast-track",
+    "context": "Architect conversions = 0 for 3 days",
+    "options": ["Approve", "Defer"],
+    "impact": "Coverage of Architect gap; reduces enterprise deal risk",
+    "owner": "CEO",
+    "due": "2025-08-29T16:00:00Z"
+  }
+]
+
+4) actions.json (Next Best Actions)
+[
+  {
+    "title": "Publish VS case study",
+    "owner": "Content",
+    "eta_days": 2,
+    "reason": "Highest LTV segment; improves Initiative Health",
+    "action_link": "https://replit.com/@ComplianceWorxs/agents/content/run"
+  },
+  {
+    "title": "Double cadence on OpenAI-critique posts",
+    "owner": "CMO",
+    "eta_days": 3,
+    "reason": "+19% ER; 3 paid yesterday",
+    "action_link": "https://replit.com/@ComplianceWorxs/agents/cmo/schedule"
+  }
+]
+
+5) meetings.json (Communication Bridge)
+[
+  {
+    "title": "Growth Standup",
+    "date": "2025-08-28T13:00:00Z",
+    "summary": ["VS topic outperforming", "Architect gap persists", "Email subject A/B result: +11%"],
+    "actions": [
+      {"text": "Create Architect guide outline", "owner": "Content", "due": "2025-08-30"},
+      {"text": "Spin up 2 new VS creatives", "owner": "CMO", "due": "2025-08-29"}
+    ]
+  }
+]
+
+I. Automation Rules (CoS should execute, not just report)
+
+Proactive tasking: If a meeting action has no owner in 2h → auto-assign via ownership matrix and notify in Slack/Email.
+
+Calendar triage: If a decision is due within 4h and CEO is in back-to-backs → CoS auto-moves the lowest-value meeting and inserts a 10-min “Decision Block”.
+
+Directive dispatch: When an insight passes a threshold (e.g., ER Δ ≥ +15%), CoS drafts a directive and routes to CMO/CRO for execution with prefilled context and links.
+
+Escalation: If any initiative turns Red or Risk Clock < 72h, create a “Path-to-Green” task group and start the escalation ladder automatically.
+
+Weekly synthesis: Each Friday 3pm, CoS auto-generates a 5-slide board brief (revenue pacing, initiative health, risks, decisions, plan).
+
+J. UI Layout (at a glance)
+
+Top Strip (5 KPI cards)
+
+CEO Command Surface
+
+Decision Inbox (left) • Next Best Actions (center) • Brief Generator (right)
+
+Cross-Functional Initiatives RAG board
+
+Communication Bridge
+
+Meeting Synth • Drafts & Outreach • Escalation Ladder
+
+Intelligence → Insight → Directive
+
+Alerts & Guardrails (Decision Debt, Runway Actions, Compliance Clock)
+
+Style: same visual system you’re using (rounded cards, soft shadows), but fewer widgets, more decisions. Mobile: collapse RAG→accordion; keep the Top Strip always visible.
+
+K. Success Criteria (how we know it’s working)
+
+CEO can make/clear 90% of daily decisions in ≤ 10 minutes.
+
+Decision Debt ≤ 3, average age < 24h.
+
+Initiative Health trending up (≥ +10 points over 14 days).
+
+Alignment ≥ 85%, Autonomy ≥ 90%, MTTR < 5 min.
+
+Revenue Pace holds Green 4 of 5 days/week.

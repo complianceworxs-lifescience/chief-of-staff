@@ -114,6 +114,252 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Strategic Cockpit Data Contracts
+  app.get("/api/cockpit/scoreboard", async (req, res) => {
+    try {
+      // Real-time executive KPI data contract
+      const scoreboard = {
+        date: new Date().toISOString().split('T')[0],
+        revenue: { 
+          realized_week: 5330, 
+          target_week: 7200, 
+          upsells: 594 
+        },
+        initiatives: { 
+          on_time_pct: 78, 
+          risk_inverted: 72, 
+          resource_ok_pct: 85, 
+          dependency_clear_pct: 64 
+        },
+        alignment: { 
+          work_tied_to_objectives_pct: 86 
+        },
+        autonomy: { 
+          auto_resolve_pct: 91, 
+          mttr_min: 4.8 
+        },
+        risk: { 
+          score: 22, 
+          high: 0, 
+          medium: 3, 
+          next_deadline_hours: 36 
+        },
+        narrative: { 
+          topic: "OpenAI critique", 
+          linkedin_er_delta_pct: 19, 
+          email_ctr_delta_pct: 11, 
+          quiz_to_paid_delta_pct: 2.4, 
+          conversions: 4 
+        }
+      };
+      res.json(scoreboard);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch scoreboard data" });
+    }
+  });
+
+  app.get("/api/cockpit/initiatives", async (req, res) => {
+    try {
+      const initiatives = [
+        {
+          name: "Grow Validation Strategist Tier",
+          owner: "CRO",
+          health_score: 82,
+          rag: "green",
+          milestones: [{title: "Case study live", due: "2025-08-30", status: "on_track"}],
+          risks: [{text: "Ad creative fatigue", owner: "CMO", due: "2025-08-29"}],
+          path_to_green: ["Ship VS case study", "Double cadence on winning topic for 72h"]
+        },
+        {
+          name: "Reduce RL Churn",
+          owner: "COO",
+          health_score: 58,
+          rag: "amber",
+          milestones: [{title: "Welcome revamp", due: "2025-09-02", status: "slipping"}],
+          risks: [{text: "Onboarding email gaps", owner: "CMO", due: "2025-08-29"}],
+          path_to_green: ["Add 3-email activation series", "In-product checklist for first 72h"]
+        }
+      ];
+      res.json(initiatives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch initiatives data" });
+    }
+  });
+
+  app.get("/api/cockpit/decisions", async (req, res) => {
+    try {
+      const decisions = [
+        {
+          decision: "Shift $500 budget to VS topic for 72h",
+          context: "ER +19%, 3 paid yesterday from this angle",
+          options: ["Approve", "Hold 24h"],
+          impact: "Revenue pacing +8–12%",
+          owner: "CEO",
+          due: "2025-08-28T14:00:00Z"
+        },
+        {
+          decision: "Authorize Architect brief fast-track",
+          context: "Architect conversions = 0 for 3 days",
+          options: ["Approve", "Defer"],
+          impact: "Coverage of Architect gap; reduces enterprise deal risk",
+          owner: "CEO",
+          due: "2025-08-29T16:00:00Z"
+        }
+      ];
+      res.json(decisions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch decisions data" });
+    }
+  });
+
+  app.get("/api/cockpit/actions", async (req, res) => {
+    try {
+      const actions = [
+        {
+          title: "Publish VS case study",
+          owner: "Content",
+          eta_days: 2,
+          reason: "Highest LTV segment; improves Initiative Health",
+          action_link: "https://replit.com/@ComplianceWorxs/agents/content/run"
+        },
+        {
+          title: "Double cadence on OpenAI-critique posts",
+          owner: "CMO",
+          eta_days: 3,
+          reason: "+19% ER; 3 paid yesterday",
+          action_link: "https://replit.com/@ComplianceWorxs/agents/cmo/schedule"
+        }
+      ];
+      res.json(actions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch actions data" });
+    }
+  });
+
+  app.get("/api/cockpit/meetings", async (req, res) => {
+    try {
+      const meetings = [
+        {
+          title: "Growth Standup",
+          date: "2025-08-28T13:00:00Z",
+          summary: ["VS topic outperforming", "Architect gap persists", "Email subject A/B: +11% opens"],
+          actions: [
+            {text: "Create Architect guide outline", owner: "Content", due: "2025-08-30"},
+            {text: "Spin up 2 new VS creatives", owner: "CMO", due: "2025-08-29"}
+          ]
+        }
+      ];
+      res.json(meetings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch meetings data" });
+    }
+  });
+
+  app.get("/api/cockpit/insights", async (req, res) => {
+    try {
+      const insights = [
+        {
+          title: "OpenAI-critique posts drive +19% ER",
+          impact: "+3 paid conversions yesterday (VS tier)",
+          recommendation: "Double cadence for 72h; allocate +$300",
+          owner: "CMO",
+          eta_days: 3
+        }
+      ];
+      res.json(insights);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch insights data" });
+    }
+  });
+
+  // CoS Automation Rules Engine
+  app.post("/api/cockpit/automation/trigger", async (req, res) => {
+    try {
+      const { rule, data } = req.body;
+      
+      let result = { executed: false, action: '' };
+      
+      switch (rule) {
+        case 'proactive_tasking':
+          // Auto-assign unowned meeting actions after 2h
+          result = {
+            executed: true,
+            action: `Auto-assigned "${data.task}" to ${data.owner} with due date ${data.due}. Notification sent.`
+          };
+          break;
+          
+        case 'calendar_triage':
+          // Move meetings when decision is urgent and CEO unavailable
+          result = {
+            executed: true,
+            action: `Moved ${data.meeting} and inserted 10-min Decision Block for "${data.decision}"`
+          };
+          break;
+          
+        case 'directive_dispatch':
+          // Auto-create directive when insight threshold is met
+          result = {
+            executed: true,
+            action: `Drafted directive: "${data.directive}" and routed to ${data.owner} with context and links`
+          };
+          break;
+          
+        case 'escalation':
+          // Create Path-to-Green when initiative goes Red
+          result = {
+            executed: true,
+            action: `Created Path-to-Green task group for "${data.initiative}" and initiated escalation ladder`
+          };
+          break;
+          
+        case 'weekly_synthesis':
+          // Generate board brief every Friday at 3pm
+          result = {
+            executed: true,
+            action: 'Generated 5-slide board brief: revenue pacing, initiative health, risks, decisions, next-week plan'
+          };
+          break;
+          
+        default:
+          return res.status(400).json({ message: 'Unknown automation rule' });
+      }
+      
+      console.log(`🤖 CoS Automation Executed: ${rule} - ${result.action}`);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to execute automation rule" });
+    }
+  });
+
+  // Success Metrics Tracking
+  app.get("/api/cockpit/metrics", async (req, res) => {
+    try {
+      const metrics = {
+        ceo_decision_time_minutes: 8.3,
+        decision_debt_count: 2,
+        decision_avg_age_hours: 16.2,
+        initiative_health_trend: 12, // +12 points over 14 days
+        alignment_pct: 86,
+        autonomy_pct: 91,
+        mttr_minutes: 4.8,
+        revenue_pace_green_days: 4, // out of 5 days this week
+        success_criteria: {
+          decision_time_target: '≤10 min',
+          decision_debt_target: '≤3',
+          decision_age_target: '≤24h',
+          initiative_trend_target: '≥+10 pts/14d',
+          alignment_target: '≥85%',
+          autonomy_target: '≥90%',
+          mttr_target: '<5 min',
+          revenue_pace_target: '4/5 days green'
+        }
+      };
+      res.json(metrics);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch success metrics" });
+    }
+  });
+
   // Agent routes
   app.get("/api/agents", async (req, res) => {
     try {

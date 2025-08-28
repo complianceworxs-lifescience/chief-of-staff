@@ -1,0 +1,61 @@
+UI Layout (wireframe)
+
+Top Strip (5 KPI cards) — sticky on scroll.
+
+CEO Command Surface — three columns: Decision Inbox • Next Best Actions • Brief Generator.
+
+Initiatives RAG board — cards with health meter, milestones, risks, path‑to‑green.
+
+Communication Bridge — latest meeting synth, drafts, escalation ladder with timers.
+
+Intelligence → Insight → Directive — insight cards; one‑click directive sender.
+
+Alerts & Guardrails — Decision Debt, Runway Actions, Compliance Clock.
+
+Design system: same rounded cards/soft shadows; reduce widget count; emphasize decisions. Mobile: collapse RAG to accordion; keep Top Strip visible.
+
+J) Rendering & Delivery
+
+Inputs: scoreboard.json, initiatives.json, decisions.json, actions.json, meetings.json, optional insights.json.
+
+Validation: schema/shape checks; on error send "DATA GAP" alert with missing fields.
+
+Render: web dashboard + optional daily HTML email snapshot for CEO.
+
+Log: archive a copy of inputs + rendered HTML to cof_reports/{date}/ for lineage.
+
+K) SLAs & Success Criteria
+
+SLA: dashboard fresh by 06:35 local; Decision Inbox never >3 open >24h.
+
+Success metrics:
+
+CEO clears ≥90% daily decisions in ≤10 min.
+
+Initiative Health +10 points over 14 days.
+
+Alignment ≥85%, Autonomy ≥90%, MTTR <5 min.
+
+Revenue Pace Green 4 of 5 days/week.
+
+L) Notes on Integrations (non‑exclusive)
+
+Comms/Meetings: Slack, Gmail, Zoom/Meet transcripts.
+
+Work mgmt: Asana/Jira/Trello for task syncing (optional).
+
+Data: Stripe/MemberPress, MailerLite, Shield (LinkedIn), GA4/WP.
+
+No hard dependency: CoS should function with existing internal agents/logs.
+
+End of Spec — hand this file to Replit as cos_dashboard_spec.md and wire the inputs accordingly.
+
+Done. I’ve dropped a full “CoS Dashboard — Strategic Cockpit Spec (v1)” into the canvas with:
+
+Purpose and KPI philosophy
+
+Exact UI layout & copy
+
+Data contracts (scoreboard.json, initiatives.json, decisions.json, actions.json, meetings.json, insights.json)
+
+Automation rules, SLAs, success metrics, and integration notes
