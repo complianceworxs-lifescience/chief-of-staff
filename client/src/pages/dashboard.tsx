@@ -394,22 +394,64 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ArrowRight className="h-5 w-5" />
-              Directive Builder
+              <Send className="h-5 w-5" />
+              Directive Center
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="p-4 border rounded-lg">
-                <p className="font-medium mb-2">Recommended Directive:</p>
-                <p className="text-sm mb-3">
-                  "Double cadence on {scoreboard?.narrative?.topic || 'top-performing'} topic for 72h. Owner: CMO. Budget shift: +$2K."
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm">Send Directive</Button>
-                  <Button size="sm" variant="outline">Edit First</Button>
+              {/* Quick Directive Creation */}
+              <div className="p-4 border-2 border-blue-200 bg-blue-50 rounded-lg">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="font-semibold text-blue-900">Create New Directive</p>
+                    <p className="text-sm text-blue-700">Send commands to agents</p>
+                  </div>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    + New Directive
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <Button size="sm" variant="outline" className="justify-start h-8">
+                    📈 Revenue Push
+                  </Button>
+                  <Button size="sm" variant="outline" className="justify-start h-8">
+                    🎯 Campaign Launch
+                  </Button>
+                  <Button size="sm" variant="outline" className="justify-start h-8">
+                    📊 Budget Shift
+                  </Button>
+                  <Button size="sm" variant="outline" className="justify-start h-8">
+                    🚨 Emergency Action
+                  </Button>
                 </div>
               </div>
+              
+              {/* Recent Directives */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Recent Directives</h4>
+                {[
+                  { text: 'Double OpenAI-critique cadence', agent: 'CMO', status: 'Active', time: '2h ago' },
+                  { text: 'Architect conversion analysis', agent: 'CRO', status: 'Pending', time: '4h ago' },
+                  { text: 'Customer retention focus', agent: 'CCO', status: 'Complete', time: '1d ago' }
+                ].map((directive, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 border rounded text-xs">
+                    <div>
+                      <p className="font-medium">{directive.text}</p>
+                      <p className="text-gray-500">{directive.agent} • {directive.time}</p>
+                    </div>
+                    <Badge 
+                      variant={directive.status === 'Active' ? 'default' : 
+                              directive.status === 'Complete' ? 'secondary' : 'outline'}
+                      className="text-xs"
+                    >
+                      {directive.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Auto-Trigger Rules */}
               <div className="p-3 bg-amber-50 border border-amber-200 rounded text-xs">
                 <p className="font-medium mb-1">Auto-Trigger Rules Active:</p>
                 <p>• Revenue Pace &lt;85% for 2 days → Propose pricing/promo levers</p>
