@@ -15,6 +15,9 @@ import { ContentManager } from "./services/content-manager";
 import { marketIntelligenceAgent } from "./services/market-intelligence";
 import { generativeStrategist } from "./services/generative-strategist";
 import { agentsRouter } from "./routes/agents";
+import { LLMDirectiveEngine } from "./services/llm-directive-engine";
+import { AgentDispatchService } from "./services/agent-dispatch";
+import { EmailIngestService } from "./services/email-ingest";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
@@ -2144,6 +2147,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Experiment OS integration
   app.use("/experiments", (await import("./routes/experiments")).default);
+
+  // ====================================
+  // LLM DIRECTIVE ENGINE - External AI Integration
+  // ====================================
+
+  // Initialize LLM services
+  const llmEngine = new LLMDirectiveEngine();
+  const agentDispatch = new AgentDispatchService();
+  const emailIngest = new EmailIngestService();
+
+  // Email Ingestion Endpoint - Receives forwarded emails from Gmail
+  app.post("/inbound/email", async (req, res) => {
+    try {
+      const emailData = {
+        subject: req.body.subject || '',
+        body: req.body.body || req.body.text || '',
+        html: req.body.html,
+        from: req.body.from || '',
+        received_at: new Date().toISOString()
+      };
+
+      console.log(`📧 Processing inbound email: ${emailData.subject}`);
+      
+      const parsed = await emailIngest.processInboundEmail(emailData);
+      
+      res.json({ 
+        success: true, 
+        message: "Email processed successfully",
+        parsed_data_types: Object.keys(parsed).filter(key => parsed[key as keyof typeof parsed]),
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Email ingestion error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Failed to process email", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Manual Orchestrator Trigger - For testing and manual runs
+  app.post("/api/llm/orchestrate", async (req, res) => {
+    try {
+      console.log("🚀 Starting LLM directive generation cycle...");
+      
+      // Generate directives using LLM
+      const directives = await llmEngine.generateDirectives();
+      
+      // Save directives to file system
+      await llmEngine.saveDirectives(directives);
+      
+      // Dispatch to agents
+      const dispatchResult = await agentDispatch.dispatchDirectives(directives);
+      
+      res.json({
+        success: true,
+        message: "LLM orchestration completed",
+        directives_generated: directives.directives.length,
+        agents_notified: dispatchResult.successful,
+        failed_dispatches: dispatchResult.failed,
+        llm_provider: directives.llm_provider,
+        summary: directives.summary,
+        dispatch_results: dispatchResult.results,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("LLM orchestration error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "LLM orchestration failed", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Get Latest LLM Directives - View generated directives
+  app.get("/api/llm/directives", async (req, res) => {
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      
+      const directivesPath = path.join(process.cwd(), "server", "data", "directives.json");
+      const content = await fs.readFile(directivesPath, "utf-8");
+      const directives = JSON.parse(content);
+      
+      res.json(directives);
+    } catch (error) {
+      console.error("Error reading directives:", error);
+      res.status(404).json({ 
+        message: "No directives found - run orchestration first" 
+      });
+    }
+  });
+
+  // Get Data Sources Status - Check what data is available
+  app.get("/api/llm/data-status", async (req, res) => {
+    try {
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      
+      const dataPath = path.join(process.cwd(), "server", "data");
+      const files = ['scoreboard.json', 'initiatives.json', 'decisions.json', 'actions.json', 'meetings.json', 'insights.json'];
+      
+      const status: Record<string, any> = {};
+      
+      for (const file of files) {
+        try {
+          const content = await fs.readFile(path.join(dataPath, file), "utf-8");
+          const data = JSON.parse(content);
+          status[file] = {
+            exists: true,
+            size: content.length,
+            records: Array.isArray(data) ? data.length : 1,
+            last_updated: (await fs.stat(path.join(dataPath, file))).mtime
+          };
+        } catch {
+          status[file] = { exists: false };
+        }
+      }
+      
+      res.json({
+        data_sources: status,
+        ready_for_llm: Object.values(status).filter((s: any) => s.exists).length >= 4,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error checking data status:", error);
+      res.status(500).json({ 
+        message: "Failed to check data status", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Update Data Source - Manual data entry endpoint
+  app.post("/api/llm/data/:source", async (req, res) => {
+    try {
+      const { source } = req.params;
+      const allowedSources = ['scoreboard', 'initiatives', 'decisions', 'actions', 'meetings', 'insights'];
+      
+      if (!allowedSources.includes(source)) {
+        return res.status(400).json({ message: "Invalid data source" });
+      }
+      
+      const fs = await import("fs/promises");
+      const path = await import("path");
+      
+      const filePath = path.join(process.cwd(), "server", "data", `${source}.json`);
+      await fs.writeFile(filePath, JSON.stringify(req.body, null, 2));
+      
+      console.log(`📊 Updated ${source}.json with new data`);
+      
+      res.json({ 
+        success: true, 
+        message: `${source} data updated successfully`,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error updating data source:", error);
+      res.status(500).json({ 
+        message: "Failed to update data source", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // LLM Configuration - View/update LLM settings
+  app.get("/api/llm/config", async (req, res) => {
+    res.json({
+      provider: process.env.LLM_PROVIDER || "openai",
+      available_providers: ["openai", "gemini"],
+      openai_configured: !!process.env.OPENAI_API_KEY,
+      gemini_configured: !!process.env.GEMINI_API_KEY,
+      webhooks_configured: {
+        cos: !!process.env.COS_WEBHOOK,
+        cmo: !!process.env.CMO_WEBHOOK,
+        cro: !!process.env.CRO_WEBHOOK,
+        cco: !!process.env.CCO_WEBHOOK,
+        cfo: !!process.env.CFO_WEBHOOK,
+        coo: !!process.env.COO_WEBHOOK
+      },
+      scheduled_run_time: process.env.RUN_AT || "06:35",
+      timezone: "UTC"
+    });
+  });
 
   const httpServer = createServer(app);
   return httpServer;
