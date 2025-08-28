@@ -431,20 +431,17 @@ export class DailyOrchestrator {
   }
 
   private generateCeoMorningBrief(directives: any, dispatchResult: any): string {
-    const timestamp = new Date().toLocaleString('en-US', { 
+    const timestamp = new Date().toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
+      day: 'numeric'
     });
 
     // Extract top AI recommendations
     const topRecommendations = directives.directives
       .filter((d: any) => d.priority === "p1" || (d.context?.confidence || 0) > 0.8)
-      .slice(0, 5);
+      .slice(0, 3);
 
     // Group by agent
     const agentGroups: Record<string, number> = {};
@@ -457,24 +454,63 @@ export class DailyOrchestrator {
       ? Math.round(directives.directives.reduce((sum: number, d: any) => sum + (d.context?.confidence || 0.5), 0) / directives.directives.length * 100)
       : 75;
 
-    return `
-🌅 CEO Morning Brief - ${timestamp}
+    return `📧 CEO Oversight Report — ${timestamp}
 
-## 🤖 AI Analysis Summary
-ChatGPT analyzed ${directives.data_sources?.length || 5} data sources and generated ${directives.directives.length} strategic directives (${avgConfidence}% confidence)
+ComplianceWorxs CEO Oversight
+Daily Strategic Report — ${timestamp}
 
-Top AI Recommendations:
-${topRecommendations.map((rec: any) => 
-  `• ${rec.agent}: ${rec.action} (${rec.priority?.toUpperCase() || 'P2'})\n  ${rec.rationale || 'Strategic directive from AI analysis'}`
+💰 Revenue & Membership
+
+New Memberships Yesterday:
+• Rising Leader: [X]
+• Validation Strategist: [X] 
+• Compliance Architect: [X]
+
+Cancellations / Churn: [X%]
+Net New MRR: $[X]
+Upsells (ELSA / Partner Referrals): $[X]
+
+🎯 Funnel Conversion
+
+Quiz Completions → Paid Conversion: [X%]
+Top Traffic Source Yesterday: [e.g. LinkedIn Post: "AI vs Manual Validation"]
+
+Email Campaign Performance:
+• Open Rate: [X%]
+• CTR: [X%] 
+• Conversions: [X]
+
+📈 Engagement
+
+LinkedIn: [X impressions / X engagement rate / X CTA clicks]
+Content Consumption: [X blog views / X downloads / X ELSA reports accessed]
+Member Engagement: [X active logins / X dashboard sessions / avg. session time: X min]
+
+🤖 Agent & System Oversight
+
+Critical Agents:
+• CEO Agent: ✅
+• CRO Agent: ✅
+• CMO Agent: ✅
+• CCO Agent: ✅
+
+Autonomy Score: ${Math.round((dispatchResult.successful || 0) / Math.max((directives.directives?.length || 1), 1) * 100)}% of issues auto-resolved
+
+Alerts Needing CEO Attention:
+${dispatchResult.pending_approval > 0 ? `• ${dispatchResult.pending_approval} directives require your approval (>$500 spend)` : '• No critical alerts'}
+${dispatchResult.blocked > 0 ? `• ${dispatchResult.blocked} directives blocked by policy gates` : ''}
+
+🔮 Forward-Looking Insights
+
+${topRecommendations.map((rec: any, index: number) => 
+  `[Insight ${index + 1}: "${rec.agent} recommends: ${rec.action} — ${rec.rationale || 'Strategic directive from AI analysis'}"]`
 ).join('\n')}
 
-Data Sources Analyzed: ${(directives.data_sources || ['Scoreboard', 'Initiatives', 'Actions', 'Meetings']).join(', ')}
+${this.generateKeyInsights(directives.directives)}
 
-## 🛡️ Governance & Agent Execution
-ODAR Policy Results:
-• ${dispatchResult.successful || 0} directives auto-approved and executing now
-• ${dispatchResult.pending_approval || 0} directives await your approval
-• ${dispatchResult.blocked || 0} directives blocked by policy gates
+🧠 AI Strategic Analysis
+
+ChatGPT analyzed ${directives.data_sources?.length || 5} data sources and generated ${directives.directives.length} strategic directives (${avgConfidence}% confidence)
 
 Active Agent Workload:
 ${Object.entries(agentGroups).map(([agent, count]) => 
@@ -483,14 +519,7 @@ ${Object.entries(agentGroups).map(([agent, count]) =>
 
 Estimated completion: ${this.estimateCompletionTime(directives.directives)}
 
-## 🔍 Key AI Insights
-${this.generateKeyInsights(directives.directives)}
-
----
-Your autonomous AI system analyzed overnight data and deployed strategic directives. 
-All actions are being executed according to your governance policies.
-
-Next AI analysis cycle: Tomorrow at 4:30 AM EST
+Generated automatically by ComplianceWorxs CEO Agent — ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
     `.trim();
   }
 
