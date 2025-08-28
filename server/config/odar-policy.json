@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "gates": {
+    "spend_per_day_usd": 500,
+    "lifetime_spend_usd": 3000,
+    "requires_cco_for_public_claims": true,
+    "block_if_risk_high_increases": true,
+    "new_vendor_requires": [
+      "CCO",
+      "COO"
+    ]
+  },
+  "prioritization": {
+    "objective": "RevenuePace>=90_this_week",
+    "tie_breakers": [
+      "risk_gate_pass",
+      "roi_per_day_desc",
+      "cost_asc"
+    ],
+    "max_directives": 5
+  },
+  "slas": {
+    "ingest_by_local": "06:35",
+    "decision_block_minutes": 10,
+    "escalation_hours_default": 72
+  },
+  "reporting": {
+    "kpis": [
+      "RevenuePace",
+      "NetNewMRR",
+      "RiskHighCount",
+      "GTMMomentum",
+      "DecisionVelocity",
+      "ROIperDay"
+    ],
+    "email_snapshot": true
+  }
+}

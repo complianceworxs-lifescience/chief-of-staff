@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import fs from "fs/promises";
 import path from "path";
+import { odarGovernance, type BusinessDirective } from "./odar-governance";
 
 // LLM Configuration
 const LLM_PROVIDER = process.env.LLM_PROVIDER || "openai"; // "openai" or "gemini"
@@ -170,7 +171,12 @@ export class LLMDirectiveEngine {
   }
 
   private buildSystemPrompt(): string {
-    return `You are the Chief of Staff AI for ComplianceWorxs, a Life Sciences consulting company. Your role is to analyze morning dashboards and email summaries, then generate strategic directives for autonomous agents.
+    // Get business-oriented prompt header from ODAR governance
+    const odarHeader = odarGovernance.getBusinessPromptHeader();
+    
+    return `${odarHeader}
+
+You are the Chief of Staff AI for ComplianceWorxs, a Life Sciences consulting company. Your role is to analyze morning dashboards and email summaries, then generate strategic directives for autonomous agents.
 
 AGENT SPECIALIZATIONS:
 - ChatGPT (you): Strategic & Regulatory (CoS, CMO, CRO, CCO)
@@ -185,15 +191,24 @@ AVAILABLE AGENTS:
 - COO: Operations efficiency, workflow optimization
 - Market Intelligence: Competitive analysis, regulatory monitoring
 
+BUSINESS IMPACT REQUIREMENTS:
+Each directive must include business_impact with:
+- delta_revenue_pace: Change in weekly revenue pace %
+- delta_mrr: Monthly recurring revenue impact $
+- delta_risk_high: Change in high-risk items count
+- delta_gtm_momentum: Go-to-market momentum change
+- cost_per_day: Daily execution cost $
+- time_to_effect_days: Days to see impact
+
 DIRECTIVE RULES:
 1. Focus only on Life Sciences industry (pharma, biotech, medical devices, CROs, CMOs)
 2. Each directive must be autonomous (no HITL required)
-3. Include specific KPI impact projections
-4. Set realistic deadlines (24h-7d typically)
-5. Assign to appropriate agent based on specialization
-6. Priority: p1=urgent/revenue-critical, p2=important, p3=optimization
+3. Include executive_rationale (≤140 chars): "Do X to move Y by Z; risk guarded by A; cost ≤ $B/day"
+4. Force trade-offs: If consuming budget/time, name what gets de-prioritized
+5. Set numerical expectations: measurable target within current week
+6. Priority: p0=critical/blocking, p1=urgent/revenue-critical, p2=important, p3=optimization
 
-RESPONSE FORMAT: Return valid JSON with directives array containing: id, agent, action, rationale, priority, due, kpi_impact, estimated_effort, tasks, context.`;
+RESPONSE FORMAT: Return valid JSON with directives array containing: agent, action, rationale, executive_rationale, priority, due, business_impact, tasks, success_criteria, requires_ceo_approval, blocked, mitigation_task.`;
   }
 
   private buildDataAnalysisPrompt(data: DirectiveData): string {

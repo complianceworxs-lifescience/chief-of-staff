@@ -1,0 +1,194 @@
+policy_gate.py (paste this file as-is)
+# policy_gate.py
+# Evaluate AI directives against ODAR policy gates and stamp each with a status.
+
+from __future__ import annotations
+import json, re
+from typing import Dict, Any, List, Tuple
+
+# --- helpers ---------------------------------------------------------------
+
+def _load_policy(path: str = "policy.json") -> Dict[str, Any]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def _num(v, default=0.0) -> float:
+    try:
+        return float(v)
+    except Exception:
+        return float(default)
+
+def _impact(d: Dict[str, Any]) -> Dict[str, float]:
+    """
+    Normalize impact fields. We look in two places:
+    - top-level keys set by your LLM prompt
+    - an optional nested 'impact' object, if your model returns that
+    """
+    src = d
+    imp = d.get("impact") or {}
+    return {
+        "delta_risk_high": _num(src.get("delta_risk_high", imp.get("delta_risk_high", 0))),
+        "cost_per_day": _num(src.get("cost_per_day", imp.get("cost_per_day", 0))),
+        "lifetime_cost": _num(src.get("lifetime_cost", imp.get("lifetime_cost", 0))),
+        "time_to_effect_days": _num(src.get("time_to_effect_days", imp.get("time_to_effect_days", 0))),
+    }
+
+MITI_KEYWORDS = re.compile(
+    r"\b(mitigation|mitigate|risk control|capa|poe|proof[- ]?of[- ]?effectiveness|"
+    r"remediation|containment|verification|validation|audit pack|evidence)\b",
+    re.I,
+)
+
+CLAIM_KEYWORDS = re.compile(
+    r"\b(claim|efficacy|safe|effective|fda|regulator|press release|public statement|"
+    r"advertising|marketing claim|testimonial)\b",
+    re.I,
+)
+
+NEW_VENDOR_KEYWORDS = re.compile(
+    r"\b(new vendor|onboard .*vendor|adopt .*tool|trial .*saas|switch to|procure|"
+    r"third[- ]party integration)\b",
+    re.I,
+)
+
+def _has_mitigation_task(d: Dict[str, Any]) -> bool:
+    for t in d.get("tasks", []):
+        if isinstance(t, dict) and MITI_KEYWORDS.search(t.get("text","")):
+            return True
+    return False
+
+def _requires_public_claim_review(d: Dict[str, Any]) -> bool:
+    # explicit flag wins; fallback to keyword sniffing on title/rationale/tasks
+    if d.get("requires_public_claim_review") is True:
+        return True
+    text = " ".join([d.get("title",""), d.get("rationale","")] + [t.get("text","") for t in d.get("tasks",[]) if isinstance(t,dict)])
+    return bool(CLAIM_KEYWORDS.search(text))
+
+def _introduces_new_vendor(d: Dict[str, Any]) -> bool:
+    if d.get("introduces_new_vendor") is True:
+        return True
+    text = " ".join([d.get("title",""), d.get("rationale","")] + [t.get("text","") for t in d.get("tasks",[]) if isinstance(t,dict)])
+    return bool(NEW_VENDOR_KEYWORDS.search(text))
+
+def _status_from_approvals(req: List[str]) -> str:
+    s = sorted(set(req))
+    if not s: return "approved"
+    if s == ["CEO"]: return "needs_ceo"
+    if s == ["CCO"]: return "needs_cco"
+    if s == ["COO"]: return "needs_coo"
+    if s == ["CCO","COO"]: return "needs_cco_coo"
+    return "needs_multi"
+
+# --- core evaluation -------------------------------------------------------
+
+def evaluate_directive(directive: Dict[str, Any], policy: Dict[str, Any]) -> Dict[str, Any]:
+    g = policy.get("gates", {})
+    imp = _impact(directive)
+    required: List[str] = []
+    reasons: List[str] = []
+    mitigations_required: List[str] = []
+
+    # 1) Spend gates → CEO approval
+    if imp["cost_per_day"] > _num(g.get("spend_per_day_usd", 1e9)):
+        required.append("CEO")
+        reasons.append(f"cost_per_day ${imp['cost_per_day']:.0f} exceeds ${_num(g.get('spend_per_day_usd')):.0f}/day gate")
+    if imp["lifetime_cost"] > _num(g.get("lifetime_spend_usd", 1e9)):
+        required.append("CEO")
+        reasons.append(f"lifetime_cost ${imp['lifetime_cost']:.0f} exceeds ${_num(g.get('lifetime_spend_usd')):.0f} gate")
+
+    # 2) Public claims → CCO approval
+    if g.get("requires_cco_for_public_claims") and _requires_public_claim_review(directive):
+        required.append("CCO")
+        reasons.append("public/regulated claim detected")
+
+    # 3) New vendor → CCO + COO approvals
+    if _introduces_new_vendor(directive):
+        req = g.get("new_vendor_requires", ["CCO","COO"])
+        required.extend(req)
+        reasons.append("introduces new vendor/integration")
+
+    # 4) Risk increase without mitigation → BLOCK
+    blocked = False
+    if g.get("block_if_risk_high_increases") and imp["delta_risk_high"] > 0:
+        if not _has_mitigation_task(directive):
+            blocked = True
+            reasons.append("increases Risk High without mitigation task")
+            mitigations_required = [
+                "Add mitigation task (e.g., CAPA containment/remediation)",
+                "Add Proof-of-Effectiveness plan with monitoring window",
+            ]
+
+    status = "blocked" if blocked else _status_from_approvals(required)
+
+    # attach evaluation
+    evaluated = dict(directive)
+    evaluated["policy"] = {
+        "status": status,
+        "required_approvals": sorted(set(required)) if not blocked else [],
+        "reasons": reasons,
+        "impact": imp,
+        "mitigations_required": mitigations_required
+    }
+    # convenience: flip the UI toggle if CEO needed
+    if status in ("needs_ceo","needs_multi") and "CEO" in evaluated["policy"]["required_approvals"]:
+        evaluated["requires_ceo_approval"] = True
+        # ensure CEO is in watchers if present
+        wl = set(evaluated.get("watchers", []))
+        wl.add("CEO")
+        evaluated["watchers"] = sorted(wl)
+    return evaluated
+
+def evaluate_bundle(bundle: Dict[str, Any], policy: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(bundle)
+    dirs = bundle.get("directives", [])
+    out["directives"] = [evaluate_directive(d, policy) for d in dirs]
+    return out
+
+# convenience runner for ad-hoc tests
+if __name__ == "__main__":
+    import sys
+    pol = _load_policy(sys.argv[1] if len(sys.argv) > 1 else "policy.json")
+    sample = {
+        "agent": "CMO",
+        "title": "Launch press claim on efficacy; adopt new analytics tool",
+        "rationale": "Big uplift expected",
+        "tasks": [{"text":"Create launch assets"},{"text":"Publish claim on website"}],
+        "delta_risk_high": 1,
+        "cost_per_day": 700,
+        "lifetime_cost": 4000
+    }
+    print(json.dumps(evaluate_directive(sample, pol), indent=2))
+
+3) Plug it into your orchestrator (3 lines)
+
+In orchestrator.py, after you get directives from the LLM and before you dispatch:
+
+from policy_gate import _load_policy, evaluate_bundle
+
+policy = _load_policy("policy.json")
+directives = evaluate_bundle(directives, policy)
+
+approved = [d for d in directives["directives"] if d["policy"]["status"] == "approved"]
+needs =    [d for d in directives["directives"] if d["policy"]["status"].startswith("needs")]
+blocked =  [d for d in directives["directives"] if d["policy"]["status"] == "blocked"]
+
+# 1) Dispatch approved now
+directives["directives"] = approved
+dispatch_directives(directives)
+
+# 2) Route approvals to CEO/CCO/COO (your existing approval path)
+# 3) Alert CoS on any blocked items with reasons + required mitigations
+
+
+If you prefer to hold the whole batch until approvals are cleared, skip the immediate dispatch and send an approval summary to the CEO/CCO/COO instead.
+
+Notes & assumptions
+
+The LLM should already be returning delta_risk_high, cost_per_day, lifetime_cost, time_to_effect_days. If any are missing, they default to 0 (safe).
+
+You can override heuristics by having the LLM include explicit flags:
+requires_public_claim_review: true or introduces_new_vendor: true.
+
+The mitigation check looks for common keywords in task text (CAPA, PoE, mitigation, etc.). If you want a stronger signal, add a boolean mitigation_included: true to the directive and update _has_mitigation_task() accordingly.
+
+This gives you a clear, auditable Approve / Need Approval / Block stamp on every directive—automatically—before anything hits your autonomous agents.

@@ -18,6 +18,8 @@ import { agentsRouter } from "./routes/agents";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { EmailIngestService } from "./services/email-ingest";
+import { dailyOrchestrator } from "./services/daily-orchestrator";
+import { policyGate } from "./services/policy-gate";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
@@ -2219,6 +2221,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false, 
         message: "LLM orchestration failed", 
         error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // ODAR Orchestration Routes
+  app.post("/api/odar/orchestrate", async (req, res) => {
+    try {
+      console.log("🚀 ODAR orchestration triggered manually");
+      const result = await dailyOrchestrator.runOnce();
+      res.json(result);
+    } catch (error) {
+      console.error("ODAR orchestration failed:", error);
+      res.status(500).json({ 
+        error: "ODAR orchestration failed", 
+        message: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/odar/status", async (req, res) => {
+    try {
+      const status = dailyOrchestrator.getStatus();
+      const policy = policyGate.getPolicy();
+      res.json({
+        orchestrator: status,
+        policy: policy,
+        governance: "ODAR v1.0"
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to get ODAR status", 
+        message: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.post("/api/odar/policy/reload", async (req, res) => {
+    try {
+      await policyGate.reloadPolicy();
+      res.json({ 
+        success: true, 
+        message: "Policy reloaded successfully",
+        policy: policyGate.getPolicy()
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to reload policy", 
+        message: error instanceof Error ? error.message : String(error) 
       });
     }
   });

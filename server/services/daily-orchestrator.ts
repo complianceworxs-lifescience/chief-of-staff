@@ -1,5 +1,7 @@
 import { LLMDirectiveEngine } from "./llm-directive-engine";
 import { AgentDispatchService } from "./agent-dispatch";
+import { odarGovernance, type ODARObservation, type ODARDiagnosis, type ODARAction, type ODARReview } from "./odar-governance";
+import { policyGate, type AIDirective, type DirectiveAssessment } from "./policy-gate";
 import fs from "fs/promises";
 import path from "path";
 
@@ -15,12 +17,26 @@ interface OrchestrationResult {
   success: boolean;
   timestamp: string;
   run_mode: string;
+  odar_cycle: {
+    observation: ODARObservation;
+    diagnosis: ODARDiagnosis;
+    action: ODARAction;
+    review?: ODARReview;
+  };
   data_sources_loaded: string[];
   directives_generated: number;
   agents_notified: number;
   failed_dispatches: number;
   llm_provider: string;
   execution_time_ms: number;
+  business_metrics: {
+    decision_velocity_hours: number;
+    plan_adherence_pct: number;
+    win_rate_pct: number;
+    revenue_pace_days_green: number;
+    risk_posture_high_count: number;
+    roi_per_day: number;
+  };
   errors?: string[];
   summary?: any;
 }
@@ -68,31 +84,43 @@ export class DailyOrchestrator {
       throw new Error("Orchestrator is already running");
     }
 
-    console.log("🚀 Starting LLM Daily Orchestration Cycle");
+    console.log("🚀 Starting ODAR Daily Orchestration Cycle");
     const startTime = Date.now();
     this.isRunning = true;
 
     try {
-      // Step 1: Validate data sources
-      console.log("📊 Step 1: Validating data sources...");
-      const dataSources = await this.validateDataSources();
+      // OBSERVE: Data collection and validation
+      console.log("🔍 OBSERVE: Data collection and validation...");
+      const dataSourcesRaw = await this.loadAllDataSources();
+      const observation = await odarGovernance.observe(dataSourcesRaw);
       
-      if (dataSources.length < 3) {
-        throw new Error(`Insufficient data sources (${dataSources.length}/6). Need at least scoreboard, initiatives, and actions data.`);
+      if (observation.quality_score < 60) {
+        throw new Error(`Data quality too low (${observation.quality_score}%). Gaps: ${observation.data_gaps.join(', ')}`);
       }
 
-      // Step 2: Generate directives using LLM
-      console.log("🤖 Step 2: Generating directives with LLM...");
-      const directives = await this.llmEngine.generateDirectives();
+      // DIAGNOSE: AI analysis with business framing
+      console.log("🧠 DIAGNOSE: AI analysis with business framing...");
+      const rawDirectives = await this.llmEngine.generateDirectives();
+      const diagnosis = await odarGovernance.diagnose(observation, rawDirectives);
       
-      console.log(`✅ Generated ${directives.directives.length} directives using ${directives.llm_provider}`);
-      console.log(`📈 Agent distribution:`, directives.summary.by_agent);
+      console.log(`✅ Generated ${rawDirectives.directives.length} directives using ${diagnosis.llm_provider}`);
+      console.log(`📈 Agent distribution:`, rawDirectives.summary.by_agent);
 
-      // Step 3: Save directives and create lineage
-      console.log("💾 Step 3: Saving directives and lineage...");
-      await this.llmEngine.saveDirectives(directives);
+      // ACT: Apply policy gates and guardrails
+      console.log("⚡ ACT: Applying policy gates and guardrails...");
+      const policyAssessments = await policyGate.assessDirectives(rawDirectives.directives as AIDirective[]);
+      const policySummary = policyGate.getSummary(policyAssessments);
+      
+      console.log(`📋 Policy Gates: ${Object.keys(policySummary.gates_hit).join(', ') || 'none'}`);
+      console.log(`🚦 Policy Results: ${policySummary.approved} approved + ${policySummary.needs_approval} need approval + ${policySummary.blocked} blocked`);
 
-      // Step 4: Dispatch to agents (skip in dry run)
+      // Convert to business directives with policy status
+      const businessDirectives = this.convertToBusinessDirectivesWithPolicy(rawDirectives, policyAssessments);
+      const action = await odarGovernance.act(businessDirectives);
+      
+      console.log(`🚦 Final Results: ${action.auto_executed} auto + ${action.approved_directives} approval + ${action.blocked_directives} blocked`);
+
+      // Dispatch approved directives (skip in dry run)
       let dispatchResult;
       if (this.config.dryRun) {
         console.log("🧪 DRY RUN: Skipping agent dispatch");
@@ -104,32 +132,57 @@ export class DailyOrchestrator {
           errors: []
         };
       } else {
-        console.log("📤 Step 4: Dispatching directives to agents...");
-        dispatchResult = await this.agentDispatch.dispatchDirectives(directives);
+        console.log("📤 Dispatching approved directives to agents...");
+        const approvedDirectives = businessDirectives.filter(d => !d.blocked && !d.requires_ceo_approval);
+        dispatchResult = await this.agentDispatch.dispatchBusinessDirectives(approvedDirectives);
         console.log(`✅ Dispatched to ${dispatchResult.successful} agents, ${dispatchResult.failed} failed`);
       }
 
-      // Step 5: Generate and send CoS snapshot email (optional)
+      // REVIEW: Close the loop and learn
+      console.log("📊 REVIEW: Learning and adjustments...");
+      const previousResults = await this.loadPreviousResults();
+      const review = await odarGovernance.review(previousResults);
+
+      // Calculate business metrics
+      const businessMetrics = {
+        decision_velocity_hours: review.metrics.decision_velocity_hours,
+        plan_adherence_pct: 85, // Mock - integrate with your tracking
+        win_rate_pct: review.metrics.win_rate,
+        revenue_pace_days_green: 4, // Mock - from weekly tracking
+        risk_posture_high_count: observation.data_gaps.length,
+        roi_per_day: review.metrics.roi_per_day
+      };
+
+      // Generate CoS snapshot email (optional)
       if (this.config.enableEmailNotifications && !this.config.dryRun) {
-        console.log("📧 Step 5: Sending CoS snapshot email...");
-        await this.sendCosSnapshotEmail(directives, dispatchResult);
+        console.log("📧 Sending CoS ODAR snapshot email...");
+        await this.sendOdarSnapshotEmail(observation, diagnosis, action, review, businessMetrics);
       }
 
       const result: OrchestrationResult = {
         success: true,
         timestamp: new Date().toISOString(),
         run_mode: this.config.mode,
-        data_sources_loaded: dataSources,
-        directives_generated: directives.directives.length,
+        odar_cycle: {
+          observation,
+          diagnosis,
+          action,
+          review
+        },
+        data_sources_loaded: observation.data_sources,
+        directives_generated: rawDirectives.directives.length,
         agents_notified: dispatchResult.successful,
         failed_dispatches: dispatchResult.failed,
-        llm_provider: directives.llm_provider,
+        llm_provider: diagnosis.llm_provider,
         execution_time_ms: Date.now() - startTime,
-        summary: directives.summary
+        business_metrics: businessMetrics,
+        summary: rawDirectives.summary
       };
 
-      console.log("🎉 Daily orchestration completed successfully!");
-      console.log(`⏱️  Total execution time: ${result.execution_time_ms}ms`);
+      console.log("🎉 ODAR cycle completed successfully!");
+      console.log(`⏱️  Decision velocity: ${businessMetrics.decision_velocity_hours}h`);
+      console.log(`📈 ROI/day: $${businessMetrics.roi_per_day}`);
+      console.log(`🎯 Win rate: ${businessMetrics.win_rate_pct}%`);
 
       // Log result for audit trail
       await this.logOrchestrationResult(result);
@@ -141,16 +194,25 @@ export class DailyOrchestrator {
         success: false,
         timestamp: new Date().toISOString(),
         run_mode: this.config.mode,
+        odar_cycle: {} as any, // Incomplete cycle
         data_sources_loaded: [],
         directives_generated: 0,
         agents_notified: 0,
         failed_dispatches: 0,
         llm_provider: "none",
         execution_time_ms: Date.now() - startTime,
+        business_metrics: {
+          decision_velocity_hours: 0,
+          plan_adherence_pct: 0,
+          win_rate_pct: 0,
+          revenue_pace_days_green: 0,
+          risk_posture_high_count: 999,
+          roi_per_day: -100
+        },
         errors: [error instanceof Error ? error.message : String(error)]
       };
 
-      console.error("❌ Daily orchestration failed:", error);
+      console.error("❌ ODAR orchestration failed:", error);
       await this.logOrchestrationResult(errorResult);
       
       throw error;
@@ -189,6 +251,56 @@ export class DailyOrchestrator {
     };
 
     scheduleNext();
+  }
+
+  private async loadAllDataSources(): Promise<any> {
+    return await this.llmEngine.loadDataSources();
+  }
+
+  private async loadPreviousResults(): Promise<any> {
+    // Mock implementation - integrate with your results tracking
+    return {
+      yesterday_directives: [],
+      completion_rate: 0.85,
+      cost_actual: 150,
+      impact_measured: 0.75
+    };
+  }
+
+  private convertToBusinessDirectivesWithPolicy(rawDirectives: any, policyAssessments: Array<{ directive: AIDirective; assessment: DirectiveAssessment }>): any[] {
+    return policyAssessments.map(({ directive, assessment }) => ({
+      title: directive.action,
+      rationale: directive.rationale,
+      executive_rationale: `${directive.action} (${assessment.status})`,
+      target_agents: [directive.agent],
+      priority: directive.priority,
+      deadline: directive.due,
+      escalation_hours: 72,
+      tasks: directive.tasks || [],
+      success_criteria: [],
+      business_impact: {
+        delta_revenue_pace: 0,
+        delta_mrr: 0,
+        delta_risk_high: directive.business_impact?.delta_risk_high || 0,
+        delta_gtm_momentum: 0,
+        cost_per_day: directive.business_impact?.cost_per_day || 0,
+        time_to_effect_days: 1
+      },
+      requires_ceo_approval: assessment.status.includes('ceo'),
+      blocked: assessment.status === 'blocked',
+      blocked_reason: assessment.blocked_reason,
+      mitigation_task: assessment.mitigation_required
+    }));
+  }
+
+  private async sendOdarSnapshotEmail(observation: ODARObservation, diagnosis: ODARDiagnosis, action: ODARAction, review: ODARReview, metrics: any): Promise<void> {
+    // TODO: Implement ODAR snapshot email
+    console.log("📧 ODAR snapshot email (TODO: implement email service)");
+    console.log(`   - Data quality: ${observation.quality_score}%`);
+    console.log(`   - ${diagnosis.hypotheses.length} hypotheses analyzed`);
+    console.log(`   - ${action.auto_executed} directives auto-executed`);
+    console.log(`   - Decision velocity: ${metrics.decision_velocity_hours}h`);
+    console.log(`   - ROI/day: $${metrics.roi_per_day}`);
   }
 
   private async validateDataSources(): Promise<string[]> {
