@@ -120,6 +120,26 @@ export class DailyOrchestrator {
       
       console.log(`🚦 Final Results: ${action.auto_executed} auto + ${action.approved_directives} approval + ${action.blocked_directives} blocked`);
 
+      // Filter directives by policy status
+      const approvedDirectives = businessDirectives.filter(d => 
+        !d.blocked && !d.requires_ceo_approval
+      );
+      const needsApproval = businessDirectives.filter(d => 
+        !d.blocked && d.requires_ceo_approval
+      );
+      const blockedDirectives = businessDirectives.filter(d => d.blocked);
+
+      console.log(`📋 Policy Results: ${approvedDirectives.length} approved, ${needsApproval.length} need approval, ${blockedDirectives.length} blocked`);
+
+      // Log blocked directives with reasons
+      if (blockedDirectives.length > 0) {
+        console.log("🚫 BLOCKED DIRECTIVES:");
+        blockedDirectives.forEach(d => {
+          console.log(`   - ${d.title}: ${d.blocked_reason}`);
+          console.log(`   - Required mitigation: ${d.mitigation_task}`);
+        });
+      }
+
       // Dispatch approved directives (skip in dry run)
       let dispatchResult;
       if (this.config.dryRun) {
@@ -132,10 +152,26 @@ export class DailyOrchestrator {
           errors: []
         };
       } else {
-        console.log("📤 Dispatching approved directives to agents...");
-        const approvedDirectives = businessDirectives.filter(d => !d.blocked && !d.requires_ceo_approval);
-        dispatchResult = await this.agentDispatch.dispatchBusinessDirectives(approvedDirectives);
-        console.log(`✅ Dispatched to ${dispatchResult.successful} agents, ${dispatchResult.failed} failed`);
+        if (approvedDirectives.length > 0) {
+          console.log("📤 Dispatching approved directives to agents...");
+          dispatchResult = await this.agentDispatch.dispatchBusinessDirectives(approvedDirectives);
+          console.log(`✅ Dispatched to ${dispatchResult.successful} agents, ${dispatchResult.failed} failed`);
+        } else {
+          console.log("⏸️  No directives approved for immediate dispatch");
+          dispatchResult = {
+            total_dispatched: 0,
+            successful: 0,
+            failed: 0,
+            results: [],
+            errors: []
+          };
+        }
+
+        // Route approval requests to CEO/CCO/COO
+        if (needsApproval.length > 0) {
+          console.log("📨 Routing approval requests...");
+          await this.routeApprovalRequests(needsApproval);
+        }
       }
 
       // REVIEW: Close the loop and learn
@@ -291,6 +327,29 @@ export class DailyOrchestrator {
       blocked_reason: assessment.blocked_reason,
       mitigation_task: assessment.mitigation_required
     }));
+  }
+
+  private async routeApprovalRequests(needsApproval: any[]): Promise<void> {
+    // Group by approval type
+    const byCeo = needsApproval.filter(d => d.executive_rationale.includes('ceo') || d.requires_ceo_approval);
+    const byCco = needsApproval.filter(d => d.executive_rationale.includes('cco'));
+    const byCoo = needsApproval.filter(d => d.executive_rationale.includes('coo'));
+    
+    // TODO: Send approval requests to respective executives
+    if (byCeo.length > 0) {
+      console.log(`   📧 CEO approval needed for ${byCeo.length} directives`);
+      byCeo.forEach(d => console.log(`      - ${d.title}: ${d.executive_rationale}`));
+    }
+    
+    if (byCco.length > 0) {
+      console.log(`   📧 CCO approval needed for ${byCco.length} directives`);
+      byCco.forEach(d => console.log(`      - ${d.title}: ${d.executive_rationale}`));
+    }
+    
+    if (byCoo.length > 0) {
+      console.log(`   📧 COO approval needed for ${byCoo.length} directives`);
+      byCoo.forEach(d => console.log(`      - ${d.title}: ${d.executive_rationale}`));
+    }
   }
 
   private async sendOdarSnapshotEmail(observation: ODARObservation, diagnosis: ODARDiagnosis, action: ODARAction, review: ODARReview, metrics: any): Promise<void> {

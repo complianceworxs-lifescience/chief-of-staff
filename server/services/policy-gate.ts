@@ -78,37 +78,41 @@ export class PolicyGate {
     let blockedReason = "";
     let mitigationRequired = "";
 
-    // Gate 1: Spend per day limit
-    const dailyCost = directive.business_impact?.cost_per_day || 0;
-    if (dailyCost > this.policy.gates.spend_per_day_usd) {
+    // Normalize impact fields from various possible locations
+    const impact = this.normalizeImpact(directive);
+
+    // Gate 1: Spend gates → CEO approval
+    if (impact.cost_per_day > this.policy.gates.spend_per_day_usd) {
       gatesTriggered.push("spend_per_day");
       approvalRequired.push("CEO");
     }
 
-    // Gate 2: Risk increase gate
-    const riskIncrease = directive.business_impact?.delta_risk_high || 0;
-    if (riskIncrease > 0 && this.policy.gates.block_if_risk_high_increases) {
-      gatesTriggered.push("risk_increase");
-      
-      // Check if mitigation is included
-      const hasMitigation = this.checkForMitigation(directive);
-      if (!hasMitigation) {
-        blocked = true;
-        blockedReason = "Risk increase without mitigation task";
-        mitigationRequired = "Add specific risk mitigation task to directive";
-      }
+    if (impact.lifetime_cost > this.policy.gates.lifetime_spend_usd) {
+      gatesTriggered.push("lifetime_spend");
+      approvalRequired.push("CEO");
     }
 
-    // Gate 3: Public claims gate
+    // Gate 2: Public claims → CCO approval
     if (this.isPublicClaim(directive) && this.policy.gates.requires_cco_for_public_claims) {
       gatesTriggered.push("public_claims");
       approvalRequired.push("CCO");
     }
 
-    // Gate 4: New vendor gate
+    // Gate 3: New vendor → CCO + COO approvals
     if (this.involvesNewVendor(directive)) {
       gatesTriggered.push("new_vendor");
       approvalRequired.push(...this.policy.gates.new_vendor_requires);
+    }
+
+    // Gate 4: Risk increase without mitigation → BLOCK
+    if (this.policy.gates.block_if_risk_high_increases && impact.delta_risk_high > 0) {
+      gatesTriggered.push("risk_increase");
+      
+      if (!this.checkForMitigation(directive)) {
+        blocked = true;
+        blockedReason = "Increases Risk High without mitigation task";
+        mitigationRequired = "Add mitigation task (e.g., CAPA containment/remediation) or Proof-of-Effectiveness plan with monitoring window";
+      }
     }
 
     // Gate 5: High priority emergency gate
@@ -208,42 +212,82 @@ export class PolicyGate {
     return summary;
   }
 
-  // Helper methods for gate detection
+  // Helper methods for gate detection (enhanced with Life Sciences patterns)
 
   private checkForMitigation(directive: AIDirective): boolean {
-    // Check if directive includes mitigation language
-    const text = `${directive.action} ${directive.rationale} ${directive.tasks?.map(t => t.text).join(' ') || ''}`.toLowerCase();
-    
-    const mitigationKeywords = [
-      'mitigate', 'mitigation', 'risk reduction', 'safeguard', 'backup plan',
-      'contingency', 'fallback', 'safety measure', 'risk control', 'prevention'
-    ];
+    // Check for explicit flag first
+    if ((directive as any).mitigation_included === true) {
+      return true;
+    }
 
-    return mitigationKeywords.some(keyword => text.includes(keyword));
+    // Check tasks for mitigation keywords
+    for (const task of directive.tasks || []) {
+      const text = task.text.toLowerCase();
+      const mitigationPattern = /\b(mitigation|mitigate|risk control|capa|poe|proof[- ]?of[- ]?effectiveness|remediation|containment|verification|validation|audit pack|evidence)\b/i;
+      
+      if (mitigationPattern.test(text)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private isPublicClaim(directive: AIDirective): boolean {
-    const text = `${directive.action} ${directive.rationale}`.toLowerCase();
-    
-    const publicKeywords = [
-      'public', 'marketing', 'announcement', 'press', 'media', 'blog',
-      'social media', 'website', 'campaign', 'advertising', 'promotion',
-      'messaging', 'communication', 'content', 'publication'
-    ];
+    // Check for explicit flag first
+    if ((directive as any).requires_public_claim_review === true) {
+      return true;
+    }
 
-    return publicKeywords.some(keyword => text.includes(keyword));
+    // Build text from directive and tasks
+    const taskTexts = directive.tasks?.map(t => t.text).join(' ') || '';
+    const text = `${directive.action} ${directive.rationale} ${taskTexts}`.toLowerCase();
+    
+    // Enhanced pattern for Life Sciences claims
+    const claimPattern = /\b(claim|efficacy|safe|effective|fda|regulator|press release|public statement|advertising|marketing claim|testimonial|clinical|therapeutic|indication|dosage)\b/i;
+
+    return claimPattern.test(text);
   }
 
   private involvesNewVendor(directive: AIDirective): boolean {
-    const text = `${directive.action} ${directive.rationale}`.toLowerCase();
-    
-    const vendorKeywords = [
-      'vendor', 'supplier', 'third party', 'external', 'contractor',
-      'service provider', 'partnership', 'integration', 'api',
-      'new tool', 'software', 'platform', 'subscription'
-    ];
+    // Check for explicit flag first
+    if ((directive as any).introduces_new_vendor === true) {
+      return true;
+    }
 
-    return vendorKeywords.some(keyword => text.includes(keyword));
+    // Build text from directive and tasks
+    const taskTexts = directive.tasks?.map(t => t.text).join(' ') || '';
+    const text = `${directive.action} ${directive.rationale} ${taskTexts}`.toLowerCase();
+    
+    // Enhanced pattern for vendor/integration detection
+    const vendorPattern = /\b(new vendor|onboard .*vendor|adopt .*tool|trial .*saas|switch to|procure|third[- ]party integration|cro|cmo|contract)\b/i;
+
+    return vendorPattern.test(text);
+  }
+
+  private normalizeImpact(directive: AIDirective): {
+    delta_risk_high: number;
+    cost_per_day: number;
+    lifetime_cost: number;
+    time_to_effect_days: number;
+  } {
+    const impact = directive.business_impact || {};
+    const topLevel = directive as any;
+    
+    return {
+      delta_risk_high: this.parseNumber(topLevel.delta_risk_high || impact.delta_risk_high || 0),
+      cost_per_day: this.parseNumber(topLevel.cost_per_day || impact.cost_per_day || 0),
+      lifetime_cost: this.parseNumber(topLevel.lifetime_cost || impact.lifetime_cost || 0),
+      time_to_effect_days: this.parseNumber(topLevel.time_to_effect_days || impact.time_to_effect_days || 1)
+    };
+  }
+
+  private parseNumber(value: any, defaultValue: number = 0): number {
+    try {
+      return parseFloat(value) || defaultValue;
+    } catch {
+      return defaultValue;
+    }
   }
 
   getPolicy(): PolicyConfig {
