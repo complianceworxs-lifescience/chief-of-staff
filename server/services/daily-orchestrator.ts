@@ -52,7 +52,7 @@ export class DailyOrchestrator {
   constructor(config?: Partial<OrchestrationConfig>) {
     this.config = {
       mode: "scheduled",
-      runAt: process.env.RUN_AT || "06:35",
+      runAt: process.env.RUN_AT || "09:30", // 4:30 AM EST = 9:30 AM UTC
       timezone: "UTC",
       enableEmailNotifications: true,
       dryRun: process.env.MODE === "dry_run",
