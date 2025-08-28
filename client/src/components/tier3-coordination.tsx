@@ -64,7 +64,7 @@ export function Tier3CoordinationDashboard() {
 
   const { data: kpis } = useQuery<Tier3KPIs>({
     queryKey: ['/api/tier3/kpis'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
 
   const { data: coordinations } = useQuery<{
@@ -73,7 +73,7 @@ export function Tier3CoordinationDashboard() {
     sessions: CoordinationSession[];
   }>({
     queryKey: ['/api/tier3/coordinations'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
 
   const handleToggleMode = async (mode: 'simulation' | 'canary', enabled: boolean) => {

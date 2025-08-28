@@ -20,7 +20,7 @@ export function AutonomousStatusIndicator() {
   
   const { data: systemHealth, isLoading, refetch } = useQuery<SystemHealth>({
     queryKey: ['/api/conflicts/system-health'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
 
   const triggerMonitoring = async () => {

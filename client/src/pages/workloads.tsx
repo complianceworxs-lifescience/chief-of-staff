@@ -73,7 +73,7 @@ export default function WorkloadsPage() {
 
   const { data: workloadData, isLoading } = useQuery<WorkloadData>({
     queryKey: ['/api/workloads'],
-    refetchInterval: 1800000, // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
 
   const initializeWorkloadsMutation = useMutation({

@@ -26,12 +26,12 @@ import type { Agent } from "@shared/schema";
 export default function COODashboard() {
   const { data: agentsData } = useQuery({
     queryKey: qk.agents,
-    refetchInterval: 21600000 // Optimized for 3-4 daily checks: 6 hours
+    refetchInterval: 7200000 // 2 hour intervals - unified polling schedule
   });
 
   const { data: cooRemediationState } = useQuery({
     queryKey: qk.remediation("coo"),
-    refetchInterval: 21600000 // Optimized for 3-4 daily checks: 6 hours
+    refetchInterval: 7200000 // 2 hour intervals - unified polling schedule
   });
 
   const cooAgent = (agentsData as any)?.items?.find((agent: Agent) => agent.id === "coo");

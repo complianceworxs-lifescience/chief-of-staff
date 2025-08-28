@@ -38,7 +38,7 @@ export function AgentStatusCardWithRemediation({ agent }: AgentStatusCardProps) 
   // Fetch remediation state
   const { data: remediationState } = useQuery<RemediationState>({
     queryKey: ['/api/remediation/state', agent.id],
-    refetchInterval: 1800000, // Check every 30 minutes - maximum cost savings
+    refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
 
   // Manual remediation trigger

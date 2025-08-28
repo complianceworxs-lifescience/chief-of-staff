@@ -49,12 +49,12 @@ export default function DirectivesPage() {
   // Get conflicts from the API - maximum cost savings
   const { data: activeConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/active"],
-    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000 // 2 hour intervals - unified polling schedule
   });
   
   const { data: resolvedConflicts = [] } = useQuery<any[]>({
     queryKey: ["/api/conflicts/resolved"],
-    refetchInterval: 1800000 // Maximum cost savings: 30 minutes
+    refetchInterval: 7200000 // 2 hour intervals - unified polling schedule
   });
 
   // Transform API conflicts to match expected format
