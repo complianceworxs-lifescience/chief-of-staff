@@ -1311,6 +1311,166 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Advanced Directive Features - Attachment Upload
+  app.post("/api/directives/attachments/upload", async (req, res) => {
+    try {
+      const { directiveId } = req.body;
+      // Note: In production, would use multer middleware for actual file handling
+      const mockFiles = req.body.files || []; // Mock files for demo
+      
+      if (!directiveId) {
+        return res.status(400).json({ message: "Directive ID is required" });
+      }
+
+      // Mock file upload for now - in production would integrate with object storage
+      const attachments = mockFiles.map((file: any, index: number) => ({
+        id: `att_${Date.now()}_${index}`,
+        name: file.name || `file_${index}`,
+        url: `/attachments/${directiveId}/${file.name}`,
+        type: file.type || 'document',
+        size: file.size || 0,
+        uploadedAt: new Date().toISOString()
+      }));
+
+      // In production, would save to directive attachments table
+      console.log(`Uploaded ${attachments.length} attachments for directive ${directiveId}`);
+      
+      res.json({ 
+        success: true, 
+        attachments,
+        message: `Successfully uploaded ${attachments.length} files`
+      });
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Failed to upload attachments", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // One-Click Directive Generation from Templates
+  app.post("/api/directives/generate-from-template", async (req, res) => {
+    try {
+      const template = req.body;
+      
+      if (!template || !template.generatedContent) {
+        return res.status(400).json({ message: "Invalid template data" });
+      }
+
+      // Generate directive structure from template
+      const directiveData = {
+        id: `dir_${Date.now()}`,
+        initiativeId: `init_${template.sourceType}_${Date.now()}`,
+        targetAgent: template.generatedContent.tasks[0]?.owner_hint?.toLowerCase() || 'cmo',
+        action: template.generatedContent.title,
+        goal: template.generatedContent.rationale,
+        deadline: new Date(Date.now() + 7*24*60*60*1000).toISOString(), // 7 days from now
+        priority: template.sourceType === 'metric' ? 'high' : 'medium',
+        status: 'assigned',
+        createdAt: new Date().toISOString(),
+        impactScore: template.generatedContent.kpi_impacts?.[0]?.goal || 85,
+        effortScore: template.generatedContent.tasks.length * 20, // Estimate effort based on task count
+        estimatedImpact: template.generatedContent.kpi_impacts?.map((kpi: any) => 
+          `${kpi.kpi}: ${kpi.goal}${kpi.unit}`
+        ).join(', ') || 'Strategic impact expected'
+      };
+
+      // In production, would save to directives table using storage
+      console.log(`Generated directive from ${template.sourceType} template:`, directiveData.action);
+      
+      // Simulate agent notification
+      await chiefOfStaff.notifyAgentOfNewDirective(directiveData.targetAgent, directiveData);
+      
+      res.json({ 
+        success: true, 
+        directive: directiveData,
+        message: `Directive generated and assigned to ${directiveData.targetAgent.toUpperCase()} agent`
+      });
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ message: "Failed to generate directive from template", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Bulk Operations for Advanced Directive Management
+  app.post("/api/directives/bulk-update", async (req, res) => {
+    try {
+      const { directiveIds, updates } = req.body;
+      
+      if (!directiveIds || !Array.isArray(directiveIds)) {
+        return res.status(400).json({ message: "Valid directive IDs array required" });
+      }
+
+      // Mock bulk update - in production would update multiple directives
+      const results = directiveIds.map(id => ({
+        id,
+        success: true,
+        updates: Object.keys(updates || {}).length
+      }));
+      
+      console.log(`Bulk updated ${directiveIds.length} directives`);
+      
+      res.json({ 
+        success: true, 
+        results,
+        message: `Successfully updated ${directiveIds.length} directives`
+      });
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      res.status(500).json({ message: "Failed to bulk update directives", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // Template Library for One-Click Generation
+  app.get("/api/directives/templates", async (req, res) => {
+    try {
+      // Mock context data for template generation - in production would come from actual data sources
+      const insights = [];
+      const decisions = [];
+      const meetings = [];
+      
+      const templates = [
+        {
+          id: 'revenue-sprint',
+          name: 'Revenue Recovery Sprint',
+          category: 'performance',
+          description: '72-hour tactical intervention for revenue gaps',
+          estimatedDuration: '3 days',
+          recommendedAgents: ['CRO', 'CMO', 'CCO'],
+          kpiTargets: ['RevenuePace: 90%', 'GTMMomentum: +30 score']
+        },
+        {
+          id: 'competitive-response',
+          name: 'Competitive Response',
+          category: 'market',
+          description: 'Rapid market positioning adjustment',
+          estimatedDuration: '5 days',
+          recommendedAgents: ['CMO', 'CRO'],
+          kpiTargets: ['CompetitiveAdvantage: +25%', 'MarketShare: defend']
+        },
+        {
+          id: 'customer-retention-blitz',
+          name: 'Customer Retention Blitz',
+          category: 'customer',
+          description: 'Intensive customer success intervention',
+          estimatedDuration: '7 days',
+          recommendedAgents: ['CCO', 'COO'],
+          kpiTargets: ['ChurnRisk: -40%', 'CustomerSat: +15%']
+        }
+      ];
+      
+      res.json({
+        templates,
+        contextData: {
+          insights: insights.slice(0, 3),
+          decisions: decisions.slice(0, 2),
+          meetings: meetings.slice(0, 2)
+        }
+      });
+    } catch (error) {
+      console.error("Template fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch templates", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
   // Strategic Briefs (Weekly Reports)
   app.get("/api/chief-of-staff/strategic-briefs", async (req, res) => {
     try {

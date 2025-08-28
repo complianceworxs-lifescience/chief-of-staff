@@ -580,6 +580,43 @@ export class ChiefOfStaffService {
   }
   
   /**
+   * Notify agent of new directive assignment
+   */
+  async notifyAgentOfNewDirective(agentId: string, directive: any): Promise<void> {
+    console.log(`📨 Chief of Staff: Notifying ${agentId.toUpperCase()} agent of new directive: ${directive.action}`);
+    
+    // In production, this would:
+    // 1. Send notification to agent's queue
+    // 2. Update agent workload status
+    // 3. Trigger agent's task processing
+    // 4. Log directive assignment for audit trail
+    
+    const notificationData = {
+      id: `notif_${Date.now()}`,
+      agentId,
+      type: 'directive_assignment',
+      priority: directive.priority,
+      payload: {
+        directiveId: directive.id,
+        action: directive.action,
+        goal: directive.goal,
+        deadline: directive.deadline,
+        impactScore: directive.impactScore,
+        estimatedImpact: directive.estimatedImpact
+      },
+      sentAt: new Date().toISOString()
+    };
+    
+    // Mock agent notification - in production would integrate with agent communication system
+    console.log(`✅ Agent notification sent:`, notificationData);
+    
+    // Simulate agent acknowledgment
+    setTimeout(() => {
+      console.log(`🤝 ${agentId.toUpperCase()} agent acknowledged directive ${directive.id}`);
+    }, 1000);
+  }
+
+  /**
    * Start nightly scheduler for dashboard cleanup
    */
   startNightlyScheduler(): void {
