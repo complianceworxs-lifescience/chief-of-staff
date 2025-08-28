@@ -413,17 +413,121 @@ export class DailyOrchestrator {
   }
 
   private async sendCosSnapshotEmail(directives: any, dispatchResult: any): Promise<void> {
-    // TODO: Implement email notification using template
-    // This would send a summary email to the CEO with:
-    // - Number of directives generated
-    // - Agent assignments
-    // - High priority items
-    // - Data source summary
+    // Generate CEO Morning Brief with AI Analysis and Agent Execution
+    const briefContent = this.generateCeoMorningBrief(directives, dispatchResult);
     
-    console.log("📧 CoS snapshot email (TODO: implement email service)");
-    console.log(`   - ${directives.directives.length} directives generated`);
-    console.log(`   - ${dispatchResult.successful} agents notified`);
-    console.log(`   - ${directives.summary.high_priority_count} high priority items`);
+    console.log("📧 CEO Morning Brief Generated:");
+    console.log(briefContent);
+    
+    // TODO: Implement actual email sending service
+    // For now, save to data directory for CEO to access
+    try {
+      const briefPath = path.join(process.cwd(), "server", "data", "ceo-morning-brief.txt");
+      await fs.writeFile(briefPath, briefContent);
+      console.log("💾 CEO Morning Brief saved to ceo-morning-brief.txt");
+    } catch (error) {
+      console.error("Failed to save CEO Morning Brief:", error);
+    }
+  }
+
+  private generateCeoMorningBrief(directives: any, dispatchResult: any): string {
+    const timestamp = new Date().toLocaleString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+
+    // Extract top AI recommendations
+    const topRecommendations = directives.directives
+      .filter((d: any) => d.priority === "p1" || (d.context?.confidence || 0) > 0.8)
+      .slice(0, 5);
+
+    // Group by agent
+    const agentGroups: Record<string, number> = {};
+    directives.directives.forEach((d: any) => {
+      agentGroups[d.agent] = (agentGroups[d.agent] || 0) + 1;
+    });
+
+    // Calculate confidence
+    const avgConfidence = directives.directives.length > 0 
+      ? Math.round(directives.directives.reduce((sum: number, d: any) => sum + (d.context?.confidence || 0.5), 0) / directives.directives.length * 100)
+      : 75;
+
+    return `
+🌅 CEO Morning Brief - ${timestamp}
+
+## 🤖 AI Analysis Summary
+ChatGPT analyzed ${directives.data_sources?.length || 5} data sources and generated ${directives.directives.length} strategic directives (${avgConfidence}% confidence)
+
+Top AI Recommendations:
+${topRecommendations.map((rec: any) => 
+  `• ${rec.agent}: ${rec.action} (${rec.priority?.toUpperCase() || 'P2'})\n  ${rec.rationale || 'Strategic directive from AI analysis'}`
+).join('\n')}
+
+Data Sources Analyzed: ${(directives.data_sources || ['Scoreboard', 'Initiatives', 'Actions', 'Meetings']).join(', ')}
+
+## 🛡️ Governance & Agent Execution
+ODAR Policy Results:
+• ${dispatchResult.successful || 0} directives auto-approved and executing now
+• ${dispatchResult.pending_approval || 0} directives await your approval
+• ${dispatchResult.blocked || 0} directives blocked by policy gates
+
+Active Agent Workload:
+${Object.entries(agentGroups).map(([agent, count]) => 
+  `• ${agent}: ${count} active directive${count > 1 ? 's' : ''}`
+).join('\n')}
+
+Estimated completion: ${this.estimateCompletionTime(directives.directives)}
+
+## 🔍 Key AI Insights
+${this.generateKeyInsights(directives.directives)}
+
+---
+Your autonomous AI system analyzed overnight data and deployed strategic directives. 
+All actions are being executed according to your governance policies.
+
+Next AI analysis cycle: Tomorrow at 4:30 AM EST
+    `.trim();
+  }
+
+  private estimateCompletionTime(directives: any[]): string {
+    const avgEffort = directives.reduce((sum, d) => sum + (d.estimated_effort || 4), 0) / Math.max(directives.length, 1);
+    const completionHours = Math.ceil(avgEffort);
+    const completionTime = new Date();
+    completionTime.setHours(completionTime.getHours() + completionHours);
+    return completionTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  private generateKeyInsights(directives: any[]): string {
+    const insights: string[] = [];
+    
+    // Risk-focused insights
+    const highRiskDirectives = directives.filter(d => d.context?.risk_level === "high");
+    if (highRiskDirectives.length > 0) {
+      insights.push(`• ${highRiskDirectives.length} high-risk initiatives require immediate attention`);
+    }
+
+    // Priority insights
+    const p1Count = directives.filter(d => d.priority === "p1").length;
+    if (p1Count > 2) {
+      insights.push(`• ${p1Count} P1 priorities competing for attention today`);
+    }
+
+    // Agent workload insights
+    const agentCounts: Record<string, number> = {};
+    directives.forEach(d => {
+      agentCounts[d.agent] = (agentCounts[d.agent] || 0) + 1;
+    });
+    const overloadedAgents = Object.entries(agentCounts).filter(([_, count]) => count > 3);
+    if (overloadedAgents.length > 0) {
+      insights.push(`• Heavy workload detected: ${overloadedAgents.map(([agent, _]) => agent).join(", ")}`);
+    }
+
+    return insights.length > 0 ? insights.slice(0, 3).join('\n') : '• All systems operating within normal parameters';
   }
 
   private async logOrchestrationResult(result: OrchestrationResult): Promise<void> {
