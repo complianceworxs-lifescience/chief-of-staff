@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Goals from "@/pages/goals-fixed";
 import Initiatives from "@/pages/initiatives";
 import Directives from "@/pages/directives";
+import DirectiveCenter from "@/pages/directive-center";
 import AnalyticsPage from "@/pages/analytics";
 import AiAssistant from "@/pages/ai-assistant";
 import GovernancePage from "@/pages/governance";
@@ -25,6 +26,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/goals" component={Goals} />
         <Route path="/initiatives" component={Initiatives} />
+        <Route path="/directive-center" component={DirectiveCenter} />
         <Route path="/directives" component={Directives} />
         <Route path="/analytics" component={AnalyticsPage} />
         <Route path="/ai-assistant" component={AiAssistant} />

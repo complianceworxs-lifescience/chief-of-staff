@@ -360,6 +360,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Directive Center API endpoints
+  app.get("/api/chief-of-staff/directive-stats", async (req, res) => {
+    try {
+      const stats = {
+        activeAgents: 7,
+        directivesSent: 25,
+        completed: 18,
+        urgent: 2
+      };
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch directive stats" });
+    }
+  });
+
+  app.get("/api/chief-of-staff/recent-directives", async (req, res) => {
+    try {
+      const directives = [
+        {
+          id: "dir_001",
+          targetAgent: "cmo",
+          content: "Core Principle: 'No Lone Wolves' Every major initiative (e.g., webinar, upsell launch, compliance case study) must have at least two agents collaborating. One drives...",
+          priority: "medium",
+          status: "sent",
+          createdAt: "2025-08-17T21:22:00Z"
+        },
+        {
+          id: "dir_002",
+          targetAgent: "ceo",
+          content: "CEO Directive Template Library (Part 6) Agent Autonomy Upgrade Pack ● 1. Upgrade Principles Self-Assessment First. Agents must continuously evaluate their own...",
+          priority: "medium",
+          status: "sent",
+          createdAt: "2025-08-17T21:05:00Z"
+        },
+        {
+          id: "dir_003",
+          targetAgent: "cro",
+          content: "Double cadence on OpenAI-critique posts for 72h. Budget shift: +$2K. Expected: 15% ER improvement with 3+ paid conversions.",
+          priority: "high",
+          status: "completed",
+          createdAt: "2025-08-17T18:51:00Z"
+        }
+      ];
+      res.json(directives);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch recent directives" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/send-directive", async (req, res) => {
+    try {
+      const { targetAgent, priority, deadline, content } = req.body;
+      
+      // Simulate sending directive
+      const directiveId = `dir_${Date.now()}`;
+      
+      console.log(`📝 DIRECTIVE SENT: ${directiveId} → ${targetAgent} (${priority} priority)`);
+      console.log(`📋 CONTENT: ${content.substring(0, 100)}...`);
+      
+      const result = {
+        id: directiveId,
+        targetAgent,
+        priority,
+        deadline,
+        content,
+        status: 'sent',
+        createdAt: new Date().toISOString()
+      };
+      
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to send directive" });
+    }
+  });
+
   // Agent routes
   app.get("/api/agents", async (req, res) => {
     try {

@@ -34,6 +34,7 @@ export function Layout({ children }: LayoutProps) {
       icon: TrendingUp,
       submenu: [
         { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
+        { path: "/directive-center", label: "Directive Center", icon: Target },
         { path: "/directives", label: "Directives", icon: Users },
         { path: "/governance", label: "Governance", icon: Settings }
       ]
