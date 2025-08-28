@@ -2,6 +2,7 @@
 import os, json, base64, email
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
+import re, math
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -10,6 +11,53 @@ from google.auth.transport.requests import Request
 
 from bs4 import BeautifulSoup
 import html2text
+
+# --- Helper functions for robust email parsing ---
+def _money(s: str) -> float:
+    m = re.search(r"\$?\s*([0-9][0-9,]*(?:\.\d+)?)", s)
+    return float(m.group(1).replace(",", "")) if m else 0.0
+
+def _percent(s: str) -> float:
+    m = re.search(r"([+-]?\d+(?:\.\d+)?)\s*%", s)
+    return float(m.group(1)) if m else 0.0
+
+def _int(s: str) -> int:
+    m = re.search(r"([0-9][0-9,]*)", s)
+    return int(m.group(1).replace(",", "")) if m else 0
+
+def _find_line(text: str, *keywords) -> str:
+    """Return the first line containing all keywords (case-insensitive)."""
+    for line in text.splitlines():
+        L = line.strip()
+        if all(k.lower() in L.lower() for k in keywords):
+            return L
+    return ""
+
+def _extract_after(text: str, label: str) -> str:
+    """Return substring after first occurrence of label (case-insensitive)."""
+    i = text.lower().find(label.lower())
+    if i == -1: return ""
+    return text[i+len(label):].strip()
+
+def _quoted(text: str) -> str:
+    m = re.search(r"[\"""''']([^\"""''']{2,})[\"""''']", text)
+    return (m.group(1).strip() if m else "").strip()
+
+def _deep_fill(dst, src):
+    """Fill only missing/zero/empty fields in dst from src (recursively)."""
+    if isinstance(dst, dict) and isinstance(src, dict):
+        for k, v in src.items():
+            if k not in dst:
+                dst[k] = v
+            else:
+                dst[k] = _deep_fill(dst[k], v)
+        return dst
+    if isinstance(dst, list) or isinstance(src, list):
+        return dst if dst else src
+    # primitives
+    if dst in (None, "", 0, 0.0) and src not in (None, "", 0, 0.0):
+        return src
+    return dst
 
 DATA_DIR = os.getenv("DATA_DIR", "server/data")
 LABEL = os.getenv("GMAIL_LABEL", "cw/daily-reports")  # set this label in Gmail
@@ -98,9 +146,21 @@ def _headers(msg) -> Dict[str,str]:
 
 # ----- mappers: adapt these 2–3 functions to your email formats ----------------
 
-def map_ceo_to_scoreboard(text: str) -> Optional[Dict[str, Any]]:
-    """Heuristic mapper for CEO summary → scoreboard.json. Customize as needed."""
-    # Defaults - Life Sciences focused metrics
+def map_ceo_to_scoreboard(text: str) -> dict:
+    """
+    Parse your CEO Summary into the scoreboard shape.
+    Expected hints in the email (examples; order/format flexible):
+      - 'Net New MRR: $298 (target $1200)'
+      - 'Autonomy: 92%'
+      - 'Quiz→Paid: 7.8%'
+      - 'LinkedIn ER: +19%'
+      - 'Email CTR: +11%'
+      - 'Top theme: "OpenAI critique"' or 'Narrative: OpenAI critique'
+      - 'Conversions: 4 paid'
+      - 'Risk: High 2 • Medium 1 • Next deadline 4h'
+    Anything not present stays at 0 and can be filled by your dashboards later.
+    """
+    lines = text.replace("\u2192", "->")  # normalize arrow
     out = {
         "date": datetime.now().date().isoformat(),
         "revenue": {"realized_week": 0, "target_week": 0, "upsells": 0},
@@ -108,90 +168,175 @@ def map_ceo_to_scoreboard(text: str) -> Optional[Dict[str, Any]]:
         "alignment": {"work_tied_to_objectives_pct": 0},
         "autonomy": {"auto_resolve_pct": 0, "mttr_min": 0},
         "risk": {"score": 0, "high": 0, "medium": 0, "next_deadline_hours": 0},
-        "narrative": {
-            "topic": "Life Sciences Operations Update", 
-            "linkedin_er_delta_pct": 0, 
-            "email_ctr_delta_pct": 0, 
-            "quiz_to_paid_delta_pct": 0, 
-            "conversions": 0
-        }
+        "narrative": {"topic": "", "linkedin_er_delta_pct": 0, "email_ctr_delta_pct": 0, "quiz_to_paid_delta_pct": 0, "conversions": 0}
     }
-    
-    import re
-    
-    # Revenue patterns
-    m = re.search(r"Net New MRR[:\s]\$?([\d,]+)", text, re.I)
+
+    # Net New MRR + target (used to proxy weekly pace if present)
+    m = re.search(r"Net\s*New\s*MRR[:\s]+\$?\s*([0-9,]+)(?:.*?target[^$]*\$?\s*([0-9,]+))?", lines, re.I|re.S)
     if m:
-        out["revenue"]["upsells"] = float(m.group(1).replace(",",""))
-    
-    m = re.search(r"Weekly Revenue[:\s]\$?([\d,]+)", text, re.I)
-    if m:
-        out["revenue"]["realized_week"] = float(m.group(1).replace(",",""))
-        
-    # Autonomy patterns
-    m = re.search(r"Autonomy[:\s]([\d\.]+)%", text, re.I)
-    if m: 
-        out["autonomy"]["auto_resolve_pct"] = float(m.group(1))
-    
-    m = re.search(r"MTTR[:\s]([\d\.]+)", text, re.I)
-    if m: 
-        out["autonomy"]["mttr_min"] = float(m.group(1))
-        
-    # Life Sciences specific patterns
-    m = re.search(r"Regulatory[:\s]([\d\.]+)", text, re.I)
-    if m: 
-        out["risk"]["high"] = int(float(m.group(1)))
-        
-    m = re.search(r"Client Conversion[:\s]([\d\.]+)%", text, re.I)
-    if m: 
-        out["narrative"]["quiz_to_paid_delta_pct"] = float(m.group(1))
-        
+        realized = float(m.group(1).replace(",", ""))
+        target = float(m.group(2).replace(",", "")) if m.group(2) else 0.0
+        out["revenue"]["realized_week"] = realized if realized else 0
+        out["revenue"]["target_week"] = target if target else 0
+
+    # Upsells (if mentioned explicitly)
+    L = _find_line(lines, "upsell")
+    if L: out["revenue"]["upsells"] = _money(L)
+
+    # Autonomy %
+    L = _find_line(lines, "autonomy")
+    if L: out["autonomy"]["auto_resolve_pct"] = _percent(L)
+
+    # MTTR minutes (e.g., 'MTTR 4.3m' or 'MTTR: 5 min')
+    m = re.search(r"mttr[:\s]+([0-9]+(?:\.[0-9]+)?)\s*m", lines, re.I)
+    if m: out["autonomy"]["mttr_min"] = float(m.group(1))
+
+    # Quiz->Paid %
+    L = _find_line(lines, "quiz", "paid")
+    if L: out["narrative"]["quiz_to_paid_delta_pct"] = _percent(L)
+
+    # LinkedIn ER %
+    L = _find_line(lines, "linkedin", "er")
+    if L: out["narrative"]["linkedin_er_delta_pct"] = _percent(L)
+
+    # Email CTR %
+    L = _find_line(lines, "email", "ctr")
+    if L: out["narrative"]["email_ctr_delta_pct"] = _percent(L)
+
+    # Conversions: 'Conversions: 4 paid' or 'paid: 4'
+    L = _find_line(lines, "conversion")
+    if not L: L = _find_line(lines, "paid")
+    if L:
+        n = _int(L)
+        if n: out["narrative"]["conversions"] = n
+
+    # Narrative topic (quoted or plain)
+    L = _find_line(lines, "top theme")
+    topic = _quoted(L) or _extract_after(L or lines, "Top theme:").splitlines()[0].strip()
+    if not topic:
+        L = _find_line(lines, "narrative:")
+        topic = _extract_after(L or "", "narrative:").splitlines()[0].strip()
+    if topic:
+        out["narrative"]["topic"] = topic.strip(" .")
+
+    # Risk summary (e.g., 'High 2 • Medium 1 • Next deadline 4h' or 'Risk: score 78')
+    L = _find_line(lines, "high")
+    if L: out["risk"]["high"] = max(out["risk"]["high"], _int(L))
+    L = _find_line(lines, "medium")
+    if L: out["risk"]["medium"] = max(out["risk"]["medium"], _int(L))
+    L = _find_line(lines, "deadline")
+    if L:
+        m = re.search(r"([0-9]+)\s*h", L, re.I); 
+        if m: out["risk"]["next_deadline_hours"] = int(m.group(1))
+    # Optional overall risk score
+    L = _find_line(lines, "risk", "score")
+    if L: out["risk"]["score"] = max(out["risk"]["score"], _int(L))
+
     return out
 
 def map_content_to_actions(text: str) -> Dict[str, Any]:
-    """Heuristic mapper for Content Digest → actions/meetings."""
+    """
+    Parse your Content Digest into actions + (optional) meeting summary.
+    Expected hints:
+      - 'Top Piece: "Title..."'
+      - 'Conversions: 4 paid ($596 influenced)'
+      - 'Persona: VS 3x > RL' or 'Persona winners: VS'
+      - 'Action: ...' lines
+      - Channel lifts: 'LinkedIn ER +19%', 'Email CTR +11%'
+    Output merges into actions.json & meetings.json.
+    """
+    lines = text
     actions = []
-    meetings = []
-    
-    import re
-    
-    # Extract top performing content
-    top = re.search(r'Top Piece[:\s]"?\"?(.+?)\"?[\r\n]', text)
-    if top:
+    meeting_summary = []
+
+    # Top Piece
+    L = _find_line(lines, "top piece")
+    if L:
+        title = _quoted(L) or _extract_after(L, "Top Piece:").strip()
+        if title:
+            actions.append({
+                "title": f"Amplify Top Piece: {title}",
+                "owner": "CMO",
+                "eta_days": 2,
+                "reason": "Top-performing piece in Content Digest"
+            })
+            meeting_summary.append(f"Top piece: {title}")
+
+    # Conversions from content
+    L = _find_line(lines, "conversion")
+    if not L: L = _find_line(lines, "paid")
+    paid = _int(L) if L else 0
+    if paid:
+        meeting_summary.append(f"Paid from content: {paid}")
+
+    # Influenced revenue
+    rev_line = _find_line(lines, "influenced")
+    influenced = _money(rev_line) if rev_line else 0.0
+    if influenced:
+        meeting_summary.append(f"Influenced revenue: ${int(influenced)}")
+
+    # Persona winners (VS, RL, Architect)
+    persona_line = _find_line(lines, "persona")
+    if persona_line:
+        # Prefer VS if mentioned with advantage
+        if re.search(r"\bVS\b", persona_line, re.I):
+            actions.append({
+                "title": "Prioritize VS persona content for 72h",
+                "owner": "Content",
+                "eta_days": 3,
+                "reason": "Persona signal favors VS in Content Digest"
+            })
+            meeting_summary.append("Persona winner: VS")
+        if re.search(r"Architect", persona_line, re.I) and not re.search(r"paid\s*[:=]\s*[1-9]", lines, re.I):
+            actions.append({
+                "title": "Draft Architect brief (fast-track)",
+                "owner": "Content",
+                "eta_days": 3,
+                "reason": "Architect lagging; fast-track brief to close gap"
+            })
+            meeting_summary.append("Architect gap detected")
+
+    # Explicit "Action:" lines → convert to tasks
+    for m in re.finditer(r"(?im)^\s*Action[:\-]\s*(.+)$", lines):
+        txt = m.group(1).strip().rstrip(".")
         actions.append({
-            "title": f"Amplify: {top.group(1).strip()}",
+            "title": txt[:100],
             "owner": "CMO",
             "eta_days": 2,
-            "reason": "Top-performing piece in Content Digest"
+            "reason": "Action captured from Content Digest"
         })
-    
-    # Extract content gaps
-    gap = re.search(r'Content Gap[:\s](.+?)[\r\n]', text, re.I)
-    if gap:
+
+    # Channel lifts → quick directives
+    L = _find_line(lines, "linkedin", "er")
+    if L and _percent(L) >= 10:
         actions.append({
-            "title": f"Create content: {gap.group(1).strip()}",
-            "owner": "Content Manager",
-            "eta_days": 5,
-            "reason": "Identified content gap from digest"
-        })
-    
-    # Extract regulatory updates
-    reg = re.search(r'Regulatory Update[:\s](.+?)[\r\n]', text, re.I)
-    if reg:
-        actions.append({
-            "title": f"Review regulatory change: {reg.group(1).strip()}",
-            "owner": "CCO",
+            "title": "Double LinkedIn cadence for 72h (winning theme)",
+            "owner": "CMO",
             "eta_days": 3,
-            "reason": "Regulatory update requiring review"
+            "reason": f"LinkedIn ER lift {_percent(L)}% in digest"
         })
-        
+        meeting_summary.append(f"LinkedIn ER {int(_percent(L))}%")
+
+    L = _find_line(lines, "email", "ctr")
+    if L and _percent(L) >= 8:
+        actions.append({
+            "title": "Extend winning email subject to VS segment",
+            "owner": "CMO",
+            "eta_days": 2,
+            "reason": f"Email CTR lift {_percent(L)}% in digest"
+        })
+        meeting_summary.append(f"Email CTR {int(_percent(L))}%")
+
+    # Build a compact meeting snapshot (if we have at least one signal)
+    meetings = []
+    if meeting_summary:
         meetings.append({
-            "title": "Regulatory Impact Review",
-            "date": (datetime.now() + timedelta(days=1)).date().isoformat(),
-            "attendees": ["CCO", "CoS"],
-            "agenda": f"Assess impact of: {reg.group(1).strip()}"
+            "title": "Content Digest",
+            "date": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "summary": meeting_summary[:3],
+            "actions": []  # we keep tactical items in actions.json; leave meeting actions empty
         })
-    
+
     return {"actions": actions, "meetings": meetings}
 
 def map_operational_to_insights(text: str) -> Dict[str, Any]:
@@ -281,24 +426,45 @@ def pull_and_write():
                 collected_insights += mapped.get("insights", [])
                 collected_decisions += mapped.get("decisions", [])
 
-        # Write aggregated data files
+        # Write aggregated data files with smart merging
         if ceo_scoreboard:
-            _save_json("scoreboard.json", ceo_scoreboard)
-            print("💾 Updated scoreboard.json from CEO summary")
+            # Merge with existing scoreboard using _deep_fill (non-destructive)
+            path = os.path.join(DATA_DIR, "scoreboard.json")
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        existing = json.load(f)
+                except:
+                    existing = {}
+            else:
+                existing = {}
+            merged = _deep_fill(existing, ceo_scoreboard)
+            _save_json("scoreboard.json", merged)
+            print("💾 Updated scoreboard.json from CEO summary (non-destructive merge)")
         
         if collected_actions:
-            # Merge with existing actions
+            # Merge with deduplication by title
             path = os.path.join(DATA_DIR, "actions.json")
-            existing_actions = []
             if os.path.exists(path):
                 try:
                     with open(path, "r", encoding="utf-8") as f: 
-                        existing_actions = json.load(f)
+                        existing = json.load(f)
                 except:
-                    existing_actions = []
+                    existing = []
+            else:
+                existing = []
             
-            _save_json("actions.json", existing_actions + collected_actions)
-            print(f"💾 Added {len(collected_actions)} actions to actions.json")
+            # Dedupe by title
+            titles = {a.get("title","") for a in existing}
+            new_count = 0
+            for a in collected_actions:
+                if a.get("title") not in titles:
+                    existing.append(a)
+                    titles.add(a.get("title"))
+                    new_count += 1
+            
+            _save_json("actions.json", existing)
+            print(f"💾 Added {new_count} new actions to actions.json (deduped)")
         
         if collected_meetings:
             path = os.path.join(DATA_DIR, "meetings.json")

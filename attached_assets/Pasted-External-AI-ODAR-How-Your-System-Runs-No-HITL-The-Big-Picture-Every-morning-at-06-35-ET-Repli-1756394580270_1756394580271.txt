@@ -1,0 +1,84 @@
+External AI + ODAR: How Your System Runs (No HITL)
+The Big Picture
+
+Every morning at 06:35 ET, Replit collects your latest business data (revenue pace, initiative health, pending decisions, meeting takeaways), packages it as JSON, and sends it to ChatGPT and/or Gemini. The models analyze the signals and propose directives (action plans). A built-in ODAR governance layer then approves or blocks those directives before they reach your autonomous agents. No human approval is required unless a policy gate triggers it.
+
+How ChatGPT/Gemini Receive Your Information
+
+Ingest (Observe): Replit pulls from two sources:
+
+Dashboards → JSON snapshots (scoreboard, initiatives, decisions, actions, meetings, optional insights).
+
+Morning emails (CEO & Content) via Gmail API, parsed into the same JSON shapes.
+
+Prompting: The models get a structured briefing with your actual metrics and context, plus a role constraint to think like Life Sciences executives (biotech, pharma, med-device).
+
+How External AI Works With Your Agents
+
+Diagnose:
+
+ChatGPT lane: strategy/comms/regulatory (CoS, CMO, CRO, CCO).
+
+Gemini lane: finance/ops/market (CFO, COO, Market Intel).
+
+Each model returns directives: title, rationale, tasks, deadlines, success criteria, and predicted impact (Δ Revenue Pace, Δ Risk High, cost/day, time-to-effect).
+
+ODAR → Act (Governance): A policy “filter” stamps each directive:
+
+approved → dispatch now
+
+needs CEO/CCO/COO → routed for approval
+
+blocked → held with required mitigations
+
+Dispatch: Approved directives are posted via webhooks to the target agents (CMO, CRO, Content, CCO, COO, CEO). Agents execute autonomously and report outcomes within 24 hours.
+
+ODAR—What It Ensures
+
+Observe: Data completeness & freshness checks; if anything’s missing → DATA GAP alert.
+
+Diagnose: Models propose business-case options with impact & cost.
+
+Act: Policy gates enforce discipline:
+
+Spend > $500/day or lifetime > $3,000 → CEO approval
+
+Public/regulated claims → CCO approval
+
+New vendor/tool → CCO + COO approval
+
+Any directive that increases High Risk must include mitigation + proof-of-effectiveness, or it’s blocked
+
+Review: Yesterday’s results are scored (win rate, ROI/day, decision velocity) and feed tomorrow’s analysis.
+
+Security & Privacy (summarized)
+
+Transport: TLS 1.2+/1.3 with PFS; HSTS enforced at the edge.
+
+Data minimization: Only aggregates/metrics go to the models; PII is stripped or hashed.
+
+Separation of duties: ChatGPT and Gemini use separate API keys & logs.
+
+Auditability: Inputs, model outputs, and dispatches are written to lineage for traceability.
+
+What You Receive (and When)
+
+06:35 ET: CoS Snapshot email/Slack—5 KPIs, top decisions, what was dispatched.
+
+Only when needed: Approval pings if a directive trips a policy gate.
+
+Daily loop: Agents execute; outcomes roll into the next morning’s data.
+
+Why This Is “Business-First”
+
+One coordinated plan per day, aligned to targets (e.g., Revenue Pace ≥ 90%).
+
+Explicit trade-offs (budget/time) with measurable end-of-week goals.
+
+Guardrails stop risky moves and route required approvals automatically.
+
+Continuous learning (win rate, ROI/day) improves recommendations week over week.
+
+TL;DR (you can use this as a header blurb)
+
+Replit turns your dashboards and morning emails into a structured daily briefing for ChatGPT/Gemini. The models propose directives; ODAR policy gates approve or block them; approved items are dispatched to agents automatically. You get a morning snapshot and approval pings only when policy requires it. No HITL for the daily run—just results.
