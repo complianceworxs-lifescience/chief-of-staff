@@ -17,7 +17,7 @@ import { generativeStrategist } from "./services/generative-strategist";
 import { agentsRouter } from "./routes/agents";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
-import { EmailIngestService } from "./services/email-ingest";
+import { emailIngest } from "./services/email-ingest";
 import { dailyOrchestrator } from "./services/daily-orchestrator";
 import { policyGate } from "./services/policy-gate";
 import { 
@@ -2157,7 +2157,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize LLM services
   const llmEngine = new LLMDirectiveEngine();
   const agentDispatch = new AgentDispatchService();
-  const emailIngest = new EmailIngestService();
 
   // Email Ingestion Endpoint - Receives forwarded emails from Gmail
   app.post("/inbound/email", async (req, res) => {
@@ -2268,6 +2267,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ 
         error: "Failed to reload policy", 
+        message: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Gmail Integration Routes
+  app.post("/api/gmail/pull", async (req, res) => {
+    try {
+      console.log("📧 Manual Gmail pull triggered");
+      const result = await emailIngest.pullGmailEmails();
+      res.json(result);
+    } catch (error) {
+      console.error("Gmail pull error:", error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Gmail pull failed", 
+        message: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/gmail/status", async (req, res) => {
+    try {
+      const authStatus = await emailIngest.checkGmailAuth();
+      const configStatus = emailIngest.getConfigStatus();
+      
+      res.json({
+        authentication: authStatus,
+        configuration: configStatus,
+        integration_ready: authStatus.authenticated
+      });
+    } catch (error) {
+      res.status(500).json({ 
+        error: "Failed to check Gmail status", 
         message: error instanceof Error ? error.message : String(error) 
       });
     }

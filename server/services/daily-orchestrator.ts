@@ -2,6 +2,7 @@ import { LLMDirectiveEngine } from "./llm-directive-engine";
 import { AgentDispatchService } from "./agent-dispatch";
 import { odarGovernance, type ODARObservation, type ODARDiagnosis, type ODARAction, type ODARReview } from "./odar-governance";
 import { policyGate, type AIDirective, type DirectiveAssessment } from "./policy-gate";
+import { emailIngest } from "./email-ingest";
 import fs from "fs/promises";
 import path from "path";
 
@@ -89,7 +90,30 @@ export class DailyOrchestrator {
     this.isRunning = true;
 
     try {
-      // OBSERVE: Data collection and validation
+      // STEP 0: Gmail email pull (if configured)
+      console.log("📧 STEP 0: Gmail email pull...");
+      const gmailAuthStatus = await emailIngest.checkGmailAuth();
+      
+      if (gmailAuthStatus.authenticated) {
+        try {
+          const gmailResult = await emailIngest.pullGmailEmails();
+          if (gmailResult.success) {
+            console.log(`✅ Gmail pull: ${gmailResult.messages_processed} messages → ${gmailResult.files_updated.length} files updated`);
+            if (gmailResult.files_updated.length > 0) {
+              console.log(`📂 Updated files: ${gmailResult.files_updated.join(', ')}`);
+            }
+          } else {
+            console.log(`⚠️  Gmail pull failed: ${gmailResult.errors.join(', ')}`);
+          }
+        } catch (gmailError) {
+          console.log(`⚠️  Gmail pull error: ${gmailError instanceof Error ? gmailError.message : String(gmailError)}`);
+          // Continue with orchestration even if Gmail fails
+        }
+      } else {
+        console.log(`ℹ️  Gmail integration not configured: ${gmailAuthStatus.error || 'authentication not set up'}`);
+      }
+
+      // OBSERVE: Data collection and validation (now includes Gmail data)
       console.log("🔍 OBSERVE: Data collection and validation...");
       const dataSourcesRaw = await this.loadAllDataSources();
       const observation = await odarGovernance.observe(dataSourcesRaw);

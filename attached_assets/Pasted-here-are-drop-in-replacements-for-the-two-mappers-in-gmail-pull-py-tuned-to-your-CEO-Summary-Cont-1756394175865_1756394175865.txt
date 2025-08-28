@@ -1,0 +1,327 @@
+here are drop-in replacements for the two mappers in gmail_pull.py, tuned to your CEO Summary + Content Digest formats. They’re robust to bullets, quotes, emojis, and different punctuation, and they only fill missing/zero fields so your dashboard snapshots can still overwrite with fresher numbers.
+
+Paste these into gmail_pull.py, replacing the two stub functions. I’ve also included tiny helpers for safe deep-fill and set/merge.
+
+✅ Updated mapping code (paste into gmail_pull.py)
+# --- helpers you can place near the top of gmail_pull.py -------------------
+import re, math
+
+def _money(s: str) -> float:
+    m = re.search(r"\$?\s*([0-9][0-9,]*(?:\.\d+)?)", s)
+    return float(m.group(1).replace(",", "")) if m else 0.0
+
+def _percent(s: str) -> float:
+    m = re.search(r"([+-]?\d+(?:\.\d+)?)\s*%", s)
+    return float(m.group(1)) if m else 0.0
+
+def _int(s: str) -> int:
+    m = re.search(r"([0-9][0-9,]*)", s)
+    return int(m.group(1).replace(",", "")) if m else 0
+
+def _find_line(text: str, *keywords) -> str:
+    """Return the first line containing all keywords (case-insensitive)."""
+    for line in text.splitlines():
+        L = line.strip()
+        if all(k.lower() in L.lower() for k in keywords):
+            return L
+    return ""
+
+def _extract_after(text: str, label: str) -> str:
+    """Return substring after first occurrence of label (case-insensitive)."""
+    i = text.lower().find(label.lower())
+    if i == -1: return ""
+    return text[i+len(label):].strip()
+
+def _quoted(text: str) -> str:
+    m = re.search(r"[\"“”‘’']([^\"“”‘’']{2,})[\"“”‘’']", text)
+    return (m.group(1).strip() if m else "").strip()
+
+def _deep_fill(dst, src):
+    """Fill only missing/zero/empty fields in dst from src (recursively)."""
+    if isinstance(dst, dict) and isinstance(src, dict):
+        for k, v in src.items():
+            if k not in dst:
+                dst[k] = v
+            else:
+                dst[k] = _deep_fill(dst[k], v)
+        return dst
+    if isinstance(dst, list) or isinstance(src, list):
+        return dst if dst else src
+    # primitives
+    if dst in (None, "", 0, 0.0) and src not in (None, "", 0, 0.0):
+        return src
+    return dst
+
+# --- replace the two stub mappers with these --------------------------------
+
+def map_ceo_to_scoreboard(text: str) -> dict:
+    """
+    Parse your CEO Summary into the scoreboard shape.
+    Expected hints in the email (examples; order/format flexible):
+      - 'Net New MRR: $298 (target $1200)'
+      - 'Autonomy: 92%'
+      - 'Quiz→Paid: 7.8%'
+      - 'LinkedIn ER: +19%'
+      - 'Email CTR: +11%'
+      - 'Top theme: "OpenAI critique"' or 'Narrative: OpenAI critique'
+      - 'Conversions: 4 paid'
+      - 'Risk: High 2 • Medium 1 • Next deadline 4h'
+    Anything not present stays at 0 and can be filled by your dashboards later.
+    """
+    lines = text.replace("\u2192", "->")  # normalize arrow
+    out = {
+        "date": datetime.now().date().isoformat(),
+        "revenue": {"realized_week": 0, "target_week": 0, "upsells": 0},
+        "initiatives": {"on_time_pct": 0, "risk_inverted": 0, "resource_ok_pct": 0, "dependency_clear_pct": 0},
+        "alignment": {"work_tied_to_objectives_pct": 0},
+        "autonomy": {"auto_resolve_pct": 0, "mttr_min": 0},
+        "risk": {"score": 0, "high": 0, "medium": 0, "next_deadline_hours": 0},
+        "narrative": {"topic": "", "linkedin_er_delta_pct": 0, "email_ctr_delta_pct": 0, "quiz_to_paid_delta_pct": 0, "conversions": 0}
+    }
+
+    # Net New MRR + target (used to proxy weekly pace if present)
+    m = re.search(r"Net\s*New\s*MRR[:\s]+\$?\s*([0-9,]+)(?:.*?target[^$]*\$?\s*([0-9,]+))?", lines, re.I|re.S)
+    if m:
+        realized = float(m.group(1).replace(",", ""))
+        target = float(m.group(2).replace(",", "")) if m.group(2) else 0.0
+        out["revenue"]["realized_week"] = realized if realized else 0
+        out["revenue"]["target_week"] = target if target else 0
+
+    # Upsells (if mentioned explicitly)
+    L = _find_line(lines, "upsell")
+    if L: out["revenue"]["upsells"] = _money(L)
+
+    # Autonomy %
+    L = _find_line(lines, "autonomy")
+    if L: out["autonomy"]["auto_resolve_pct"] = _percent(L)
+
+    # MTTR minutes (e.g., 'MTTR 4.3m' or 'MTTR: 5 min')
+    m = re.search(r"mttr[:\s]+([0-9]+(?:\.[0-9]+)?)\s*m", lines, re.I)
+    if m: out["autonomy"]["mttr_min"] = float(m.group(1))
+
+    # Quiz->Paid %
+    L = _find_line(lines, "quiz", "paid")
+    if L: out["narrative"]["quiz_to_paid_delta_pct"] = _percent(L)
+
+    # LinkedIn ER %
+    L = _find_line(lines, "linkedin", "er")
+    if L: out["narrative"]["linkedin_er_delta_pct"] = _percent(L)
+
+    # Email CTR %
+    L = _find_line(lines, "email", "ctr")
+    if L: out["narrative"]["email_ctr_delta_pct"] = _percent(L)
+
+    # Conversions: 'Conversions: 4 paid' or 'paid: 4'
+    L = _find_line(lines, "conversion")
+    if not L: L = _find_line(lines, "paid")
+    if L:
+        n = _int(L)
+        if n: out["narrative"]["conversions"] = n
+
+    # Narrative topic (quoted or plain)
+    L = _find_line(lines, "top theme")
+    topic = _quoted(L) or _extract_after(L or lines, "Top theme:").splitlines()[0].strip()
+    if not topic:
+        L = _find_line(lines, "narrative:")
+        topic = _extract_after(L or "", "narrative:").splitlines()[0].strip()
+    if topic:
+        out["narrative"]["topic"] = topic.strip(" .")
+
+    # Risk summary (e.g., 'High 2 • Medium 1 • Next deadline 4h' or 'Risk: score 78')
+    L = _find_line(lines, "high")
+    if L: out["risk"]["high"] = max(out["risk"]["high"], _int(L))
+    L = _find_line(lines, "medium")
+    if L: out["risk"]["medium"] = max(out["risk"]["medium"], _int(L))
+    L = _find_line(lines, "deadline")
+    if L:
+        m = re.search(r"([0-9]+)\s*h", L, re.I); 
+        if m: out["risk"]["next_deadline_hours"] = int(m.group(1))
+    # Optional overall risk score
+    L = _find_line(lines, "risk", "score")
+    if L: out["risk"]["score"] = max(out["risk"]["score"], _int(L))
+
+    return out
+
+
+def map_content_to_actions(text: str) -> dict:
+    """
+    Parse your Content Digest into actions + (optional) meeting summary.
+    Expected hints:
+      - 'Top Piece: "Title..."'
+      - 'Conversions: 4 paid ($596 influenced)'
+      - 'Persona: VS 3x > RL' or 'Persona winners: VS'
+      - 'Action: ...' lines
+      - Channel lifts: 'LinkedIn ER +19%', 'Email CTR +11%'
+    Output merges into actions.json & meetings.json.
+    """
+    lines = text
+    actions = []
+    meeting_summary = []
+
+    # Top Piece
+    L = _find_line(lines, "top piece")
+    if L:
+        title = _quoted(L) or _extract_after(L, "Top Piece:").strip()
+        if title:
+            actions.append({
+                "title": f"Amplify Top Piece: {title}",
+                "owner": "CMO",
+                "eta_days": 2,
+                "reason": "Top-performing piece in Content Digest"
+            })
+            meeting_summary.append(f"Top piece: {title}")
+
+    # Conversions from content
+    L = _find_line(lines, "conversion")
+    if not L: L = _find_line(lines, "paid")
+    paid = _int(L) if L else 0
+    if paid:
+        meeting_summary.append(f"Paid from content: {paid}")
+
+    # Influenced revenue
+    rev_line = _find_line(lines, "influenced")
+    influenced = _money(rev_line) if rev_line else 0.0
+    if influenced:
+        meeting_summary.append(f"Influenced revenue: ${int(influenced)}")
+
+    # Persona winners (VS, RL, Architect)
+    persona_line = _find_line(lines, "persona")
+    if persona_line:
+        # Prefer VS if mentioned with advantage
+        if re.search(r"\bVS\b", persona_line, re.I):
+            actions.append({
+                "title": "Prioritize VS persona content for 72h",
+                "owner": "Content",
+                "eta_days": 3,
+                "reason": "Persona signal favors VS in Content Digest"
+            })
+            meeting_summary.append("Persona winner: VS")
+        if re.search(r"Architect", persona_line, re.I) and not re.search(r"paid\s*[:=]\s*[1-9]", lines, re.I):
+            actions.append({
+                "title": "Draft Architect brief (fast-track)",
+                "owner": "Content",
+                "eta_days": 3,
+                "reason": "Architect lagging; fast-track brief to close gap"
+            })
+            meeting_summary.append("Architect gap detected")
+
+    # Explicit “Action:” lines → convert to tasks
+    for m in re.finditer(r"(?im)^\s*Action[:\-]\s*(.+)$", lines):
+        txt = m.group(1).strip().rstrip(".")
+        actions.append({
+            "title": txt[:100],
+            "owner": "CMO",
+            "eta_days": 2,
+            "reason": "Action captured from Content Digest"
+        })
+
+    # Channel lifts → quick directives
+    L = _find_line(lines, "linkedin", "er")
+    if L and _percent(L) >= 10:
+        actions.append({
+            "title": "Double LinkedIn cadence for 72h (winning theme)",
+            "owner": "CMO",
+            "eta_days": 3,
+            "reason": f"LinkedIn ER lift {_percent(L)}% in digest"
+        })
+        meeting_summary.append(f"LinkedIn ER {int(_percent(L))}%")
+
+    L = _find_line(lines, "email", "ctr")
+    if L and _percent(L) >= 8:
+        actions.append({
+            "title": "Extend winning email subject to VS segment",
+            "owner": "CMO",
+            "eta_days": 2,
+            "reason": f"Email CTR lift {_percent(L)}% in digest"
+        })
+        meeting_summary.append(f"Email CTR {int(_percent(L))}%")
+
+    # Build a compact meeting snapshot (if we have at least one signal)
+    meetings = []
+    if meeting_summary:
+        meetings.append({
+            "title": "Content Digest",
+            "date": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "summary": meeting_summary[:3],
+            "actions": []  # we keep tactical items in actions.json; leave meeting actions empty
+        })
+
+    return {"actions": actions, "meetings": meetings}
+
+🧠 How these behave
+
+CEO Summary → scoreboard.json: pulls Net New MRR, (optional) target, Autonomy %, Quiz→Paid %, LinkedIn ER %, Email CTR %, Conversions (paid), Top theme, and a lightweight Risk snapshot (High/Med counts & next deadline hours).
+
+Content Digest → actions.json & meetings.json: creates concrete actions to amplify the top piece, prioritize VS, fast-track an Architect brief (when lagging), and boost channels with significant lifts. Also writes a short “Content Digest” meeting card (3 bullets max).
+
+Non-destructive fill: these mappers never clobber a non-zero value. If dashboards emit better numbers later, they win.
+
+🔧 Merge them during the pull
+
+In your existing pull_and_write() (from the version I sent), make sure you merge instead of overwrite:
+
+# after collecting ceo_scoreboard, collected_actions, collected_meetings ...
+if ceo_scoreboard:
+    # merge with existing scoreboard if present
+    path = os.path.join(DATA_DIR, "scoreboard.json")
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+    else:
+        existing = {}
+    merged = _deep_fill(existing, ceo_scoreboard)
+    _save_json("scoreboard.json", merged)
+
+if collected_actions:
+    path = os.path.join(DATA_DIR, "actions.json")
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+    else:
+        existing = []
+    # dedupe by title
+    titles = {a.get("title","") for a in existing}
+    for a in collected_actions:
+        if a.get("title") not in titles:
+            existing.append(a)
+            titles.add(a.get("title"))
+    _save_json("actions.json", existing)
+
+if collected_meetings:
+    path = os.path.join(DATA_DIR, "meetings.json")
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+    else:
+        existing = []
+    _save_json("meetings.json", existing + collected_meetings)
+
+🧪 Quick smoke test
+
+Paste a chunk of your CEO email into a Python REPL:
+
+from gmail_pull import map_ceo_to_scoreboard, map_content_to_actions
+sample_ceo = """
+CEO Oversight — 8/28
+Net New MRR: $298 (target $1200)
+Autonomy: 92% · MTTR 4.3m
+Quiz→Paid: 7.8%
+LinkedIn ER: +19% · Email CTR: +11%
+Top theme: "OpenAI critique"
+Risk: High 2 • Medium 1 • Next deadline 4h
+Conversions: 4 paid
+"""
+print(map_ceo_to_scoreboard(sample_ceo))
+
+sample_content = """
+Content Digest — 8/28
+Top Piece: "OpenAI Criticism That Converts"
+Conversions: 4 paid ($596 influenced)
+Persona: VS 3x > RL
+LinkedIn ER +19%; Email CTR +11%
+Action: Double down on OpenAI-critique posts today.
+"""
+print(map_content_to_actions(sample_content))
+
+
+You should see a well-populated scoreboard plus 3–4 action items and a compact meeting summary.

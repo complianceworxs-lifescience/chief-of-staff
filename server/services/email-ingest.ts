@@ -1,13 +1,21 @@
 import fs from "fs/promises";
 import path from "path";
+import { spawn } from "child_process";
 // import { parse as parseHtml } from "node-html-parser"; // TODO: Install package if needed
 
-interface EmailData {
+export interface EmailData {
   subject: string;
   body: string;
   from: string;
   received_at: string;
   html?: string;
+}
+
+export interface GmailPullResult {
+  success: boolean;
+  messages_processed: number;
+  files_updated: string[];
+  errors: string[];
 }
 
 interface ParsedEmailData {
@@ -21,9 +29,143 @@ interface ParsedEmailData {
 
 export class EmailIngestService {
   private dataPath: string;
+  private gmailPullScript: string;
 
   constructor() {
     this.dataPath = path.join(process.cwd(), "server", "data");
+    this.gmailPullScript = path.join(process.cwd(), "server", "services", "gmail-pull.py");
+  }
+
+  /**
+   * Pull emails from Gmail using Python service
+   */
+  async pullGmailEmails(): Promise<GmailPullResult> {
+    console.log("📧 Starting Gmail email pull...");
+    
+    return new Promise((resolve) => {
+      const result: GmailPullResult = {
+        success: false,
+        messages_processed: 0,
+        files_updated: [],
+        errors: []
+      };
+
+      // Execute Python Gmail puller
+      const pythonProcess = spawn("python3", [this.gmailPullScript], {
+        env: { ...process.env, PYTHONPATH: process.cwd() },
+        cwd: process.cwd()
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      pythonProcess.stdout.on("data", (data) => {
+        const output = data.toString();
+        stdout += output;
+        console.log(output.trim());
+      });
+
+      pythonProcess.stderr.on("data", (data) => {
+        const error = data.toString();
+        stderr += error;
+        console.error("Gmail pull error:", error.trim());
+      });
+
+      pythonProcess.on("close", (code) => {
+        if (code === 0) {
+          result.success = true;
+          
+          // Parse output to extract metrics
+          const lines = stdout.split("\n");
+          for (const line of lines) {
+            if (line.includes("Retrieved") && line.includes("messages")) {
+              const match = line.match(/(\d+) messages/);
+              if (match) result.messages_processed = parseInt(match[1]);
+            }
+            if (line.includes("Updated") || line.includes("Added")) {
+              const fileMatch = line.match(/(scoreboard|actions|meetings|insights|decisions)\.json/);
+              if (fileMatch) result.files_updated.push(fileMatch[1]);
+            }
+          }
+          
+          console.log(`✅ Gmail pull completed: ${result.messages_processed} messages processed`);
+        } else {
+          result.success = false;
+          result.errors.push(`Gmail pull failed with exit code ${code}`);
+          if (stderr) result.errors.push(stderr);
+        }
+
+        resolve(result);
+      });
+
+      pythonProcess.on("error", (error) => {
+        result.success = false;
+        result.errors.push(`Failed to start Gmail pull: ${error.message}`);
+        resolve(result);
+      });
+    });
+  }
+
+  /**
+   * Check Gmail authentication status
+   */
+  async checkGmailAuth(): Promise<{ authenticated: boolean; mode?: string; error?: string }> {
+    const mode = process.env.GMAIL_AUTH_MODE || "service";
+    
+    if (mode === "service") {
+      const gsaJson = process.env.GSA_JSON;
+      const impersonate = process.env.GMAIL_IMPERSONATE;
+      
+      if (!gsaJson || !impersonate) {
+        return {
+          authenticated: false,
+          error: "Missing GSA_JSON or GMAIL_IMPERSONATE environment variables"
+        };
+      }
+      
+      try {
+        JSON.parse(gsaJson);
+        return { authenticated: true, mode: "service" };
+      } catch {
+        return {
+          authenticated: false,
+          error: "Invalid GSA_JSON format"
+        };
+      }
+    } else if (mode === "oauth") {
+      const clientId = process.env.OAUTH_CLIENT_ID;
+      const clientSecret = process.env.OAUTH_CLIENT_SECRET;
+      const refreshToken = process.env.OAUTH_REFRESH_TOKEN;
+      
+      if (!clientId || !clientSecret || !refreshToken) {
+        return {
+          authenticated: false,
+          error: "Missing OAuth environment variables"
+        };
+      }
+      
+      return { authenticated: true, mode: "oauth" };
+    }
+    
+    return {
+      authenticated: false,
+      error: "Invalid GMAIL_AUTH_MODE (must be 'service' or 'oauth')"
+    };
+  }
+
+  /**
+   * Get configuration status for Gmail integration
+   */
+  getConfigStatus() {
+    return {
+      gmail_auth_mode: process.env.GMAIL_AUTH_MODE || "not_set",
+      gmail_label: process.env.GMAIL_LABEL || "cw/daily-reports",
+      gmail_query: process.env.GMAIL_QUERY || 'label:"cw/daily-reports" newer_than:2d',
+      data_dir: process.env.DATA_DIR || "server/data",
+      has_service_account: !!process.env.GSA_JSON,
+      has_oauth_config: !!(process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET && process.env.OAUTH_REFRESH_TOKEN),
+      has_impersonation: !!process.env.GMAIL_IMPERSONATE
+    };
   }
 
   async processInboundEmail(emailData: EmailData): Promise<ParsedEmailData> {
@@ -330,3 +472,5 @@ export class EmailIngestService {
     }
   }
 }
+
+export const emailIngest = new EmailIngestService();
