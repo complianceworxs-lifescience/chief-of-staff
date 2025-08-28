@@ -92,14 +92,14 @@ export default function DirectiveCenter() {
   const getAgentName = (agentId: string) => {
     const agentMap: Record<string, string> = {
       'ceo': 'CEO',
-      'cfo': 'CFO Agent',
-      'cos': 'Chief of Staff Agent',
-      'cro': 'CRO Agent',
-      'cmo': 'CMO Agent',
-      'coo': 'COO Agent',
-      'cco': 'CCO Agent',
+      'cfo': 'CFO',
+      'cos': 'Chief of Staff',
+      'cro': 'CRO',
+      'cmo': 'CMO',
+      'coo': 'COO',
+      'cco': 'CCO',
       'content-manager': 'Content Manager',
-      'market-intelligence': 'Market Intelligence Agent'
+      'market-intelligence': 'Market Intelligence'
     };
     return agentMap[agentId] || agentId;
   };
@@ -223,14 +223,14 @@ export default function DirectiveCenter() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ceo">CEO</SelectItem>
-                    <SelectItem value="cfo">CFO Agent</SelectItem>
-                    <SelectItem value="cos">Chief of Staff Agent</SelectItem>
-                    <SelectItem value="cro">CRO Agent</SelectItem>
-                    <SelectItem value="cmo">CMO Agent</SelectItem>
-                    <SelectItem value="coo">COO Agent</SelectItem>
-                    <SelectItem value="cco">CCO Agent</SelectItem>
+                    <SelectItem value="cfo">CFO</SelectItem>
+                    <SelectItem value="cos">Chief of Staff</SelectItem>
+                    <SelectItem value="cro">CRO</SelectItem>
+                    <SelectItem value="cmo">CMO</SelectItem>
+                    <SelectItem value="coo">COO</SelectItem>
+                    <SelectItem value="cco">CCO</SelectItem>
                     <SelectItem value="content-manager">Content Manager</SelectItem>
-                    <SelectItem value="market-intelligence">Market Intelligence Agent</SelectItem>
+                    <SelectItem value="market-intelligence">Market Intelligence</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
