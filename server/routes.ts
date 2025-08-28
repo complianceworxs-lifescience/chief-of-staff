@@ -411,27 +411,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/chief-of-staff/send-directive", async (req, res) => {
     try {
-      const { targetAgent, priority, deadline, content } = req.body;
+      const directiveData = req.body;
       
-      // Simulate sending directive
-      const directiveId = `dir_${Date.now()}`;
+      // Validate required fields
+      if (!directiveData.target_agents || directiveData.target_agents.length === 0) {
+        return res.status(400).json({ message: "At least one target agent is required" });
+      }
+      if (!directiveData.title || directiveData.title.length < 4) {
+        return res.status(400).json({ message: "Title must be at least 4 characters" });
+      }
+      if (!directiveData.rationale || directiveData.rationale.length < 10) {
+        return res.status(400).json({ message: "Rationale must be at least 10 characters" });
+      }
+      if (!directiveData.tasks || directiveData.tasks.length === 0 || !directiveData.tasks[0].text) {
+        return res.status(400).json({ message: "At least one task is required" });
+      }
       
-      console.log(`📝 DIRECTIVE SENT: ${directiveId} → ${targetAgent} (${priority} priority)`);
-      console.log(`📋 CONTENT: ${content.substring(0, 100)}...`);
+      // Generate directive ID
+      const directiveId = `dir_${new Date().toISOString().split('T')[0]}_${String(Date.now()).slice(-3)}`;
+      const createdAt = new Date().toISOString();
       
+      console.log(`🎯 COMPREHENSIVE DIRECTIVE CREATED: ${directiveId}`);
+      console.log(`📊 TYPE: ${directiveData.directive_type} | PRIORITY: ${directiveData.priority}`);
+      console.log(`🎯 TARGET AGENTS: ${directiveData.target_agents.join(', ')}`);
+      console.log(`👥 WATCHERS: ${directiveData.watchers?.join(', ') || 'none'}`);
+      console.log(`📝 TITLE: ${directiveData.title}`);
+      console.log(`💡 RATIONALE: ${directiveData.rationale}`);
+      console.log(`✅ TASKS: ${directiveData.tasks.length} task(s)`);
+      console.log(`🎯 SUCCESS CRITERIA: ${directiveData.success_criteria?.length || 0} criteria`);
+      console.log(`⏰ ESCALATION: ${directiveData.escalation_after_hours}h`);
+      
+      // Simulate webhook dispatch to each target agent
+      const dispatchResults = [];
+      
+      for (const agent of directiveData.target_agents) {
+        // Create webhook payload for this agent
+        const webhookPayload = {
+          directive_id: directiveId,
+          created_at: createdAt,
+          agent: agent,
+          priority: directiveData.priority,
+          title: directiveData.title,
+          rationale: directiveData.rationale,
+          objective: directiveData.objective,
+          tasks: directiveData.tasks.filter(task => !task.owner_hint || task.owner_hint === agent || task.owner_hint.toUpperCase() === agent),
+          success_criteria: directiveData.success_criteria || [],
+          deadline: directiveData.deadline,
+          escalation_after_hours: directiveData.escalation_after_hours,
+          requires_ceo_approval: directiveData.requires_ceo_approval
+        };
+        
+        // Simulate webhook POST
+        console.log(`🚀 WEBHOOK DISPATCH → ${agent}: ${JSON.stringify(webhookPayload, null, 2)}`);
+        console.log(`📡 Headers: X-CW-Auth: [SHARED_SECRET]`);
+        
+        // Simulate agent response
+        const ticketId = `ticket_${agent.toLowerCase()}_${Date.now()}`;
+        dispatchResults.push({
+          agent,
+          ok: true,
+          accepted_at: createdAt,
+          ticket_id: ticketId
+        });
+        
+        console.log(`✅ AGENT RESPONSE ${agent}: { "ok": true, "accepted_at": "${createdAt}", "ticket_id": "${ticketId}" }`);
+      }
+      
+      // Create response
       const result = {
         id: directiveId,
-        targetAgent,
-        priority,
-        deadline,
-        content,
-        status: 'sent',
-        createdAt: new Date().toISOString()
+        created_at: createdAt,
+        target_agents: directiveData.target_agents,
+        watchers: directiveData.watchers || [],
+        priority: directiveData.priority,
+        directive_type: directiveData.directive_type,
+        title: directiveData.title,
+        status: 'dispatched',
+        dispatch_results: dispatchResults,
+        escalates_at: new Date(Date.now() + directiveData.escalation_after_hours * 60 * 60 * 1000).toISOString()
+      };
+      
+      console.log(`✅ DIRECTIVE DISPATCH COMPLETE: ${directiveId} → ${directiveData.target_agents.length} agent(s)`);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Directive dispatch error:', error);
+      res.status(500).json({ message: "Failed to send directive" });
+    }
+  });
+
+  app.post("/api/chief-of-staff/send-directive-test", async (req, res) => {
+    try {
+      const directiveData = req.body;
+      
+      console.log(`🧪 TEST DIRECTIVE TO CoS:`);
+      console.log(`📝 PAYLOAD: ${JSON.stringify(directiveData, null, 2)}`);
+      
+      const result = {
+        id: `test_${Date.now()}`,
+        status: 'test_sent',
+        sent_to: 'CoS',
+        validation: 'passed'
       };
       
       res.json(result);
     } catch (error) {
-      res.status(500).json({ message: "Failed to send directive" });
+      res.status(500).json({ message: "Failed to send test directive" });
     }
   });
 

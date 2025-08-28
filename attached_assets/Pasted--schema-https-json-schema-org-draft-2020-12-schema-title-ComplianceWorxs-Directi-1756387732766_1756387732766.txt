@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ComplianceWorxs Directive",
+  "type": "object",
+  "required": ["target_agents", "priority", "directive_type", "title", "rationale"],
+  "properties": {
+    "version": { "type": "string", "const": "1.0" },
+
+    "target_agents": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "enum": ["CMO", "CRO", "Content", "CCO", "COO", "CEO", "CoS"] },
+      "description": "Primary agent(s) expected to execute"
+    },
+    "watchers": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["CMO", "CRO", "Content", "CCO", "COO", "CEO", "CoS"] },
+      "description": "Agents to notify/CC"
+    },
+
+    "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"], "default": "medium" },
+    "deadline": { "type": "string", "format": "date-time", "description": "Optional absolute due date/time" },
+
+    "directive_type": {
+      "type": "string",
+      "enum": ["implementation", "operational", "decision", "daily_run", "experiment"]
+    },
+
+    "objective": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      },
+      "anyOf": [{ "required": ["id"] }, { "required": ["name"] }],
+      "description": "Strategic objective/initiative linkage"
+    },
+
+    "kpi_impacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kpi"],
+        "properties": {
+          "kpi": {
+            "type": "string",
+            "enum": ["RevenuePace", "StrategicHealth", "Alignment", "RiskRadar", "GTMMomentum", "Custom"]
+          },
+          "goal": { "type": "number" },
+          "unit": { "type": "string", "enum": ["%", "score", "$", "count", "hours", "Custom"] },
+          "by": { "type": "string", "format": "date" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+
+    "title": { "type": "string", "minLength": 4, "maxLength": 140 },
+    "rationale": { "type": "string", "minLength": 10 },
+
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string", "minLength": 4 },
+          "owner_hint": { "type": "string", "description": "Person/role suggestion" },
+          "due": { "type": "string", "format": "date" },
+          "link": { "type": "string", "format": "uri", "description": "Brief, doc, or run link" }
+        }
+      }
+    },
+
+    "success_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kpi", "goal"],
+        "properties": {
+          "kpi": {
+            "type": "string",
+            "enum": ["RevenuePace", "StrategicHealth", "Alignment", "RiskRadar", "GTMMomentum", "Custom"]
+          },
+          "goal": { "type": "number" },
+          "unit": { "type": "string", "enum": ["%", "score", "$", "count", "hours", "Custom"] },
+          "by": { "type": "string", "format": "date" }
+        }
+      }
+    },
+
+    "requires_ceo_approval": { "type": "boolean", "default": false },
+    "escalation_after_hours": { "type": "integer", "minimum": 1, "maximum": 240, "default": 72 },
+
+    "schedule": {
+      "type": "object",
+      "description": "For scheduled/recurring directives",
+      "oneOf": [
+        {
+          "title": "One-time",
+          "type": "object",
+          "required": ["type", "datetime"],
+          "properties": {
+            "type": { "const": "once" },
+            "datetime": { "type": "string", "format": "date-time" }
+          }
+        },
+        {
+          "title": "Recurring",
+          "type": "object",
+          "required": ["type", "rrule"],
+          "properties": {
+            "type": { "const": "recurring" },
+            "rrule": {
+              "type": "string",
+              "description": "iCal RRULE, e.g., RRULE:FREQ=DAILY;BYHOUR=6;BYMINUTE=35;BYSECOND=0"
+            }
+          }
+        }
+      ]
+    },
+
+    "template_id": { "type": "string", "description": "Optional form template key" },
+    "attachments": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" }
+    },
+
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+
+  "allOf": [
+    {
+      "if": { "properties": { "directive_type": { "const": "daily_run" } } },
+      "then": { "required": ["schedule"] }
+    },
+    {
+      "if": { "properties": { "requires_ceo_approval": { "const": true } } },
+      "then": {
+        "properties": { "watchers": { "contains": { "const": "CEO" } } },
+        "errorMessage": "When approval is required, add CEO to Watchers."
+      }
+    }
+  ]
+}

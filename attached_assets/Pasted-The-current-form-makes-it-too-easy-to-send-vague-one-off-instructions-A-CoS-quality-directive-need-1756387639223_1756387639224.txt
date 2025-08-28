@@ -1,0 +1,127 @@
+The current form makes it too easy to send vague, one-off instructions. A CoS-quality directive needs structure, alignment to business goals, and guardrails. Here’s a punch-list you can implement without bloating the UI.
+
+What to add (minimal but powerful)
+1) Structure the directive
+
+Directive type (radio): Implementation • Operational • Decision • Daily Run • Experiment
+Why: routes to the right agent workflow and determines required fields.
+
+Link to Objective/Initiative (dropdown + “+ New”): ties every directive to a company priority.
+
+KPI impact (multi-select chips): Revenue Pace, Strategic Health, Alignment, Risk Radar, GTM Momentum.
+Optional numeric target inputs per KPI (e.g., % to 90 by Fri).
+
+2) Make responsibility explicit
+
+Target Agents: allow multi-select + Watchers/CC (e.g., CoS & CEO).
+
+Escalation clock: “Escalate after __ hours” (default 72h).
+
+Requires CEO approval (toggle): inserts an approval step & blocks dispatch until approved.
+
+3) Turn “content” into an executable plan
+
+Replace the big free-text box with three small sections (still keep a tiny notes box):
+
+Title (one line)
+
+Rationale (why this matters—ties to KPIs/insights)
+
+Tasks (repeatable rows): Task • Owner (hint) • Due date • Link (+Add row)
+
+Success criteria / Targets (repeatable rows): KPI • Goal • By date
+
+4) Reduce friction with templates & autofill
+
+Template picker (pill buttons above the form):
+
+72-hour GTM sprint
+
+Fast-track content brief
+
+Close High compliance risk
+
+Budget shift + experiment
+
+Autofill from context (tiny links under each field):
+
+“Insert top Insight” → prefill rationale
+
+“Insert Decision” → prefill title/options/due
+
+“Insert Meeting Actions” → convert into task rows
+
+5) Preview, validate, and schedule
+
+Preview JSON (side drawer): shows the directive payload that will be sent to the agent webhook.
+
+Validate (inline): highlights missing fields; blocks send on critical gaps.
+
+Schedule: One-off now / date-time / recurring (e.g., daily 06:35 for “Daily Run”).
+
+6) Confirmation & follow-through
+
+Send test (to self/CoS)
+
+Dispatch (primary button) + Show recipients (agent webhooks)
+
+Post-send tracker (tiny banner): “Ack received ✓ • SLA 72h • Escalates: Tue 10:00”.
+
+Suggested layout (one screen, no clutter)
+
+Top row:
+Target Agents (multi) • Priority • Deadline (date+time) • Requires CEO approval (toggle)
+
+Section: Strategy
+Directive Type • Objective/Initiative • KPI Impact (+ targets)
+
+Section: Plan
+Title • Rationale • Tasks table (Add row) • Success criteria table (Add row) • Attachments/Links
+
+Footer:
+Escalation after __ hours • Schedule (Now/Datetime/Recurring)
+Buttons: Preview JSON • Send Test • Dispatch
+
+Microcopy you can drop in
+
+Directive Type help text: “Determines required fields and routing (e.g., ‘Daily Run’ adds schedule & recurrence).”
+
+KPI Impact help text: “Pick the business KPI(s) this directive will move. Add numeric target(s) if applicable.”
+
+Escalation help text: “If not completed or acknowledged within this window, CoS will auto-escalate.”
+
+Example (pre-filled) using your current strategy
+
+Directive Type: Operational
+Objective: Grow Validation Strategist Tier
+KPI Impact: Revenue Pace → Goal: 90% By: Fri
+Target Agents: CMO, Content (Watchers: CRO, CoS)
+Priority: High
+Deadline: 72h
+Escalation: 72h
+Requires CEO approval: Off
+
+Title: 72-hour VS GTM sprint (OpenAI-critique theme)
+Rationale: +19% ER on this theme; 3 paid yesterday; short sprint can close this week’s revenue gap.
+Tasks:
+
+Produce 2 new creatives + repurpose top clip — Owner hint: CMO — Due: 08/30 — Link: (campaign brief)
+
+UTM tag all assets utm_campaign=openai_crit_72h — Owner hint: CMO — Due: 08/29
+
+Publish VS case study with pricing CTA — Owner hint: Content — Due: 08/30 — Link: (doc)
+Success criteria / Targets:
+
+Revenue Pace → 90% by Fri
+
+Content-attributed paid conversions → ≥3 by Sun
+
+Why these changes matter
+
+Consistency: Every directive links to an objective and KPI; agents know the “why,” not just the “what.”
+
+Executability: Tasks, owners, due dates, and links turn directives into work—no guesswork.
+
+Governance: Approval toggle, escalation clock, and JSON preview prevent silent failure.
+
+Speed: Templates + autofill let you issue high-quality directives in <60 seconds.
