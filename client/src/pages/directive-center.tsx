@@ -92,6 +92,8 @@ export default function DirectiveCenter() {
   const getAgentName = (agentId: string) => {
     const agentMap: Record<string, string> = {
       'ceo': 'CEO',
+      'cfo': 'CFO Agent',
+      'cos': 'Chief of Staff Agent',
       'cro': 'CRO Agent',
       'cmo': 'CMO Agent',
       'coo': 'COO Agent',
@@ -220,6 +222,9 @@ export default function DirectiveCenter() {
                     <SelectValue placeholder="Select an agent" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="ceo">CEO</SelectItem>
+                    <SelectItem value="cfo">CFO Agent</SelectItem>
+                    <SelectItem value="cos">Chief of Staff Agent</SelectItem>
                     <SelectItem value="cro">CRO Agent</SelectItem>
                     <SelectItem value="cmo">CMO Agent</SelectItem>
                     <SelectItem value="coo">COO Agent</SelectItem>
