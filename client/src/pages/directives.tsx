@@ -236,7 +236,8 @@ export default function DirectivesPage() {
           rationale: `Based on market insight: ${topInsight.insight || 'High-impact market opportunity detected requiring immediate action'}`,
           tasks: [
             { text: "Analyze competitive landscape and positioning", owner_hint: "CMO", due: new Date(Date.now() + 3*24*60*60*1000).toISOString().split('T')[0] },
-            { text: "Execute tactical response campaign", owner_hint: "CRO", due: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] }
+            { text: "Execute tactical response campaign", owner_hint: "CRO", due: new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0] },
+            { text: "Strategic coordination and resource allocation", owner_hint: "CoS", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] }
           ],
           kpi_impacts: [
             { kpi: "GTMMomentum", goal: 25, unit: "score" },
@@ -308,11 +309,54 @@ export default function DirectivesPage() {
         tasks: [
           { text: "Activate high-converting content themes", owner_hint: "CMO", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] },
           { text: "Execute outbound sales blitz to warm prospects", owner_hint: "CRO", due: new Date(Date.now() + 2*24*60*60*1000).toISOString().split('T')[0] },
-          { text: "Deploy upsell campaign to existing customers", owner_hint: "CCO", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] }
+          { text: "Deploy upsell campaign to existing customers", owner_hint: "CCO", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] },
+          { text: "Budget reallocation and financial controls", owner_hint: "CFO", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] }
         ],
         kpi_impacts: [
           { kpi: "RevenuePace", goal: 90, unit: "%" },
           { kpi: "GTMMomentum", goal: 30, unit: "score" }
+        ]
+      }
+    });
+
+    // CFO Financial Analysis Sprint
+    templates.push({
+      id: 'financial-analysis-sprint',
+      name: "Financial Analysis Sprint",
+      description: "Comprehensive financial review and optimization",
+      sourceType: 'metric',
+      generatedContent: {
+        title: "Quarterly Financial Health Check",
+        rationale: "Execute comprehensive financial analysis to identify optimization opportunities and ensure fiscal alignment",
+        tasks: [
+          { text: "Analyze cash flow and burn rate patterns", owner_hint: "CFO", due: new Date(Date.now() + 3*24*60*60*1000).toISOString().split('T')[0] },
+          { text: "Review budget allocation efficiency", owner_hint: "CFO", due: new Date(Date.now() + 5*24*60*60*1000).toISOString().split('T')[0] },
+          { text: "Coordinate financial reporting with CoS", owner_hint: "CoS", due: new Date(Date.now() + 2*24*60*60*1000).toISOString().split('T')[0] }
+        ],
+        kpi_impacts: [
+          { kpi: "CashFlowHealth", goal: 95, unit: "%" },
+          { kpi: "BudgetEfficiency", goal: 85, unit: "score" }
+        ]
+      }
+    });
+
+    // CoS Strategic Alignment Template
+    templates.push({
+      id: 'strategic-alignment',
+      name: "Strategic Alignment Review",
+      description: "Cross-functional alignment and coordination sprint",
+      sourceType: 'metric',
+      generatedContent: {
+        title: "Strategic Alignment & Coordination Sprint",
+        rationale: "Ensure all agents are aligned on strategic priorities and resource allocation is optimized",
+        tasks: [
+          { text: "Review agent performance and alignment metrics", owner_hint: "CoS", due: new Date(Date.now() + 1*24*60*60*1000).toISOString().split('T')[0] },
+          { text: "Coordinate resource reallocation across teams", owner_hint: "CoS", due: new Date(Date.now() + 2*24*60*60*1000).toISOString().split('T')[0] },
+          { text: "Financial impact assessment", owner_hint: "CFO", due: new Date(Date.now() + 3*24*60*60*1000).toISOString().split('T')[0] }
+        ],
+        kpi_impacts: [
+          { kpi: "StrategicAlignment", goal: 95, unit: "%" },
+          { kpi: "CrossFunctionalEfficiency", goal: 90, unit: "score" }
         ]
       }
     });
@@ -333,7 +377,9 @@ export default function DirectivesPage() {
       'cfo': { name: 'CFO Agent', color: 'bg-green-500', avatar: 'CF' },
       'coo': { name: 'COO Agent', color: 'bg-purple-500', avatar: 'CO' },
       'cco': { name: 'CCO Agent', color: 'bg-orange-500', avatar: 'CC' },
-      'cmo': { name: 'CMO Agent', color: 'bg-pink-500', avatar: 'CM' }
+      'cmo': { name: 'CMO Agent', color: 'bg-pink-500', avatar: 'CM' },
+      'cos': { name: 'CoS Agent', color: 'bg-indigo-500', avatar: 'CS' },
+      'chief-of-staff': { name: 'CoS Agent', color: 'bg-indigo-500', avatar: 'CS' }
     };
     return agentMap[agentId] || { name: agentId, color: 'bg-gray-500', avatar: agentId.substring(0, 2).toUpperCase() };
   };
