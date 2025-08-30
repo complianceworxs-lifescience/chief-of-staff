@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CoSMonitoring } from "@/components/CoSMonitoring";
 import { 
   DollarSign, TrendingUp, Shield, Gauge, Users, 
   AlertTriangle, Target, CheckCircle, Send, 
@@ -216,6 +217,19 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Chief of Staff Monitoring */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Chief of Staff Monitoring
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CoSMonitoring />
+        </CardContent>
+      </Card>
 
       {/* Executive Brief Generator */}
       <Card className="mb-8">

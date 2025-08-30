@@ -683,6 +683,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Chief of Staff monitoring routes
+  app.get('/api/cos/daily-verification', async (req, res) => {
+    try {
+      const { chiefOfStaffMonitor } = await import('./services/chief-of-staff-monitor.js');
+      const results = await chiefOfStaffMonitor.performDailyVerification();
+      res.json(results);
+    } catch (error) {
+      console.error('Error performing daily verification:', error);
+      res.status(500).json({ message: 'Failed to perform daily verification' });
+    }
+  });
+
+  app.get('/api/cos/status-report', async (req, res) => {
+    try {
+      const { chiefOfStaffMonitor } = await import('./services/chief-of-staff-monitor.js');
+      const report = await chiefOfStaffMonitor.generateDailyStatusReport();
+      res.json({ report });
+    } catch (error) {
+      console.error('Error generating status report:', error);
+      res.status(500).json({ message: 'Failed to generate status report' });
+    }
+  });
+
+  app.get('/api/cos/system-check', async (req, res) => {
+    try {
+      const { chiefOfStaffMonitor } = await import('./services/chief-of-staff-monitor.js');
+      const checkResult = await chiefOfStaffMonitor.runSystemCheck();
+      res.json(checkResult);
+    } catch (error) {
+      console.error('Error running system check:', error);
+      res.status(500).json({ message: 'Failed to run system check' });
+    }
+  });
+
+  app.get('/api/cos/acceptance-checklist/:agent', async (req, res) => {
+    try {
+      const { agent } = req.params;
+      const { chiefOfStaffMonitor } = await import('./services/chief-of-staff-monitor.js');
+      const checklist = await chiefOfStaffMonitor.getAcceptanceChecklist(agent);
+      res.json(checklist);
+    } catch (error) {
+      console.error('Error getting acceptance checklist:', error);
+      res.status(500).json({ message: 'Failed to get acceptance checklist' });
+    }
+  });
+
   app.post("/api/conflicts", async (req, res) => {
     try {
       const validatedData = insertConflictSchema.parse(req.body);
