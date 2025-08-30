@@ -1,0 +1,108 @@
+here’s a drop-in upgraded COO runner with sharper ops+cost metrics, explicit escalation thresholds, autonomy/HITL tracking, and a hard rule to tie ops to revenue impact. Paste this over apps/agents/coo/coo_runner.py.
+
+# apps/agents/coo/coo_runner.py
+import os
+from brief_utils import run_brief, now_est_str
+
+# --- Optional knobs (override via Replit Secrets) ---
+ESC_AUTOREMEDIATE_BELOW = os.getenv("COO_ESC_AUTOREMEDIATE_BELOW", "85")   # %
+ESC_MTTR_ABOVE_MIN      = os.getenv("COO_ESC_MTTR_ABOVE_MIN", "5")        # minutes
+ESC_MAX_ESCALATIONS     = os.getenv("COO_ESC_MAX_ESCALATIONS", "5")       # per day
+COST_PER_1K_TOKENS      = os.getenv("COO_COST_PER_1K_TOKENS", "~$0.00")   # for CFO cross-check
+TARGET_DELIVERY_RATE    = os.getenv("COO_TARGET_DELIVERY_RATE", "98")     # % on-time briefs
+
+FALLBACK = f"""
+## COO Daily Brief — {now_est_str()}
+
+### Ops Health (KPIs)
+Delivery rate (AM/PM): …
+Uptime: …
+Incidents (24–72h): …
+MTTR (avg, mins): …
+Auto-resolve %: …
+Escalations (last 24h): …
+
+### Efficiency & Costs
+Jobs completed / failed (24–72h): …
+Queue backlog (age): …
+API tokens used (24h): …
+API est. cost (24h) @ {COST_PER_1K_TOKENS} per 1k: …
+Cost per delivered brief (est.): …
+
+### Autonomy & HITL
+Autonomy rate (no human): …
+HITL reviews queued: …
+HITL avg turnaround: …
+
+### Dependencies & Risks
+External deps at risk (rate limits, auth, SMTP): …
+Blocked tasks: …
+Upcoming window risks (next 48h): …
+
+### Notes to Revenue
+(Briefly tie ops issues → revenue risk/opportunity.)
+""".strip()
+
+SYSTEM_MSG = (
+    "You are the ComplianceWorxs COO analyst. Output concise, operations-first commentary that"
+    " ALWAYS connects ops to revenue impact. Apply ODAR (Objective, Data, Action, Result)."
+    " Focus: delivery reliability, throughput, rate-limit exposure, cost efficiency, autonomy/HITL,"
+    " and concrete escalations. Short bullets only; no restating the brief."
+)
+
+USER_PREFIX = (
+    "Analyze this COO Brief and PREPEND a 'ChatGPT Commentary & Recommendations' section."
+    " Use EXACT groups below. Highlight anything breaching thresholds:"
+    f" auto-resolve < {ESC_AUTOREMEDIATE_BELOW}%, MTTR > {ESC_MTTR_ABOVE_MIN}m,"
+    f" escalations > {ESC_MAX_ESCALATIONS}/day, delivery rate < {TARGET_DELIVERY_RATE}%.\n\n"
+
+    "• Ops Observations (2–4 bullets)\n"
+    "  - Call out delivery rate, MTTR, auto-resolve %, incidents, and queue age.\n"
+    "• Cost & Reliability Alignment (1–3 bullets)\n"
+    "  - Include tokens/24h and est. API cost; mention cost per delivered brief; note any savings opportunities.\n"
+    "• Risks & Bottlenecks (1–3 bullets)\n"
+    "  - Rate-limit/auth/SMTP risks; external dependencies; backlog hotspots; HITL delays.\n"
+    "• Next Actions (3–6 bullets, each with Owner + ETA)\n"
+    "  - Each action must include: Owner (COO/CTO/CMO/CRO/CCO), ETA, and expected revenue impact.\n"
+    "• ODAR Micro-Plan (3 lines max)\n"
+    "  - Objective, Data (cite 2–3 KPIs), Action (who/what/when), Result (target metric change).\n\n"
+    "Rules:\n"
+    "1) Tie every ops issue to revenue risk/opportunity (e.g., missed brief → lost conversions).\n"
+    "2) If thresholds breached, mark the bullet with **ESCALATE** and specify to whom (CTO/CoS/etc.).\n"
+    "3) Keep it scannable; no paragraphs longer than one line.\n"
+)
+
+if __name__ == "__main__":
+    run_brief(
+        url_env="AGENT_COO_URL",            # optional (Replit Secret) source for the raw COO brief
+        file_fallback="coo_brief.txt",      # optional local fallback
+        fallback_skeleton=FALLBACK,
+        openai_api_key_env="OPENAI_API_KEY",
+        model="gpt-4o-mini",
+        system_msg=SYSTEM_MSG,
+        user_prefix=USER_PREFIX,
+        subject_prefix="COO Daily Brief",
+        to_env="TO_EMAILS_COO",             # falls back to TO_EMAILS if not set
+    )
+
+Optional Replit Secrets you can set (to tune behavior)
+
+COO_ESC_AUTOREMEDIATE_BELOW (default 85)
+
+COO_ESC_MTTR_ABOVE_MIN (default 5)
+
+COO_ESC_MAX_ESCALATIONS (default 5)
+
+COO_TARGET_DELIVERY_RATE (default 98)
+
+COO_COST_PER_1K_TOKENS (for the fallback cost note)
+
+What changed
+
+Added explicit thresholds for auto-resolve, MTTR, escalations, delivery rate → used in the prompt so violations get ESCALATE tags.
+
+Enforced ops→revenue linkage in every section.
+
+Surfaced API tokens + estimated API cost and cost per delivered brief to keep cost control visible.
+
+Included autonomy/HITL metrics to reflect how independent the agents are and where human time is leaking.
