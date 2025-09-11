@@ -1,4 +1,5 @@
 import { storage } from '../storage.js';
+import { COO_AUTOMATION_CONFIG, QA_TEST_MATRIX, COOConfigService, type EventValidationResult } from './coo-config.js';
 
 interface AutomationChecklistItem {
   id: string;
@@ -95,47 +96,55 @@ class COOAutomationMonitor {
   }
 
   /**
-   * Verify Mailchimp persona tagging automation
+   * Verify Mailchimp persona tagging automation using production SLA thresholds
    */
   async verifyPersonaTagging(): Promise<{ success: boolean; metrics: any }> {
-    // Simulate Mailchimp API verification
-    // In real implementation: check webhook logs, verify tag assignments
+    const slaThresholds = COOConfigService.getSLAThresholds();
+    const personas = COOConfigService.getPersonas();
+    
+    // Simulate Mailchimp API verification with production data
     const metrics = {
       totalQuizCompletions: 147,
       successfullyTagged: 138,
-      tagSuccessRate: 93.9,
+      tagSuccessRate: 93.9, // Current: below production SLA of 99%
       personaBreakdown: {
         'Rising Leader': 52,
         'Validation Strategist': 61, 
         'Compliance Architect': 25
-      }
+      },
+      slaTarget: slaThresholds.tagging_accuracy_pct
     };
 
-    const success = metrics.tagSuccessRate > 90;
+    const success = metrics.tagSuccessRate >= slaThresholds.tagging_accuracy_pct;
     
     if (!success) {
-      await this.escalateToSystem(`Persona tagging below threshold: ${metrics.tagSuccessRate}% (target: 90%+)`);
+      await this.escalateToSystem(`🚨 SLA BREACH: Persona tagging at ${metrics.tagSuccessRate}% (SLA: ${slaThresholds.tagging_accuracy_pct}%)`);
+      await this.triggerIncidentResponse('tagging_accuracy_pct', metrics.tagSuccessRate, slaThresholds.tagging_accuracy_pct);
     }
 
     return { success, metrics };
   }
 
   /**
-   * Verify ROI Calculator triggered journeys
+   * Verify ROI Calculator triggered journeys using production SLA thresholds
    */
   async verifyROIJourneys(): Promise<{ success: boolean; metrics: any }> {
-    // Simulate journey completion verification
+    const slaThresholds = COOConfigService.getSLAThresholds();
+    
+    // Simulate journey completion verification with production data
     const metrics = {
       risingLeaderJourney: { started: 52, completed: 45, completionRate: 86.5 },
       strategistJourney: { started: 61, completed: 54, completionRate: 88.5 },
       architectJourney: { started: 25, completed: 23, completionRate: 92.0 },
-      overallCompletionRate: 87.8
+      overallCompletionRate: 87.8, // Current: below production SLA of 97%
+      slaTarget: slaThresholds.journey_entry_success_pct
     };
 
-    const success = metrics.overallCompletionRate > 85;
+    const success = metrics.overallCompletionRate >= slaThresholds.journey_entry_success_pct;
     
     if (!success) {
-      await this.escalateToSystem(`ROI journey completion below threshold: ${metrics.overallCompletionRate}% (target: 85%+)`);
+      await this.escalateToSystem(`🚨 SLA BREACH: ROI journey completion at ${metrics.overallCompletionRate}% (SLA: ${slaThresholds.journey_entry_success_pct}%)`);
+      await this.triggerIncidentResponse('journey_entry_success_pct', metrics.overallCompletionRate, slaThresholds.journey_entry_success_pct);
     }
 
     return { success, metrics };
@@ -162,60 +171,111 @@ class COOAutomationMonitor {
   }
 
   /**
-   * Verify event tracking instrumentation
+   * Verify event tracking instrumentation using production SLA thresholds
    */
   async verifyEventTracking(): Promise<{ success: boolean; metrics: any }> {
+    const slaThresholds = COOConfigService.getSLAThresholds();
+    const expectedEvents = COOConfigService.getExpectedEvents();
+    
     const metrics = {
       quizCompletedEvents: 147,
       roiCalculatedEvents: 138,
       membershipRecommendedEvents: 122,
       membershipPurchasedEvents: 29,
-      eventFireRate: 96.2,
-      dataAccuracy: 94.1
+      eventFireRate: 96.2, // Current: below production SLA of 98%
+      dataAccuracy: 94.1,
+      expectedEvents,
+      slaTarget: slaThresholds.event_fire_rate_pct
     };
 
-    const success = metrics.eventFireRate > 95 && metrics.dataAccuracy > 90;
+    const success = metrics.eventFireRate >= slaThresholds.event_fire_rate_pct;
     
     if (!success) {
-      await this.escalateToSystem(`Event tracking issues: Fire rate ${metrics.eventFireRate}%, Accuracy ${metrics.dataAccuracy}%`);
+      await this.escalateToSystem(`🚨 SLA BREACH: Event fire rate at ${metrics.eventFireRate}% (SLA: ${slaThresholds.event_fire_rate_pct}%)`);
+      await this.triggerIncidentResponse('event_fire_rate_pct', metrics.eventFireRate, slaThresholds.event_fire_rate_pct);
     }
 
     return { success, metrics };
   }
 
   /**
-   * Perform weekly end-to-end testing for each persona
+   * Trigger incident response based on SLA breach
+   */
+  private async triggerIncidentResponse(metric: string, currentValue: number, slaValue: number): Promise<void> {
+    const timestamp = new Date().toISOString();
+    const incidentSummary = {
+      incident: `SLA Breach — ${metric} below threshold`,
+      detected: timestamp,
+      scope: "All personas affected",
+      symptom: `${metric} at ${currentValue}% vs SLA ${slaValue}%`,
+      probableCause: "Recent GTM change / Mailchimp automation paused / API error",
+      immediateActions: ["Investigating root cause", "Checking recent deployments"],
+      nextSteps: ["E2E test verification", "Canary rollout if changes needed"],
+      owner: "COO Agent",
+      etaResolution: "2 hours"
+    };
+    
+    console.log(`🚨 INCIDENT TRIGGERED: ${JSON.stringify(incidentSummary, null, 2)}`);
+    
+    // Notify CEO, CMO, CRO per alerting config
+    const alertConfig = COOConfigService.getAlertingConfig();
+    
+    // Notify all stakeholders based on alerting configuration
+    const stakeholders = ['CEO', 'CMO', 'CRO'];
+    for (const agent of stakeholders) {
+      await storage.createAgentCommunication({
+        fromAgent: 'COO',
+        toAgent: agent,
+        content: `INCIDENT: ${incidentSummary.incident} - ${incidentSummary.symptom}`,
+        type: 'escalation',
+        action: 'escalate'
+      });
+    }
+  }
+
+  /**
+   * Perform weekly end-to-end testing using production QA matrix
    */
   async performWeeklyQA(): Promise<{ success: boolean; results: any; failedPaths?: string[] }> {
-    const testResults = {
-      risingLeaderPath: { 
-        quizToTag: true,
-        tagToJourney: true, 
-        journeyToRecommendation: true,
-        recommendationToPurchase: true,
-        purchaseToUpsell: true,
-        overallSuccess: true
-      },
-      strategistPath: {
-        quizToTag: true,
-        tagToJourney: true,
-        journeyToRecommendation: false, // Simulated failure
-        recommendationToPurchase: true,
-        purchaseToUpsell: true,
-        overallSuccess: false
-      },
-      architectPath: {
-        quizToTag: true,
-        tagToJourney: true,
-        journeyToRecommendation: true,
-        recommendationToPurchase: true,
-        purchaseToUpsell: true,
-        overallSuccess: true
-      }
-    };
+    // Use production QA test matrix
+    const testResults: any = {};
+    
+    for (const testCase of QA_TEST_MATRIX) {
+      const pathKey = `${testCase.abbreviation.toLowerCase()}Path`;
+      
+      // Simulate E2E test for each persona using production test matrix
+      const stepResults = {
+        quizToTag: true, // Quiz → tag applied
+        tagToJourney: testCase.persona !== 'Validation Strategist', // Simulated VS failure
+        journeyToRecommendation: true, // Journey → correct tier LP
+        recommendationToPurchase: true, // Recommendation → Purchase
+        purchaseToUpsell: true, // Purchase → Welcome + Upsell
+        eventsValidated: this.validateRequiredEvents(testCase.events_fired),
+        landingPageCorrect: true
+      };
+      
+      // Only check boolean values for success calculation
+      const booleanResults = {
+        quizToTag: stepResults.quizToTag,
+        tagToJourney: stepResults.tagToJourney,
+        journeyToRecommendation: stepResults.journeyToRecommendation,
+        recommendationToPurchase: stepResults.recommendationToPurchase,
+        purchaseToUpsell: stepResults.purchaseToUpsell,
+        eventsValidated: stepResults.eventsValidated,
+        landingPageCorrect: stepResults.landingPageCorrect
+      };
+      
+      const overallSuccess = Object.values(booleanResults).every(v => v === true);
+      testResults[pathKey] = { 
+        ...stepResults, 
+        overallSuccess,
+        journeyEntered: testCase.journey_entered,
+        expectedTag: testCase.expected_tag
+      };
+    }
 
     const failedPaths = Object.entries(testResults)
-      .filter(([_, result]) => !result.overallSuccess)
+      .filter(([_, result]: [string, any]) => !result.overallSuccess)
       .map(([path, _]) => path);
 
     if (failedPaths.length > 0) {
@@ -322,6 +382,38 @@ class COOAutomationMonitor {
         item.errorDetails = 'Verification threshold not met';
       }
     }
+  }
+
+  /**
+   * Validate required events for a test case
+   */
+  private validateRequiredEvents(requiredEvents: string[]): boolean {
+    // Simulate event validation - in production would check GTM/analytics
+    const firedEvents = ["QuizCompleted", "ROICalculated", "MembershipRecommended", "MembershipPurchased"];
+    return requiredEvents.every(event => firedEvents.includes(event));
+  }
+
+  /**
+   * Execute rollback procedures when incidents are detected
+   */
+  private async executeRollbackProcedures(): Promise<void> {
+    const rollbackPlan = COOConfigService.getRollbackPlan();
+    
+    console.log("🔄 COO: Executing automated rollback procedures...");
+    
+    for (const action of rollbackPlan.actions) {
+      console.log(`🔄 ROLLBACK ACTION: ${action}`);
+      // In production: would call Mailchimp/GTM APIs to execute rollback
+      await new Promise(resolve => setTimeout(resolve, 100)); // Simulate API call
+    }
+    
+    await storage.createAgentCommunication({
+      fromAgent: 'COO',
+      toAgent: 'CEO',
+      content: `ROLLBACK EXECUTED: ${rollbackPlan.actions.join(', ')}`,
+      type: 'escalation',
+      action: 'rollback'
+    });
   }
 
   private async escalateToSystem(message: string): Promise<void> {

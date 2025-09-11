@@ -1,0 +1,245 @@
+here are ready-to-build Mailchimp Customer Journey blueprints for each persona. I’ve written them in Mailchimp-native terms (Starting Point, Delays, If/Else, Actions) with node names, conditions, and email prompts so your COO Agent (or you, if ever needed) can paste/translate straight into the Journey builder.
+________________________________________
+🔧 Shared Setup (Use Once)
+Merge fields (Audience settings)
+•	PERSONA (text: RL/VS/CA)
+•	ROI_VAL (number)
+•	TIER_REC (text: RL/VS/CA)
+•	SRC (text)
+•	TXN_ID (text)
+Tags
+•	Rising Leader / Validation Strategist / Compliance Architect
+•	ROI_Engaged (applied on ROICalculated)
+•	MC_Recommended (applied on MembershipRecommended)
+•	Member (applied on MembershipPurchased)
+Custom Events (via API / GTM collector → Mailchimp Journeys API)
+•	QuizCompleted (props: persona)
+•	ROICalculated (props: persona, roi_value, calc_version)
+•	MembershipRecommended (props: persona, recommended_tier, roi_value)
+•	MembershipPurchased (props: persona, tier, amount, txn_id)
+Global Suppression & Collision Rules
+•	Contacts with tag Member skip all pre-purchase journeys.
+•	Each persona journey only accepts contacts with matching PERSONA.
+•	Re-entry: allow re-entry every 30 days unless tag Member present.
+Link targets (example)
+•	Membership Calculator: /membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership
+•	Tier LPs:
+o	RL → /membership/rising-leader?utm_source=mc&utm_medium=email&utm_campaign=offer_rl
+o	VS → /membership/validation-strategist?utm_source=mc&utm_medium=email&utm_campaign=offer_vs
+o	CA → /membership/compliance-architect?utm_source=mc&utm_medium=email&utm_campaign=offer_ca
+________________________________________
+1) Journey: ROI_RisingLeader_Journey
+Starting Point
+Event trigger: ROICalculated where persona == RL
+Entry actions:
+•	Action: Update Merge → PERSONA = RL, ROI_VAL = {{roi_value}}
+•	Action: Add Tag → ROI_Engaged
+Node A — Email #1: “Make Your Impact Visible”
+•	Send Email
+o	Subject: Your compliance ROI: turn numbers into recognition
+o	Body angle: “You’ve got the ROI. Here’s how to use it for visibility and promotion.”
+o	Primary CTA: Membership Calculator
+•	Delay: 2 days
+Node B — If Clicked MC?
+•	Rule: If user clicked Membership Calculator link in Email #1
+o	Yes → Node C
+o	No → Node B2
+Node B2 — Nudge Email (if No Click)
+•	Send Email #1a: Still thinking? Convert your ROI into a concrete plan.
+•	CTA: Membership Calculator
+•	Delay: 2 days → then to Node C
+Node C — Wait for MembershipRecommended
+•	Goal Wait: Up to 5 days for event MembershipRecommended (persona=RL)
+o	On Goal hit → Node D
+o	On timeout → Node C2 (fallback)
+Node C2 — Fallback
+•	Send Email #2: What’s the fastest way to capture your ROI?
+•	CTA: Membership Calculator
+•	Delay: 2 days → back to Goal wait (2 more days)
+Node D — Offer Path (Tier RL)
+•	Action: Update Merge → TIER_REC = RL
+•	Send Email #3 (Offer)
+o	Subject: Rising Leader Plan: unlock visibility + momentum
+o	Body: bullet benefits; “recognition-first” framing
+o	CTA: Tier RL LP
+•	Delay: 3 days
+Node E — If Purchased?
+•	Rule: If MembershipPurchased (tier=RL) occurs within 7 days
+o	Yes → Exit & Handoff to Post-Purchase Journeys
+o	No → Email #3a (Objection Handler)
+	Subject: Questions about the plan? Here’s how members use it
+	Content: quick FAQ + 2 social proofs
+	CTA: Tier RL LP
+	Delay: 4 days → End Journey
+Exit: End or move to re-engagement (optional 30-day revisit).
+________________________________________
+2) Journey: ROI_ValidationStrategist_Journey
+Starting Point
+Event: ROICalculated where persona == VS
+Entry actions: Update merge fields; add ROI_Engaged tag.
+Node A — Email #1: “Cut Validation Time, Not Corners”
+•	Subject: Your ROI shows time on the table — here’s how to reclaim it
+•	Angle: time savings in validation; fewer deviations; cycle compression
+•	CTA: Membership Calculator
+•	Delay: 2 days
+Node B — Click Split
+•	If MC clicked → Node C
+•	Else → Email #1a (case example: “How Strategists compress validation by 30–50%”) → Delay 2 days → Node C
+Node C — Goal Wait: MembershipRecommended (VS)
+•	Wait up to 5 days; fallback Email #2 (“See the plan that captures your ROI”) → Delay 2 days → re-wait 2 days.
+Node D — Offer (Tier VS)
+•	Update TIER_REC = VS
+•	Email #3 Offer: Validation Strategist Plan: faster cycles, fewer headaches
+•	CTA: Tier VS LP
+•	Delay: 3 days
+Node E — Purchase Split
+•	If MembershipPurchased (tier=VS) within 7 days → Exit to Post-Purchase
+•	Else → Email #3a (Proof pack: KPI gains + testimonial snippet) → Delay 4 days → End.
+________________________________________
+3) Journey: ROI_ComplianceArchitect_Journey
+Starting Point
+Event: ROICalculated where persona == CA
+Entry actions: Update merge; tag ROI_Engaged.
+Node A — Email #1: “Turn Compliance ROI into Board-Level Clarity”
+•	Subject: Your projected ROI → the enterprise case
+•	Angle: audit readiness KPIs, risk reduction, enterprise ROI
+•	CTA: Membership Calculator
+•	Delay: 2 days
+Node B — If MC Clicked?
+•	Yes → Node C
+•	No → Email #1a: From ROI to strategy: the architecture of value (executive framing) → Delay 2 days → Node C
+Node C — Goal Wait: MembershipRecommended (CA)
+•	Wait up to 5 days; fallback Email #2 (Model the board case in 10 minutes) → Delay 2 days → re-wait 2 days.
+Node D — Offer (Tier CA)
+•	Update TIER_REC = CA
+•	Email #3 Offer: Compliance Architect Plan: enterprise KPIs + audit-ready dashboards
+•	CTA: Tier CA LP
+•	Delay: 3 days
+Node E — If Purchased?
+•	Yes (tier=CA) within 7 days → Exit to Post-Purchase
+•	No → Email #3a (Executive objection handler: budget, timing, risk) → Delay 4 days → End.
+________________________________________
+4) Post-Purchase Journeys (All Tiers)
+Starting Point: MembershipPurchased (any tier; Member tag applied)
+Tier-Specific Welcome (within 1 hour)
+•	RL: Welcome_RisingLeader — “Your first 3 wins this week”
+•	VS: Welcome_ValidationStrategist — “Ship your first cycle-time win”
+•	CA: Welcome_ComplianceArchitect — “Instrument your KPIs + audit traceability”
+Day 2 — Activation Email
+•	Checklist: how to access dashboards, connect to the widget, where to find ELSA docs.
+•	CTA: book a 10-min orientation (optional).
+Day 5 — AI Agent Upsell (all tiers)
+•	Email: “Automate the next win with AI Agents”
+•	Segment logic:
+o	RL → CMO/COO lite use cases (personal productivity, recognition)
+o	VS → CCO/COO use cases (validation cycle compression)
+o	CA → CEO/CRO use cases (KPI governance, audit readiness)
+•	CTA: Agent Upsell page.
+Suppressions
+•	Suppress all pre-purchase journeys once Member tag exists.
+•	Deduplicate if TXN_ID repeats.
+________________________________________
+5) Dynamic Content & Personalization Rules
+In all journey emails, show conditional blocks by thresholds:
+•	If ROI_VAL >= 100000: show “Executive case” block (CA emphasis).
+•	If ROI_VAL 30000–99999: show “Operational efficiency” block (VS emphasis).
+•	If ROI_VAL < 30000: show “Career recognition + quick wins” block (RL emphasis).
+Personalize headlines with merge fields:
+•	Your ROI: $*|ROI_VAL|* — here’s how to capture it
+•	Include persona-specific bullets using IF PERSONA == RL/VS/CA.
+________________________________________
+6) Goals, Exit Conditions & SLAs (apply to all)
+•	Primary Goal: MembershipPurchased reached → Exit Journey (handoff to Post-Purchase).
+•	Secondary Goal: If no purchase within 14 days of start → exit, apply tag Reengage_30d, and enroll in a light re-engagement journey later.
+•	SLA: First email within 120 seconds of event trigger. Monitor via automation logs.
+________________________________________
+7) Error Handling & Rollback
+•	If events stop appearing for 30+ minutes:
+1.	Pause affected Journey(s).
+2.	Switch GTM to prior container version.
+3.	Re-run E2E tests for each persona with test contacts.
+4.	Re-enable with 10% canary for 2 hours; then full release.
+________________________________________
+8) Copy Starters (you can paste into Mailchimp)
+Email #1 (RL)
+•	Subject: Your compliance ROI: turn numbers into recognition
+•	Preheader: Next step: make your wins visible
+•	CTA: “Calculate your best-fit plan”
+Email #1 (VS)
+•	Subject: Your ROI shows time on the table
+•	Preheader: Let’s compress your next validation cycle
+•	CTA: “See your fastest path”
+Email #1 (CA)
+•	Subject: From ROI to board-level clarity
+•	Preheader: Model the enterprise case in minutes
+•	CTA: “Build the plan”
+Offer Email (per tier)
+•	RL: Rising Leader Plan: stand out with measurable wins
+•	VS: Strategist Plan: deliver faster validation cycles
+•	CA: Architect Plan: instrument KPIs + audit readiness
+________________________________________
+9) Minimal JSON Spec (for programmatic Journey creation via API)
+{
+  "journeys": [
+    {
+      "name": "ROI_RisingLeader_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == RL" },
+      "nodes": [
+        { "type": "action.update_merge", "fields": { "PERSONA": "RL", "ROI_VAL": "{{roi_value}}" } },
+        { "type": "action.add_tag", "value": "ROI_Engaged" },
+        { "type": "action.send_email", "template": "RL_Email_1" },
+        { "type": "delay", "duration_hours": 48 },
+        { "type": "rule.link_clicked", "link": "membership_calculator_url", "yes_to": "goal_wait", "no_to": "nudge" },
+        { "id": "nudge", "type": "action.send_email", "template": "RL_Email_1a" },
+        { "type": "delay", "duration_hours": 48 },
+        { "id": "goal_wait", "type": "goal.wait_for_event", "event_name": "MembershipRecommended", "timeout_hours": 120, "on_timeout_to": "fallback" },
+        { "id": "fallback", "type": "action.send_email", "template": "RL_Email_2" },
+        { "type": "delay", "duration_hours": 48 },
+        { "type": "goal.wait_for_event", "event_name": "MembershipRecommended", "timeout_hours": 48 },
+        { "type": "action.update_merge", "fields": { "TIER_REC": "RL" } },
+        { "type": "action.send_email", "template": "RL_Offer_Email_3" },
+        { "type": "delay", "duration_hours": 72 },
+        { "type": "rule.event_occurs", "event_name": "MembershipPurchased", "condition": "tier == RL", "yes_to": "exit", "no_to": "objection" },
+        { "id": "objection", "type": "action.send_email", "template": "RL_Email_3a" },
+        { "type": "delay", "duration_hours": 96 },
+        { "id": "exit", "type": "journey.end" }
+      ],
+      "reentry": { "allowed": true, "cooldown_days": 30 },
+      "suppression": { "has_tag": "Member" }
+    },
+    {
+      "name": "ROI_ValidationStrategist_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == VS" },
+      "nodes": [ "…same pattern with VS templates and Tier VS…" ]
+    },
+    {
+      "name": "ROI_ComplianceArchitect_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == CA" },
+      "nodes": [ "…same pattern with CA templates and Tier CA…" ]
+    },
+    {
+      "name": "PostPurchase_AllTiers",
+      "start": { "type": "event", "event_name": "MembershipPurchased" },
+      "nodes": [
+        { "type": "action.add_tag", "value": "Member" },
+        { "type": "action.send_email", "template": "Welcome_Tier_SmartContent" },
+        { "type": "delay", "duration_hours": 24 },
+        { "type": "action.send_email", "template": "Activation_Checklist" },
+        { "type": "delay", "duration_hours": 72 },
+        { "type": "action.send_email", "template": "Agents_Upsell_SmartContent" },
+        { "type": "journey.end" }
+      ]
+    }
+  ]
+}
+________________________________________
+10) What your COO Agent does next (no ambiguity)
+1.	Create/verify merge fields and tags.
+2.	Create custom events (or confirm your collector sends them).
+3.	Build the three persona journeys exactly as above.
+4.	Build Post-Purchase journey.
+5.	Paste the email copy starters and set dynamic blocks by PERSONA and ROI_VAL.
+6.	Set goals, exit, re-entry, and suppression rules.
+7.	Run QA Matrix (3 test contacts → 3 persona paths).
+8.	Flip to live with canary (10% audience for 2 hours), then 100%.
+9.	Report status in the Automations Status Report with pass/fail on each node.
