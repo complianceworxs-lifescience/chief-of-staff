@@ -56,29 +56,7 @@ export const EMAIL_TEMPLATES = {
     "email_1a_nudge": {
       "subject": "How Strategists compress validation by 30-50%",
       "preview": "From your *|ROI_VAL|* calculation to faster cycles",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Since your ROI calculation showed *|ROI_VAL|* in potential value, I wanted to share how other Validation Strategists compress their cycles:
-
-**Case Study: Lisa M., Pharma QA**
-- **Before:** 3-week validation cycles, constant rework
-- **After:** 2-week average, 40% fewer deviations
-- **Key change:** Systematic validation templates + early-warning KPIs
-
-**Case Study: David R., Medical Device**
-- **Before:** Validation backlogs, stressed team
-- **After:** 35% faster cycles, improved team satisfaction  
-- **Key change:** Predictive analytics + stakeholder communication framework
-
-**Your *|ROI_VAL|* projection suggests similar gains are possible.**
-
-The difference? They had systematic approaches rather than ad-hoc solutions.
-
-[Get your personalized efficiency plan →]
-
-Your time is the constraint. Systematic efficiency is the solution.
-
-\\n\\nBest,\\nComplianceWorxs Team",
+      "body": "Hi *|FNAME|*,\\n\\nSince your ROI calculation showed *|ROI_VAL|* in potential value, I wanted to share how other Validation Strategists compress their cycles:\\n\\n**Case Study: Lisa M., Pharma QA**\\n- **Before:** 3-week validation cycles, constant rework\\n- **After:** 2-week average, 40% fewer deviations\\n- **Key change:** Systematic validation templates + early-warning KPIs\\n\\n**Case Study: David R., Medical Device**\\n- **Before:** Validation backlogs, stressed team\\n- **After:** 35% faster cycles, improved team satisfaction\\n- **Key change:** Predictive analytics + stakeholder communication framework\\n\\n**Your *|ROI_VAL|* projection suggests similar gains are possible.**\\n\\nThe difference? They had systematic approaches rather than ad-hoc solutions.\\n\\n[Get your personalized efficiency plan →]\\n\\nYour time is the constraint. Systematic efficiency is the solution.\\n\\nBest,\\nComplianceWorxs Team",
       "cta": "Get your personalized efficiency plan",
       "cta_url": "/membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership"
     },
@@ -86,25 +64,7 @@ Your time is the constraint. Systematic efficiency is the solution.
     "email_2_fallback": {
       "subject": "See the plan that captures your ROI",
       "preview": "*|ROI_VAL|* in time savings → systematic efficiency",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Your *|ROI_VAL|* ROI calculation identified real time savings potential. But potential doesn't compress validation cycles — systems do.
-
-**The efficiency gap:** Most compliance professionals know where time gets wasted. Few have systematic approaches to eliminate those waste points permanently.
-
-**What systematic efficiency looks like:**
-✓ **Validation templates** that prevent common delays
-✓ **Early-warning metrics** that catch issues before they compound
-✓ **Stakeholder frameworks** that improve communication clarity
-✓ **Process optimization tools** that compress cycle times
-
-**Your specific opportunity:** Convert your *|ROI_VAL|* projection into consistent time savings.
-
-[Build your efficiency system →]
-
-You've identified the value. Now capture it systematically.
-
-\\n\\nBest,\\nComplianceWorxs Team",
+      "body": "Hi *|FNAME|*,\\n\\nYour *|ROI_VAL|* ROI calculation identified real time savings potential. But potential doesn't compress validation cycles — systems do.\\n\\n**The efficiency gap:** Most compliance professionals know where time gets wasted. Few have systematic approaches to eliminate those waste points permanently.\\n\\n**What systematic efficiency looks like:**\\n✓ **Validation templates** that prevent common delays\\n✓ **Early-warning metrics** that catch issues before they compound\\n✓ **Stakeholder frameworks** that improve communication clarity\\n✓ **Process optimization tools** that compress cycle times\\n\\n**Your specific opportunity:** Convert your *|ROI_VAL|* projection into consistent time savings.\\n\\n[Build your efficiency system →]\\n\\nYou've identified the value. Now capture it systematically.\\n\\nBest,\\nComplianceWorxs Team",
       "cta": "Build your efficiency system",
       "cta_url": "/membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership"
     },
@@ -112,36 +72,7 @@ You've identified the value. Now capture it systematically.
     "email_3_offer": {
       "subject": "Validation Strategist Plan: faster cycles, fewer headaches",
       "preview": "Your *|ROI_VAL|* → systematic time savings",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Based on your *|ROI_VAL|* ROI calculation, here's your optimal efficiency path:
-
-**Validation Strategist Plan** — designed for compliance professionals who want to compress validation cycles without sacrificing quality.
-
-**What you get:**
-• **Validation Efficiency Templates** — Proven frameworks that compress cycle times
-• **Early-Warning KPI System** — Catch delays before they compound
-• **Stakeholder Communication Toolkit** — Clear frameworks that prevent miscommunication
-• **Process Optimization Dashboard** — Track and improve cycle times systematically
-• **Deviation Prevention Playbook** — Eliminate common delay sources
-
-**Your investment:** $297/month
-**Your projected ROI:** *|ROI_VAL|* (you calculated this!)
-**Payback period:** Typically 6-8 weeks through time savings
-
-**Member results:**
-"Cut my validation cycles by 35% in the first quarter. No quality compromises — just better systems." — Lisa M., Validation Strategist member
-
-"Finally have predictability in my validation timeline. My team is less stressed, stakeholders are happier." — David R., Validation Strategist member
-
-[Start optimizing your cycles →]
-
-Your ROI calculation showed the opportunity. This plan captures it systematically.
-
-Best,
-ComplianceWorxs Team
-
-P.S. Limited time: Start within 7 days and get bonus process audit templates ($500 value).`,
+      "body": "Hi *|FNAME|*,\\n\\nBased on your *|ROI_VAL|* ROI calculation, here's your optimal efficiency path:\\n\\n**Validation Strategist Plan** — designed for compliance professionals who want to compress validation cycles without sacrificing quality.\\n\\n**What you get:**\\n• **Validation Efficiency Templates** — Proven frameworks that compress cycle times\\n• **Early-Warning KPI System** — Catch delays before they compound\\n• **Stakeholder Communication Toolkit** — Clear frameworks that prevent miscommunication\\n• **Process Optimization Dashboard** — Track and improve cycle times systematically\\n• **Deviation Prevention Playbook** — Eliminate common delay sources\\n\\n**Your investment:** $297/month\\n**Your projected ROI:** *|ROI_VAL|* (you calculated this!)\\n**Payback period:** Typically 6-8 weeks through time savings\\n\\n**Member results:**\\n\\\"Cut my validation cycles by 35% in the first quarter. No quality compromises — just better systems.\\\" — Lisa M., Validation Strategist member\\n\\n\\\"Finally have predictability in my validation timeline. My team is less stressed, stakeholders are happier.\\\" — David R., Validation Strategist member\\n\\n[Start optimizing your cycles →]\\n\\nYour ROI calculation showed the opportunity. This plan captures it systematically.\\n\\nBest,\\nComplianceWorxs Team\\n\\nP.S. Limited time: Start within 7 days and get bonus process audit templates ($500 value).",
       "cta": "Start optimizing your cycles",
       "cta_url": "/membership/validation-strategist?utm_source=mc&utm_medium=email&utm_campaign=offer_vs"
     },
@@ -149,30 +80,7 @@ P.S. Limited time: Start within 7 days and get bonus process audit templates ($5
     "email_3a_objection": {
       "subject": "Proof pack: KPI gains + testimonial snippet",
       "preview": "Real efficiency gains from Validation Strategist members",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Here's the proof behind the Validation Strategist Plan:
-
-**Quantified member results (last 6 months):**
-• Average cycle time reduction: 32%
-• Deviation rate improvement: 41%
-• Stakeholder satisfaction increase: 67%
-• Time-to-resolution improvement: 28%
-
-**Lisa M., Pharma QA (member since January):**
-"The early-warning KPIs alone saved me 3 weeks of rework in Q1. I can actually predict and prevent delays now instead of just reacting to them."
-
-**David R., Medical Device (member since March):**
-"My validation backlog disappeared in 2 months. The stakeholder communication toolkit eliminated 90% of the confusion that used to derail my timelines."
-
-**Your specific case:** *|ROI_VAL|* projected value
-**Typical member experience:** 6-8 week payback through systematic time savings
-
-[Join Validation Strategist now →]
-
-The efficiency gains are documented. Your *|ROI_VAL|* projection shows the potential. The question is timing.
-
-\\n\\nBest,\\nComplianceWorxs Team",
+      "body": "Hi *|FNAME|*,\\n\\nHere's the proof behind the Validation Strategist Plan:\\n\\n**Quantified member results (last 6 months):**\\n• Average cycle time reduction: 32%\\n• Deviation rate improvement: 41%\\n• Stakeholder satisfaction increase: 67%\\n• Time-to-resolution improvement: 28%\\n\\n**Lisa M., Pharma QA (member since January):**\\n\\\"The early-warning KPIs alone saved me 3 weeks of rework in Q1. I can actually predict and prevent delays now instead of just reacting to them.\\\"\\n\\n**David R., Medical Device (member since March):**\\n\\\"My validation backlog disappeared in 2 months. The stakeholder communication toolkit eliminated 90% of the confusion that used to derail my timelines.\\\"\\n\\n**Your specific case:** *|ROI_VAL|* projected value\\n**Typical member experience:** 6-8 week payback through systematic time savings\\n\\n[Join Validation Strategist now →]\\n\\nThe efficiency gains are documented. Your *|ROI_VAL|* projection shows the potential. The question is timing.\\n\\nBest,\\nComplianceWorxs Team",
       "cta": "Join Validation Strategist now",
       "cta_url": "/membership/validation-strategist?utm_source=mc&utm_medium=email&utm_campaign=offer_vs"
     }
@@ -213,28 +121,7 @@ You've quantified the value. Now make it board-ready.
     "email_1a_nudge": {
       "subject": "From ROI to strategy: the architecture of value",
       "preview": "Your *|ROI_VAL|* calculation → executive framework",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Your *|ROI_VAL|* ROI calculation revealed something important: you think strategically about compliance value.
-
-Most compliance professionals focus on operational efficiency. You're modeling business impact. That's the foundation of enterprise compliance architecture.
-
-**Executive framing shift:**
-• From "compliance costs" → "risk mitigation investment"
-• From "regulatory burden" → "competitive advantage"  
-• From "necessary overhead" → "strategic differentiator"
-• From "cost center" → "value creator"
-
-**Real enterprise impact:**
-Companies with strategic compliance functions average 23% better regulatory outcomes and 31% lower compliance costs (McKinsey, 2023).
-
-**Your opportunity:** Convert your *|ROI_VAL|* projection into a board-level business case.
-
-[Get your enterprise framework →]
-
-Strategic thinking is your foundation. Enterprise architecture is your multiplier.
-
-\\n\\nBest,\\nComplianceWorxs Team",
+      "body": "Hi *|FNAME|*,\\n\\nYour *|ROI_VAL|* ROI calculation revealed something important: you think strategically about compliance value.\\n\\nMost compliance professionals focus on operational efficiency. You're modeling business impact. That's the foundation of enterprise compliance architecture.\\n\\n**Executive framing shift:**\\n• From \\\"compliance costs\\\" → \\\"risk mitigation investment\\\"\\n• From \\\"regulatory burden\\\" → \\\"competitive advantage\\\"\\n• From \\\"necessary overhead\\\" → \\\"strategic differentiator\\\"\\n• From \\\"cost center\\\" → \\\"value creator\\\"\\n\\n**Real enterprise impact:**\\nCompanies with strategic compliance functions average 23% better regulatory outcomes and 31% lower compliance costs (McKinsey, 2023).\\n\\n**Your opportunity:** Convert your *|ROI_VAL|* projection into a board-level business case.\\n\\n[Get your enterprise framework →]\\n\\nStrategic thinking is your foundation. Enterprise architecture is your multiplier.\\n\\nBest,\\nComplianceWorxs Team",
       "cta": "Get your enterprise framework",
       "cta_url": "/membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership"
     },
@@ -242,25 +129,7 @@ Strategic thinking is your foundation. Enterprise architecture is your multiplie
     "email_2_fallback": {
       "subject": "Model the board case in 10 minutes",
       "preview": "*|ROI_VAL|* ROI → executive presentation ready",
-      "body": "Hi *|FNAME|*,\\n\\n
-
-Your *|ROI_VAL|* ROI calculation contains the raw material for a compelling board presentation. But raw material isn't executive communication.
-
-**The board case framework:**
-✓ **Business impact metrics** (not just compliance metrics)
-✓ **Risk mitigation value** (quantified competitive advantage)
-✓ **Strategic integration points** (how compliance drives business decisions)
-✓ **Investment case clarity** (why compliance resources create ROI)
-
-**Executive language example:**
-Instead of: "We maintained 99.8% compliance rates"
-Board-ready: "Our compliance architecture generated *|ROI_VAL|* in risk mitigation value while maintaining operational excellence"
-
-[Build your board case →]
-
-You have the strategic thinking. Add the executive communication framework.
-
-\\n\\nBest,\\nComplianceWorxs Team",
+      "body": "Hi *|FNAME|*,\\n\\nYour *|ROI_VAL|* ROI calculation contains the raw material for a compelling board presentation. But raw material isn't executive communication.\\n\\n**The board case framework:**\\n✓ **Business impact metrics** (not just compliance metrics)\\n✓ **Risk mitigation value** (quantified competitive advantage)\\n✓ **Strategic integration points** (how compliance drives business decisions)\\n✓ **Investment case clarity** (why compliance resources create ROI)\\n\\n**Executive language example:**\\nInstead of: \\\"We maintained 99.8% compliance rates\\\"\\nBoard-ready: \\\"Our compliance architecture generated *|ROI_VAL|* in risk mitigation value while maintaining operational excellence\\\"\\n\\n[Build your board case →]\\n\\nYou have the strategic thinking. Add the executive communication framework.\\n\\nBest,\\nComplianceWorxs Team",
       "cta": "Build your board case",
       "cta_url": "/membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership"
     },
