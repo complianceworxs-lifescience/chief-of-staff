@@ -1,6 +1,7 @@
 import { storage } from '../storage.js';
 import { COO_AUTOMATION_CONFIG, QA_TEST_MATRIX, COOConfigService, type EventValidationResult } from './coo-config.js';
 import { MAILCHIMP_SETUP, JOURNEY_BLUEPRINTS, IMPLEMENTATION_CHECKLIST, EMAIL_COPY_STARTERS, ERROR_HANDLING_ROLLBACK, type MailchimpJourneyImplementor } from './mailchimp-journey-blueprints.js';
+import { EMAIL_TEMPLATES, EMAIL_METADATA, MailchimpEmailService } from './mailchimp-email-templates.js';
 
 interface AutomationChecklistItem {
   id: string;
@@ -424,11 +425,12 @@ class COOAutomationMonitor {
     return {
       setup: MAILCHIMP_SETUP,
       journeys: JOURNEY_BLUEPRINTS,
-      emailCopyStarters: EMAIL_COPY_STARTERS,
+      emailTemplates: EMAIL_TEMPLATES,
+      emailMetadata: EMAIL_METADATA,
       implementationChecklist: IMPLEMENTATION_CHECKLIST,
       errorHandling: ERROR_HANDLING_ROLLBACK,
       instructions: {
-        summary: "Ready-to-build Mailchimp Customer Journey blueprints for 3 personas",
+        summary: "Complete ready-to-build Mailchimp Customer Journey blueprints with polished email templates",
         personas: ["Rising Leader (RL)", "Validation Strategist (VS)", "Compliance Architect (CA)"],
         journeyNames: [
           "ROI_RisingLeader_Journey",
@@ -436,10 +438,17 @@ class COOAutomationMonitor {
           "ROI_ComplianceArchitect_Journey",
           "PostPurchase_AllTiers"
         ],
+        emailSequences: {
+          "Rising Leader": "5 emails: kickoff, nudge, fallback, offer, objection handler",
+          "Validation Strategist": "5 emails: kickoff, nudge, fallback, offer, objection handler", 
+          "Compliance Architect": "5 emails: kickoff, nudge, fallback, offer, objection handler",
+          "Post-Purchase": "3 emails: tier-specific welcome, activation, AI agent upsell"
+        },
         nextSteps: [
           "Create/verify merge fields (PERSONA, ROI_VAL, TIER_REC, SRC, TXN_ID)",
           "Set up tags (Rising Leader, Validation Strategist, Compliance Architect, ROI_Engaged, MC_Recommended, Member)",
           "Configure custom events (QuizCompleted, ROICalculated, MembershipRecommended, MembershipPurchased)",
+          "Copy-paste the complete email templates into Mailchimp (subjects, preview text, body copy, CTAs)",
           "Build the three persona journeys exactly as specified in blueprints",
           "Implement Post-Purchase journey with tier-specific welcome sequences",
           "Set up dynamic content rules based on ROI_VAL thresholds",
@@ -447,7 +456,8 @@ class COOAutomationMonitor {
           "Deploy with 10% canary for 2 hours, then full release",
           "Monitor via Automation Status Report for node-level pass/fail"
         ],
-        slaRequirement: "First email within 120 seconds of event trigger"
+        slaRequirement: "First email within 120 seconds of event trigger",
+        totalEmailTemplates: "18 complete, ready-to-paste email templates"
       }
     };
   }
