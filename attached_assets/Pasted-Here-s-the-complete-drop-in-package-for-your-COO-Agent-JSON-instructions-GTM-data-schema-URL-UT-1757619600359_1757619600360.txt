@@ -1,0 +1,126 @@
+Here’s the complete, drop-in package for your COO Agent—JSON instructions + GTM/data schema + URL/UTM standards + QA matrix + SLAs/alerts + rollback playbook. No piecemeal.
+________________________________________
+1) COO Operational Automations Checklist (JSON Ingest)
+{
+  "coo_automation_checklist_v1": {
+    "objective": "Implement and verify seamless automations from ELSA → Quiz → ROI Calculator → Membership Calculator → Membership Purchase → AI Agent Upsell using Mailchimp + site tracking.",
+    "systems": ["Mailchimp", "Website", "Google Tag Manager", "CRO Dashboard"],
+    "personas": ["Rising Leader", "Validation Strategist", "Compliance Architect"],
+    "mailchimp": {
+      "tags": ["Rising Leader", "Validation Strategist", "Compliance Architect"],
+      "journeys": {
+        "roi_persona_journeys": {
+          "Rising Leader": "ROI_RisingLeader_Journey",
+          "Validation Strategist": "ROI_ValidationStrategist_Journey",
+          "Compliance Architect": "ROI_ComplianceArchitect_Journey"
+        },
+        "membership_offer_flows": {
+          "Rising Leader": "Offer_RisingLeader_Flow",
+          "Validation Strategist": "Offer_ValidationStrategist_Flow",
+          "Compliance Architect": "Offer_ComplianceArchitect_Flow"
+        },
+        "welcome_flows": {
+          "Rising Leader": "Welcome_RisingLeader",
+          "Validation Strategist": "Welcome_ValidationStrategist",
+          "Compliance Architect": "Welcome_ComplianceArchitect"
+        },
+        "agent_upsell_flow": "Agent_Upsell_Flow_AllTiers"
+      },
+      "events_expected": [
+        "QuizCompleted",
+        "ROICalculated",
+        "MembershipRecommended",
+        "MembershipPurchased"
+      ]
+    },
+    "event_schema": {
+      "QuizCompleted": {
+        "required_properties": ["persona", "quiz_id", "timestamp", "source"],
+        "optional_properties": ["score", "utm_campaign", "utm_source", "utm_medium"]
+      },
+      "ROICalculated": {
+        "required_properties": ["persona", "roi_value", "currency", "calc_version", "timestamp"],
+        "optional_properties": ["assumptions_hash", "utm_campaign", "utm_source", "utm_medium"]
+      },
+      "MembershipRecommended": {
+        "required_properties": ["persona", "recommended_tier", "roi_value", "timestamp"],
+        "optional_properties": ["confidence_score", "utm_campaign", "utm_source", "utm_medium"]
+      },
+      "MembershipPurchased": {
+        "required_properties": ["persona", "tier", "amount", "currency", "timestamp", "transaction_id"],
+        "optional_properties": ["coupon", "utm_campaign", "utm_source", "utm_medium"]
+      }
+    },
+    "gtm_datalayer_contract": {
+      "push_format": {
+        "event": "string",
+        "persona": "string",
+        "timestamp": "ISO8601",
+        "properties": "object"
+      },
+      "examples": [
+        {
+          "event": "QuizCompleted",
+          "persona": "Validation Strategist",
+          "timestamp": "2025-09-09T14:32:10Z",
+          "properties": { "quiz_id": "cw_quiz_v2", "source": "LinkedIn", "score": 8 }
+        },
+        {
+          "event": "ROICalculated",
+          "persona": "Compliance Architect",
+          "timestamp": "2025-09-09T14:35:02Z",
+          "properties": { "roi_value": 155000, "currency": "USD", "calc_version": "roi_v1_7" }
+        }
+      ]
+    },
+    "url_and_utm_standards": {
+      "landing_pages": {
+        "Rising Leader": "/membership/rising-leader",
+        "Validation Strategist": "/membership/validation-strategist",
+        "Compliance Architect": "/membership/compliance-architect"
+      },
+      "utm_required": ["utm_source", "utm_medium", "utm_campaign"],
+      "utm_examples": [
+        "?utm_source=linkedin&utm_medium=post&utm_campaign=elsa_to_quiz",
+        "?utm_source=site&utm_medium=calculator&utm_campaign=roi_to_membership"
+      ]
+    },
+    "verification_steps": [
+      "Create test subscribers for each persona via quiz completion; confirm Mailchimp tag assignment.",
+      "Trigger ROICalculated for each persona; verify entry into correct ROI Persona Journey.",
+      "Trigger MembershipRecommended; verify correct tier Offer Flow linkage.",
+      "Simulate MembershipPurchased; verify Welcome Flow and Agent Upsell Flow enrollment.",
+      "Cross-check GTM debug view for all events and properties; confirm ingestion in CRO Dashboard."
+    ],
+    "monitoring_and_qc": {
+      "weekly_e2e_tests": ["Rising Leader", "Validation Strategist", "Compliance Architect"],
+      "logs_to_review": ["Mailchimp Journey Activity", "GTM Preview/Debug", "CRO Dashboard Events"],
+      "report_output": "Automations_Status_Report.json"
+    },
+    "sla_thresholds": {
+      "tagging_accuracy_pct": 99.0,
+      "event_fire_rate_pct": 98.0,
+      "journey_entry_success_pct": 97.0,
+      "time_to_email_trigger_sec": 120
+    },
+    "alerting": {
+      "conditions": [
+        { "metric": "tagging_accuracy_pct", "operator": "<", "value": 99.0, "severity": "high" },
+        { "metric": "event_fire_rate_pct", "operator": "<", "value": 98.0, "severity": "high" },
+        { "metric": "journey_entry_success_pct", "operator": "<", "value": 97.0, "severity": "high" },
+        { "metric": "time_to_email_trigger_sec", "operator": ">", "value": 120, "severity": "medium" }
+      ],
+      "action": "Notify CEO Agent (SCI) + CMO/CRO with incident summary and remediation checklist."
+    },
+    "rollback_plan": {
+      "triggers": ["spike in drop-offs > 20% at any stage", "journey misrouting", "duplicate sends"],
+      "actions": [
+        "Pause affected Mailchimp journey(s).",
+        "Revert to last known-good journey version (timestamped backup).",
+        "Disable new GTM tags firing; restore previous container version.",
+        "Run E2E test on staging; re-enable production gradually with canary (10% traffic) for 2 hours."
+      ],
+      "owner": "COO Agent"
+    }
+  }
+}

@@ -262,6 +262,19 @@ export class ChiefOfStaffMonitor {
   }
 
   /**
+   * Get COO automation health for integration
+   */
+  async getCOOHealth(): Promise<{ health: number; issues: string[] }> {
+    try {
+      const { cooAutomationMonitor } = await import('./coo-automation-monitor.js');
+      const summary = await cooAutomationMonitor.getHealthSummary();
+      return { health: summary.health, issues: summary.criticalIssues };
+    } catch (error) {
+      return { health: 0, issues: ['COO automation monitoring unavailable'] };
+    }
+  }
+
+  /**
    * Generate daily status report for CEO
    */
   async generateDailyStatusReport(): Promise<string> {

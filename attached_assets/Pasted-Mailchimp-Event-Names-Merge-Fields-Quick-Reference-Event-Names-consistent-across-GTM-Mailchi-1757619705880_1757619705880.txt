@@ -1,0 +1,64 @@
+Mailchimp Event Names & Merge Fields (Quick Reference)
+Event Names (consistent across GTM + Mailchimp):
+•	QuizCompleted
+•	ROICalculated
+•	MembershipRecommended
+•	MembershipPurchased
+Recommended Mailchimp Merge Fields:
+•	PERSONA (text; RL / VS / CA)
+•	ROI_VAL (number; latest ROI $)
+•	TIER_REC (text; RL / VS / CA)
+•	SRC (text; source)
+•	TXN_ID (text; purchase transaction id)
+________________________________________
+3) Google Tag Manager – Minimal Tag Map
+•	Triggers
+o	Custom Event: QuizCompleted
+o	Custom Event: ROICalculated
+o	Custom Event: MembershipRecommended
+o	Custom Event: MembershipPurchased
+•	Tags
+o	Mailchimp Event (via webhook or server endpoint): forwards event + properties
+o	Analytics Event (your analytics tool of choice)
+o	CRO Dashboard Collector (HTTP tag to your collector endpoint)
+•	Data Layer Push (pattern)
+•	dataLayer.push({
+•	  event: "ROICalculated",
+•	  persona: "Validation Strategist",
+•	  timestamp: new Date().toISOString(),
+•	  properties: { roi_value: 123000, currency: "USD", calc_version: "roi_v1_7" }
+•	});
+________________________________________
+4) QA Test Matrix (fast to run weekly)
+Persona	Path	Expected Mailchimp Tag	Journey Entered	Next LP	Events Fired
+RL	Quiz → ROI → Membership Rec → Purchase	Rising Leader	ROI_RisingLeader_Journey	/membership/rising-leader	QuizCompleted, ROICalculated, MembershipRecommended, MembershipPurchased
+VS	Quiz → ROI → Membership Rec → Purchase	Validation Strategist	ROI_ValidationStrategist_Journey	/membership/validation-strategist	(same 4 events)
+CA	Quiz → ROI → Membership Rec → Purchase	Compliance Architect	ROI_ComplianceArchitect_Journey	/membership/compliance-architect	(same 4 events)
+Pass criteria: 100% of steps complete; events carry required properties; email triggers < 120s.
+________________________________________
+
+
+
+5) Incident Template (for alerts)
+Incident: [Metric] Breach — [metric_name] [operator] [value]
+Detected: [ISO timestamp]
+Scope: [persona(s)] / [journey(s)]
+Symptom: [e.g., 0 entries into ROI_RisingLeader_Journey in last 2 hrs]
+Probable Cause: [recent GTM change / Mailchimp automation paused / API error]
+Immediate Actions Taken: [paused journey, reverted GTM container vXXX]
+Next Steps: [E2E test, canary rollout]
+Owner: COO Agent
+ETA to Resolution: [estimate]
+________________________________________
+6) “Done = Verified” Checklist (one-glance)
+•	All 3 persona tags exist in Mailchimp
+•	Quiz → tag applied (3/3 test users)
+•	ROICalculated → correct persona journey (3/3)
+•	MembershipRecommended → correct tier LP (3/3)
+•	MembershipPurchased → welcome + upsell sent (3/3)
+•	GTM events visible w/ required properties (4/4)
+•	CRO dashboard receiving events (4/4)
+•	SLA thresholds met for last 7 days
+•	Rollback backups timestamped (Mailchimp + GTM)
+________________________________________
+This is everything your COO Agent needs to build, test, monitor, alert, and roll back—without you lifting a finger. If you want, I can also draft the Mailchimp Journey node logic (node names + conditions) for each persona to paste directly into your automation builder.

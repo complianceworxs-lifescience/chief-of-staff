@@ -729,6 +729,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // COO Automation Monitoring routes
+  app.get('/api/coo/automation-status', async (req, res) => {
+    try {
+      const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+      const report = await cooAutomationMonitor.generateAutomationStatusReport();
+      res.json(report);
+    } catch (error) {
+      console.error('Error getting automation status:', error);
+      res.status(500).json({ message: 'Failed to get automation status' });
+    }
+  });
+
+  app.get('/api/coo/checklist', async (req, res) => {
+    try {
+      const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+      const checklist = cooAutomationMonitor.getChecklistStatus();
+      res.json(checklist);
+    } catch (error) {
+      console.error('Error getting automation checklist:', error);
+      res.status(500).json({ message: 'Failed to get automation checklist' });
+    }
+  });
+
+  app.get('/api/coo/health-summary', async (req, res) => {
+    try {
+      const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+      const summary = await cooAutomationMonitor.getHealthSummary();
+      res.json(summary);
+    } catch (error) {
+      console.error('Error getting health summary:', error);
+      res.status(500).json({ message: 'Failed to get health summary' });
+    }
+  });
+
   app.post("/api/conflicts", async (req, res) => {
     try {
       const validatedData = insertConflictSchema.parse(req.body);

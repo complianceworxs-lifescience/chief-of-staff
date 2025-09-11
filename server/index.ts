@@ -121,6 +121,37 @@ app.use((req, res, next) => {
     setInterval(collectMarketIntelligence, MI_COLLECTION_INTERVAL);
     
     log("Market Intelligence scheduler started - Collection every 2 hours");
+
+    // Initialize COO Automation Monitoring with weekly scheduled execution
+    const cooAutomationScheduler = async () => {
+      try {
+        const now = new Date();
+        const dayOfWeek = now.getUTCDay(); // 0 = Sunday
+        const hour = now.getUTCHours();
+        const minute = now.getUTCMinutes();
+        
+        // Run weekly verification on Sundays at 11:35 UTC (06:35 ET)
+        if (dayOfWeek === 0 && hour === 11 && minute >= 35 && minute < 40) {
+          console.log("🔧 COO: Running scheduled weekly automation verification");
+          
+          const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+          const report = await cooAutomationMonitor.generateAutomationStatusReport();
+          
+          console.log(`🔧 COO Weekly Report: Health ${report.overallHealth}%, Escalations: ${report.escalations.length}`);
+          
+          if (report.escalations.length > 0) {
+            console.log("🚨 COO: Weekly verification found critical issues requiring attention");
+          }
+        }
+      } catch (error) {
+        console.error("❌ COO: Scheduled automation verification failed:", error);
+      }
+    };
+    
+    // Check COO automation status every 5 minutes for weekly trigger
+    setInterval(cooAutomationScheduler, 5 * 60 * 1000);
+    
+    log("🔧 COO Automation monitoring started - Weekly verification scheduled (Sundays 06:35 ET)");
     
     log("Autonomous conflict monitoring started - No HITL required");
   });
