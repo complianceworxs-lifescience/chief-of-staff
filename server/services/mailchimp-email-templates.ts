@@ -633,3 +633,79 @@ export const RISING_LEADER_EMAILS = EMAIL_TEMPLATES.rising_leader_journey;
 export const VALIDATION_STRATEGIST_EMAILS = EMAIL_TEMPLATES.validation_strategist_journey;
 export const COMPLIANCE_ARCHITECT_EMAILS = EMAIL_TEMPLATES.compliance_architect_journey;
 export const POST_PURCHASE_EMAILS = EMAIL_TEMPLATES.post_purchase;
+
+// Email metadata for automation monitoring
+export const EMAIL_METADATA = {
+  personas: ['rising_leader', 'validation_strategist', 'compliance_architect'],
+  sequences: {
+    rising_leader_journey: {
+      total_emails: 5,
+      conversion_path: ['kickoff', 'nudge', 'fallback', 'offer', 'objection'],
+      expected_timeline: '14 days',
+      success_metrics: ['membership_calc_visit', 'membership_purchase']
+    },
+    validation_strategist_journey: {
+      total_emails: 5, 
+      conversion_path: ['kickoff', 'nudge', 'fallback', 'offer', 'objection'],
+      expected_timeline: '14 days',
+      success_metrics: ['membership_calc_visit', 'membership_purchase']
+    },
+    compliance_architect_journey: {
+      total_emails: 5,
+      conversion_path: ['kickoff', 'nudge', 'fallback', 'offer', 'objection'],
+      expected_timeline: '14 days', 
+      success_metrics: ['membership_calc_visit', 'membership_purchase']
+    },
+    post_purchase: {
+      total_emails: 3,
+      conversion_path: ['welcome', 'activation', 'ai_upsell'],
+      expected_timeline: '7 days',
+      success_metrics: ['dashboard_login', 'ai_agent_purchase']
+    }
+  },
+  automation_sla: {
+    first_email_trigger: '120 seconds maximum',
+    event_response: '60 seconds maximum', 
+    template_processing: '30 seconds maximum'
+  },
+  monitoring_events: [
+    'ROICalculated',
+    'MembershipRecommended', 
+    'MembershipPurchased',
+    'EmailSent',
+    'EmailOpened',
+    'LinkClicked',
+    'ConversionCompleted'
+  ]
+};
+
+// Email service for automation monitoring
+export class MailchimpEmailService {
+  static getTemplateByKey(journeyType: string, emailKey: string) {
+    const journey = EMAIL_TEMPLATES[journeyType as keyof typeof EMAIL_TEMPLATES];
+    if (!journey || typeof journey !== 'object') return null;
+    return journey[emailKey as keyof typeof journey] || null;
+  }
+
+  static validateTemplate(template: any): boolean {
+    return template && 
+           typeof template.subject === 'string' && 
+           typeof template.preview === 'string' && 
+           typeof template.body === 'string' &&
+           typeof template.cta === 'string' &&
+           typeof template.cta_url === 'string';
+  }
+
+  static getPersonaJourneyMetadata(persona: string) {
+    const personaKey = `${persona.toLowerCase().replace(' ', '_')}_journey`;
+    return EMAIL_METADATA.sequences[personaKey as keyof typeof EMAIL_METADATA.sequences] || null;
+  }
+
+  static getMonitoringEvents() {
+    return EMAIL_METADATA.monitoring_events;
+  }
+
+  static getAutomationSLA() {
+    return EMAIL_METADATA.automation_sla;
+  }
+}
