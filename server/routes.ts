@@ -774,6 +774,206 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CRO Dashboard routes
+  app.get('/api/cro/synergy-report', async (req, res) => {
+    try {
+      const { CRODashboardService } = await import('./services/cro-dashboard.js');
+      const croService = new CRODashboardService();
+      const report = await croService.generateRevenueSynergReport();
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating synergy report:', error);
+      res.status(500).json({ message: 'Failed to generate synergy report' });
+    }
+  });
+
+  app.get('/api/cro/agent-health', async (req, res) => {
+    try {
+      const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+      const health = await cooAutomationMonitor.getHealthSummary();
+      res.json(health);
+    } catch (error) {
+      console.error('Error getting agent health:', error);
+      res.status(500).json({ message: 'Failed to get agent health' });
+    }
+  });
+
+  app.get('/api/cro/persona-performance/:persona', async (req, res) => {
+    try {
+      const { CRODashboardService } = await import('./services/cro-dashboard.js');
+      const croService = new CRODashboardService();
+      const performance = await croService.getPersonaPerformance(req.params.persona);
+      res.json(performance);
+    } catch (error) {
+      console.error('Error getting persona performance:', error);
+      res.status(500).json({ message: 'Failed to get persona performance' });
+    }
+  });
+
+  app.post('/api/cro/track-event', async (req, res) => {
+    try {
+      const { CRODashboardService } = await import('./services/cro-dashboard.js');
+      const croService = new CRODashboardService();
+      await croService.trackFunnelEvent(req.body.event, req.body.properties);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error tracking funnel event:', error);
+      res.status(500).json({ message: 'Failed to track event' });
+    }
+  });
+
+  // CMO Messaging Pack routes
+  app.get('/api/cmo/cta-matrix/:asset/:persona', async (req, res) => {
+    try {
+      const { CMOMessagingService } = await import('./services/cmo-messaging-pack.js');
+      const cmoService = new CMOMessagingService();
+      const cta = await cmoService.getPersonaCTA(req.params.asset, req.params.persona);
+      res.json(cta);
+    } catch (error) {
+      console.error('Error getting CTA matrix:', error);
+      res.status(500).json({ message: 'Failed to get CTA matrix' });
+    }
+  });
+
+  app.get('/api/cmo/landing-page/:persona', async (req, res) => {
+    try {
+      const { CMOMessagingService } = await import('./services/cmo-messaging-pack.js');
+      const cmoService = new CMOMessagingService();
+      const content = await cmoService.getLandingPageContent(req.params.persona);
+      res.json(content);
+    } catch (error) {
+      console.error('Error getting landing page content:', error);
+      res.status(500).json({ message: 'Failed to get landing page content' });
+    }
+  });
+
+  app.get('/api/cmo/message-path/:stage', async (req, res) => {
+    try {
+      const { CMOMessagingService } = await import('./services/cmo-messaging-pack.js');
+      const cmoService = new CMOMessagingService();
+      const path = await cmoService.getMessagePath(req.params.stage);
+      res.json(path);
+    } catch (error) {
+      console.error('Error getting message path:', error);
+      res.status(500).json({ message: 'Failed to get message path' });
+    }
+  });
+
+  app.post('/api/cmo/validate-message', async (req, res) => {
+    try {
+      const { CMOMessagingService } = await import('./services/cmo-messaging-pack.js');
+      const cmoService = new CMOMessagingService();
+      const validation = await cmoService.validateMessageConsistency(req.body);
+      res.json(validation);
+    } catch (error) {
+      console.error('Error validating message:', error);
+      res.status(500).json({ message: 'Failed to validate message' });
+    }
+  });
+
+  // Governance System routes
+  app.get('/api/governance/weekly-synergy-report', async (req, res) => {
+    try {
+      const { GovernanceService } = await import('./services/governance-system.js');
+      const governanceService = new GovernanceService();
+      const report = await governanceService.generateWeeklySynergyReport();
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating synergy report:', error);
+      res.status(500).json({ message: 'Failed to generate synergy report' });
+    }
+  });
+
+  app.post('/api/governance/incident', async (req, res) => {
+    try {
+      const { GovernanceService } = await import('./services/governance-system.js');
+      const governanceService = new GovernanceService();
+      const incident = await governanceService.createIncidentReport(req.body.type, req.body.details);
+      res.json(incident);
+    } catch (error) {
+      console.error('Error creating incident:', error);
+      res.status(500).json({ message: 'Failed to create incident' });
+    }
+  });
+
+  app.post('/api/governance/change-request', async (req, res) => {
+    try {
+      const { GovernanceService } = await import('./services/governance-system.js');
+      const governanceService = new GovernanceService();
+      const changeRequest = await governanceService.processChangeRequest(
+        req.body.type, 
+        req.body.requesting_agent, 
+        req.body.details
+      );
+      res.json(changeRequest);
+    } catch (error) {
+      console.error('Error processing change request:', error);
+      res.status(500).json({ message: 'Failed to process change request' });
+    }
+  });
+
+  app.get('/api/governance/escalation-check', async (req, res) => {
+    try {
+      const { GovernanceService } = await import('./services/governance-system.js');
+      const governanceService = new GovernanceService();
+      const escalations = await governanceService.checkEscalationTriggers();
+      res.json(escalations);
+    } catch (error) {
+      console.error('Error checking escalations:', error);
+      res.status(500).json({ message: 'Failed to check escalations' });
+    }
+  });
+
+  // Experiment Backlog routes
+  app.get('/api/experiments/active', async (req, res) => {
+    try {
+      const { ExperimentBacklogService } = await import('./services/experiment-backlog.js');
+      const experimentService = new ExperimentBacklogService();
+      const experiments = await experimentService.getActiveExperiments();
+      res.json(experiments);
+    } catch (error) {
+      console.error('Error getting active experiments:', error);
+      res.status(500).json({ message: 'Failed to get active experiments' });
+    }
+  });
+
+  app.get('/api/experiments/backlog', async (req, res) => {
+    try {
+      const { ExperimentBacklogService } = await import('./services/experiment-backlog.js');
+      const experimentService = new ExperimentBacklogService();
+      const backlog = await experimentService.getExperimentBacklog();
+      res.json(backlog);
+    } catch (error) {
+      console.error('Error getting experiment backlog:', error);
+      res.status(500).json({ message: 'Failed to get experiment backlog' });
+    }
+  });
+
+  // Attribution Discipline routes
+  app.post('/api/attribution/utm-generate', async (req, res) => {
+    try {
+      const { AttributionDisciplineService } = await import('./services/attribution-discipline.js');
+      const attributionService = new AttributionDisciplineService();
+      const utm = await attributionService.generateUTMParameters(req.body);
+      res.json(utm);
+    } catch (error) {
+      console.error('Error generating UTM:', error);
+      res.status(500).json({ message: 'Failed to generate UTM parameters' });
+    }
+  });
+
+  app.get('/api/attribution/channel-performance', async (req, res) => {
+    try {
+      const { AttributionDisciplineService } = await import('./services/attribution-discipline.js');
+      const attributionService = new AttributionDisciplineService();
+      const performance = await attributionService.analyzeChannelPerformance(req.query.timeframe as string);
+      res.json(performance);
+    } catch (error) {
+      console.error('Error analyzing channel performance:', error);
+      res.status(500).json({ message: 'Failed to analyze channel performance' });
+    }
+  });
+
   app.post("/api/conflicts", async (req, res) => {
     try {
       const validatedData = insertConflictSchema.parse(req.body);
