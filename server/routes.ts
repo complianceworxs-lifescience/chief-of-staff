@@ -763,6 +763,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/coo/mailchimp-blueprints', async (req, res) => {
+    try {
+      const { cooAutomationMonitor } = await import('./services/coo-automation-monitor.js');
+      const blueprints = await cooAutomationMonitor.getMailchimpImplementationInstructions();
+      res.json(blueprints);
+    } catch (error) {
+      console.error('Error getting Mailchimp blueprints:', error);
+      res.status(500).json({ message: 'Failed to get Mailchimp blueprints' });
+    }
+  });
+
   app.post("/api/conflicts", async (req, res) => {
     try {
       const validatedData = insertConflictSchema.parse(req.body);

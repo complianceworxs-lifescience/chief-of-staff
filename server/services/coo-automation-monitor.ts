@@ -1,5 +1,6 @@
 import { storage } from '../storage.js';
 import { COO_AUTOMATION_CONFIG, QA_TEST_MATRIX, COOConfigService, type EventValidationResult } from './coo-config.js';
+import { MAILCHIMP_SETUP, JOURNEY_BLUEPRINTS, IMPLEMENTATION_CHECKLIST, EMAIL_COPY_STARTERS, ERROR_HANDLING_ROLLBACK, type MailchimpJourneyImplementor } from './mailchimp-journey-blueprints.js';
 
 interface AutomationChecklistItem {
   id: string;
@@ -414,6 +415,41 @@ class COOAutomationMonitor {
       type: 'escalation',
       action: 'rollback'
     });
+  }
+
+  /**
+   * Get Mailchimp Journey implementation instructions for COO Agent
+   */
+  async getMailchimpImplementationInstructions(): Promise<any> {
+    return {
+      setup: MAILCHIMP_SETUP,
+      journeys: JOURNEY_BLUEPRINTS,
+      emailCopyStarters: EMAIL_COPY_STARTERS,
+      implementationChecklist: IMPLEMENTATION_CHECKLIST,
+      errorHandling: ERROR_HANDLING_ROLLBACK,
+      instructions: {
+        summary: "Ready-to-build Mailchimp Customer Journey blueprints for 3 personas",
+        personas: ["Rising Leader (RL)", "Validation Strategist (VS)", "Compliance Architect (CA)"],
+        journeyNames: [
+          "ROI_RisingLeader_Journey",
+          "ROI_ValidationStrategist_Journey", 
+          "ROI_ComplianceArchitect_Journey",
+          "PostPurchase_AllTiers"
+        ],
+        nextSteps: [
+          "Create/verify merge fields (PERSONA, ROI_VAL, TIER_REC, SRC, TXN_ID)",
+          "Set up tags (Rising Leader, Validation Strategist, Compliance Architect, ROI_Engaged, MC_Recommended, Member)",
+          "Configure custom events (QuizCompleted, ROICalculated, MembershipRecommended, MembershipPurchased)",
+          "Build the three persona journeys exactly as specified in blueprints",
+          "Implement Post-Purchase journey with tier-specific welcome sequences",
+          "Set up dynamic content rules based on ROI_VAL thresholds",
+          "Run QA Matrix testing with 3 test contacts (one per persona)",
+          "Deploy with 10% canary for 2 hours, then full release",
+          "Monitor via Automation Status Report for node-level pass/fail"
+        ],
+        slaRequirement: "First email within 120 seconds of event trigger"
+      }
+    };
   }
 
   private async escalateToSystem(message: string): Promise<void> {

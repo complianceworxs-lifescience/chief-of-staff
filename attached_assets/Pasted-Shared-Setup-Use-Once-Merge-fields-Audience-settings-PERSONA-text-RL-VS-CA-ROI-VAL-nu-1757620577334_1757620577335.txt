@@ -1,0 +1,518 @@
+Shared Setup (Use Once)
+Merge fields (Audience settings)
+•	PERSONA (text: RL/VS/CA)
+•	ROI_VAL (number)
+•	TIER_REC (text: RL/VS/CA)
+•	SRC (text)
+•	TXN_ID (text)
+Tags
+•	Rising Leader / Validation Strategist / Compliance Architect
+•	ROI_Engaged (applied on ROICalculated)
+•	MC_Recommended (applied on MembershipRecommended)
+•	Member (applied on MembershipPurchased)
+Custom Events (via API / GTM collector → Mailchimp Journeys API)
+•	QuizCompleted (props: persona)
+•	ROICalculated (props: persona, roi_value, calc_version)
+•	MembershipRecommended (props: persona, recommended_tier, roi_value)
+•	MembershipPurchased (props: persona, tier, amount, txn_id)
+Global Suppression & Collision Rules
+•	Contacts with tag Member skip all pre-purchase journeys.
+•	Each persona journey only accepts contacts with matching PERSONA.
+•	Re-entry: allow re-entry every 30 days unless tag Member present.
+Link targets (example)
+•	Membership Calculator: /membership-calculator?utm_source=mailchimp&utm_medium=email&utm_campaign=roi_to_membership
+•	Tier LPs:
+o	RL → /membership/rising-leader?utm_source=mc&utm_medium=email&utm_campaign=offer_rl
+o	VS → /membership/validation-strategist?utm_source=mc&utm_medium=email&utm_campaign=offer_vs
+o	CA → /membership/compliance-architect?utm_source=mc&utm_medium=email&utm_campaign=offer_ca
+________________________________________
+1) Journey: ROI_RisingLeader_Journey
+Starting Point
+Event trigger: ROICalculated where persona == RL
+Entry actions:
+•	Action: Update Merge → PERSONA = RL, ROI_VAL = {{roi_value}}
+•	Action: Add Tag → ROI_Engaged
+Node A — Email #1: “Make Your Impact Visible”
+•	Send Email
+o	Subject: Your compliance ROI: turn numbers into recognition
+o	Body angle: “You’ve got the ROI. Here’s how to use it for visibility and promotion.”
+o	Primary CTA: Membership Calculator
+•	Delay: 2 days
+Node B — If Clicked MC?
+•	Rule: If user clicked Membership Calculator link in Email #1
+o	Yes → Node C
+o	No → Node B2
+Node B2 — Nudge Email (if No Click)
+•	Send Email #1a: Still thinking? Convert your ROI into a concrete plan.
+•	CTA: Membership Calculator
+•	Delay: 2 days → then to Node C
+Node C — Wait for MembershipRecommended
+•	Goal Wait: Up to 5 days for event MembershipRecommended (persona=RL)
+o	On Goal hit → Node D
+o	On timeout → Node C2 (fallback)
+Node C2 — Fallback
+•	Send Email #2: What’s the fastest way to capture your ROI?
+•	CTA: Membership Calculator
+•	Delay: 2 days → back to Goal wait (2 more days)
+Node D — Offer Path (Tier RL)
+•	Action: Update Merge → TIER_REC = RL
+•	Send Email #3 (Offer)
+o	Subject: Rising Leader Plan: unlock visibility + momentum
+o	Body: bullet benefits; “recognition-first” framing
+o	CTA: Tier RL LP
+•	Delay: 3 days
+Node E — If Purchased?
+•	Rule: If MembershipPurchased (tier=RL) occurs within 7 days
+o	Yes → Exit & Handoff to Post-Purchase Journeys
+o	No → Email #3a (Objection Handler)
+	Subject: Questions about the plan? Here’s how members use it
+	Content: quick FAQ + 2 social proofs
+	CTA: Tier RL LP
+	Delay: 4 days → End Journey
+Exit: End or move to re-engagement (optional 30-day revisit).
+________________________________________
+2) Journey: ROI_ValidationStrategist_Journey
+Starting Point
+Event: ROICalculated where persona == VS
+Entry actions: Update merge fields; add ROI_Engaged tag.
+Node A — Email #1: “Cut Validation Time, Not Corners”
+•	Subject: Your ROI shows time on the table — here’s how to reclaim it
+•	Angle: time savings in validation; fewer deviations; cycle compression
+•	CTA: Membership Calculator
+•	Delay: 2 days
+Node B — Click Split
+•	If MC clicked → Node C
+•	Else → Email #1a (case example: “How Strategists compress validation by 30–50%”) → Delay 2 days → Node C
+Node C — Goal Wait: MembershipRecommended (VS)
+•	Wait up to 5 days; fallback Email #2 (“See the plan that captures your ROI”) → Delay 2 days → re-wait 2 days.
+Node D — Offer (Tier VS)
+•	Update TIER_REC = VS
+•	Email #3 Offer: Validation Strategist Plan: faster cycles, fewer headaches
+•	CTA: Tier VS LP
+•	Delay: 3 days
+Node E — Purchase Split
+•	If MembershipPurchased (tier=VS) within 7 days → Exit to Post-Purchase
+•	Else → Email #3a (Proof pack: KPI gains + testimonial snippet) → Delay 4 days → End.
+________________________________________
+3) Journey: ROI_ComplianceArchitect_Journey
+Starting Point
+Event: ROICalculated where persona == CA
+Entry actions: Update merge; tag ROI_Engaged.
+Node A — Email #1: “Turn Compliance ROI into Board-Level Clarity”
+•	Subject: Your projected ROI → the enterprise case
+•	Angle: audit readiness KPIs, risk reduction, enterprise ROI
+•	CTA: Membership Calculator
+•	Delay: 2 days
+Node B — If MC Clicked?
+•	Yes → Node C
+•	No → Email #1a: From ROI to strategy: the architecture of value (executive framing) → Delay 2 days → Node C
+Node C — Goal Wait: MembershipRecommended (CA)
+•	Wait up to 5 days; fallback Email #2 (Model the board case in 10 minutes) → Delay 2 days → re-wait 2 days.
+Node D — Offer (Tier CA)
+•	Update TIER_REC = CA
+•	Email #3 Offer: Compliance Architect Plan: enterprise KPIs + audit-ready dashboards
+•	CTA: Tier CA LP
+•	Delay: 3 days
+Node E — If Purchased?
+•	Yes (tier=CA) within 7 days → Exit to Post-Purchase
+•	No → Email #3a (Executive objection handler: budget, timing, risk) → Delay 4 days → End.
+________________________________________
+4) Post-Purchase Journeys (All Tiers)
+Starting Point: MembershipPurchased (any tier; Member tag applied)
+Tier-Specific Welcome (within 1 hour)
+•	RL: Welcome_RisingLeader — “Your first 3 wins this week”
+•	VS: Welcome_ValidationStrategist — “Ship your first cycle-time win”
+•	CA: Welcome_ComplianceArchitect — “Instrument your KPIs + audit traceability”
+Day 2 — Activation Email
+•	Checklist: how to access dashboards, connect to the widget, where to find ELSA docs.
+•	CTA: book a 10-min orientation (optional).
+Day 5 — AI Agent Upsell (all tiers)
+•	Email: “Automate the next win with AI Agents”
+•	Segment logic:
+o	RL → CMO/COO lite use cases (personal productivity, recognition)
+o	VS → CCO/COO use cases (validation cycle compression)
+o	CA → CEO/CRO use cases (KPI governance, audit readiness)
+•	CTA: Agent Upsell page.
+Suppressions
+•	Suppress all pre-purchase journeys once Member tag exists.
+•	Deduplicate if TXN_ID repeats.
+________________________________________
+5) Dynamic Content & Personalization Rules
+In all journey emails, show conditional blocks by thresholds:
+•	If ROI_VAL >= 100000: show “Executive case” block (CA emphasis).
+•	If ROI_VAL 30000–99999: show “Operational efficiency” block (VS emphasis).
+•	If ROI_VAL < 30000: show “Career recognition + quick wins” block (RL emphasis).
+Personalize headlines with merge fields:
+•	Your ROI: $*|ROI_VAL|* — here’s how to capture it
+•	Include persona-specific bullets using IF PERSONA == RL/VS/CA.
+________________________________________
+6) Goals, Exit Conditions & SLAs (apply to all)
+•	Primary Goal: MembershipPurchased reached → Exit Journey (handoff to Post-Purchase).
+•	Secondary Goal: If no purchase within 14 days of start → exit, apply tag Reengage_30d, and enroll in a light re-engagement journey later.
+•	SLA: First email within 120 seconds of event trigger. Monitor via automation logs.
+________________________________________
+7) Error Handling & Rollback
+•	If events stop appearing for 30+ minutes:
+1.	Pause affected Journey(s).
+2.	Switch GTM to prior container version.
+3.	Re-run E2E tests for each persona with test contacts.
+4.	Re-enable with 10% canary for 2 hours; then full release.
+________________________________________
+8) Copy Starters (you can paste into Mailchimp)
+Email #1 (RL)
+•	Subject: Your compliance ROI: turn numbers into recognition
+•	Preheader: Next step: make your wins visible
+•	CTA: “Calculate your best-fit plan”
+Email #1 (VS)
+•	Subject: Your ROI shows time on the table
+•	Preheader: Let’s compress your next validation cycle
+•	CTA: “See your fastest path”
+Email #1 (CA)
+•	Subject: From ROI to board-level clarity
+•	Preheader: Model the enterprise case in minutes
+•	CTA: “Build the plan”
+Offer Email (per tier)
+•	RL: Rising Leader Plan: stand out with measurable wins
+•	VS: Strategist Plan: deliver faster validation cycles
+•	CA: Architect Plan: instrument KPIs + audit readiness
+________________________________________
+9) Minimal JSON Spec (for programmatic Journey creation via API)
+{
+  "journeys": [
+    {
+      "name": "ROI_RisingLeader_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == RL" },
+      "nodes": [
+        { "type": "action.update_merge", "fields": { "PERSONA": "RL", "ROI_VAL": "{{roi_value}}" } },
+        { "type": "action.add_tag", "value": "ROI_Engaged" },
+        { "type": "action.send_email", "template": "RL_Email_1" },
+        { "type": "delay", "duration_hours": 48 },
+        { "type": "rule.link_clicked", "link": "membership_calculator_url", "yes_to": "goal_wait", "no_to": "nudge" },
+        { "id": "nudge", "type": "action.send_email", "template": "RL_Email_1a" },
+        { "type": "delay", "duration_hours": 48 },
+        { "id": "goal_wait", "type": "goal.wait_for_event", "event_name": "MembershipRecommended", "timeout_hours": 120, "on_timeout_to": "fallback" },
+        { "id": "fallback", "type": "action.send_email", "template": "RL_Email_2" },
+        { "type": "delay", "duration_hours": 48 },
+        { "type": "goal.wait_for_event", "event_name": "MembershipRecommended", "timeout_hours": 48 },
+        { "type": "action.update_merge", "fields": { "TIER_REC": "RL" } },
+        { "type": "action.send_email", "template": "RL_Offer_Email_3" },
+        { "type": "delay", "duration_hours": 72 },
+        { "type": "rule.event_occurs", "event_name": "MembershipPurchased", "condition": "tier == RL", "yes_to": "exit", "no_to": "objection" },
+        { "id": "objection", "type": "action.send_email", "template": "RL_Email_3a" },
+        { "type": "delay", "duration_hours": 96 },
+        { "id": "exit", "type": "journey.end" }
+      ],
+      "reentry": { "allowed": true, "cooldown_days": 30 },
+      "suppression": { "has_tag": "Member" }
+    },
+    {
+      "name": "ROI_ValidationStrategist_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == VS" },
+      "nodes": [ "…same pattern with VS templates and Tier VS…" ]
+    },
+    {
+      "name": "ROI_ComplianceArchitect_Journey",
+      "start": { "type": "event", "event_name": "ROICalculated", "condition": "persona == CA" },
+      "nodes": [ "…same pattern with CA templates and Tier CA…" ]
+    },
+    {
+      "name": "PostPurchase_AllTiers",
+      "start": { "type": "event", "event_name": "MembershipPurchased" },
+      "nodes": [
+        { "type": "action.add_tag", "value": "Member" },
+        { "type": "action.send_email", "template": "Welcome_Tier_SmartContent" },
+        { "type": "delay", "duration_hours": 24 },
+        { "type": "action.send_email", "template": "Activation_Checklist" },
+        { "type": "delay", "duration_hours": 72 },
+        { "type": "action.send_email", "template": "Agents_Upsell_SmartContent" },
+        { "type": "journey.end" }
+      ]
+    }
+  ]
+}
+________________________________________
+10) What your COO Agent does next (no ambiguity)
+1.	Create/verify merge fields and tags.
+2.	Create custom events (or confirm your collector sends them).
+3.	Build the three persona journeys exactly as above.
+4.	Build Post-Purchase journey.
+5.	Paste the email copy starters and set dynamic blocks by PERSONA and ROI_VAL.
+6.	Set goals, exit, re-entry, and suppression rules.
+7.	Run QA Matrix (3 test contacts → 3 persona paths).
+8.	Flip to live with canary (10% audience for 2 hours), then 100%.
+9.	Report status in the Automations Status Report with pass/fail on each node.
+
+Below are complete email drafts — persona-specific sequences (4 each) + 2 post-purchase emails. These are polished, Mailchimp-ready with subject lines, preview text, body copy, and CTAs.
+________________________________________
+📧 Rising Leader Journey (Recognition / Career Equity)
+Email 1 – Kickoff
+Subject: Your compliance ROI = career recognition
+Preview: You’ve got the numbers. Now make them visible.
+Body:
+You’ve taken the first step — your ROI calculation shows measurable value.
+The next step is turning those numbers into recognition. Rising Leaders don’t wait to be noticed, they show impact.
+CTA: → See your career growth path with the Membership Calculator
+________________________________________
+Email 1a – Nudge (if no click)
+Subject: Still thinking? Recognition starts with clarity
+Preview: Don’t let your ROI sit idle — put it to work.
+Body:
+Every day compliance wins go unrecognized. Don’t let yours be one of them.
+Use your ROI to prove your contribution and open the door to your next opportunity.
+CTA: → Discover your recognition path now
+________________________________________
+Email 2 – Fallback
+Subject: Turn ROI into your fastest promotion tool
+Preview: Translate compliance clarity into career equity.
+Body:
+Your ROI proves you’re adding measurable value. The question is — are the right people seeing it?
+We built the Membership Calculator to help you frame your numbers in a way that decision-makers understand.
+CTA: → Calculate your best-fit membership plan
+________________________________________
+Email 3 – Offer
+Subject: Rising Leader Plan: stand out with measurable wins
+Preview: Recognition is the currency of career growth.
+Body:
+As a Rising Leader, your edge comes from proving impact early.
+Our plan shows executives exactly how your work delivers ROI — building your reputation as someone who gets results.
+CTA: → Unlock the Rising Leader plan today
+________________________________________
+📧 Validation Strategist Journey (Efficiency / Cost Savings)
+Email 1 – Kickoff
+Subject: Your ROI shows time on the table
+Preview: Reclaim efficiency in every validation cycle.
+Body:
+Your ROI calculation highlighted a truth: wasted time is wasted money.
+Validation Strategists like you thrive by cutting cycle times and preventing costly deviations.
+CTA: → Model your most efficient strategy with the Membership Calculator
+________________________________________
+Email 1a – Nudge
+Subject: See how others cut validation cycles by 30%+
+Preview: Efficiency is the new advantage.
+Body:
+Your peers are reducing validation cycle times by 30–50% using proven methods.
+You don’t need more effort — just smarter systems.
+CTA: → Find your validation advantage today
+________________________________________
+Email 2 – Fallback
+Subject: Ready to capture your ROI savings?
+Preview: Every cycle saved is ROI in your pocket.
+Body:
+Your ROI shows what’s possible. The Membership Calculator reveals how quickly you can claim it.
+Don’t leave savings unclaimed — efficiency is measurable.
+CTA: → Calculate your fastest path forward
+________________________________________
+Email 3 – Offer
+Subject: Validation Strategist Plan: compress cycles, reduce errors
+Preview: Smarter systems deliver stronger results.
+Body:
+The Strategist Plan is designed for professionals like you who live and breathe efficiency.
+It’s about fewer deviations, shorter cycles, and tangible ROI.
+CTA: → Join the Strategist Plan now
+________________________________________
+📧 Compliance Architect Journey (Enterprise / Audit Readiness)
+Email 1 – Kickoff
+Subject: From ROI to board-level clarity
+Preview: Build the business case your executives expect.
+Body:
+Your ROI results show real financial impact.
+Now it’s time to package those insights into a board-ready business case.
+Compliance Architects don’t just follow — they shape enterprise strategy.
+CTA: → Run the Membership Calculator to see your enterprise solution
+________________________________________
+Email 1a – Nudge
+Subject: Model the architecture of value
+Preview: Compliance clarity = strategic advantage.
+Body:
+Audit readiness, digital traceability, risk reduction — all of these drive ROI.
+Our Membership Calculator shows how to align your numbers with enterprise KPIs.
+CTA: → Discover your Architect path now
+________________________________________
+Email 2 – Fallback
+Subject: Make ROI your strategic weapon
+Preview: Numbers mean nothing until they drive action.
+Body:
+You’ve quantified compliance ROI. Now ensure executives see it as a reason to invest in systems, not cut corners.
+The Architect Plan frames your ROI in enterprise terms.
+CTA: → See your strategic membership fit
+________________________________________
+Email 3 – Offer
+Subject: Architect Plan: enterprise KPIs + audit-ready dashboards
+Preview: Compliance clarity at the highest level.
+Body:
+Compliance Architects own the strategic narrative.
+This plan equips you with dashboards, predictive agents, and enterprise ROI tools to win at the board level.
+CTA: → Join the Architect Plan today
+________________________________________
+
+
+📧 Post-Purchase Journeys (All Tiers)
+Email 1 – Welcome (sent within 1 hour of purchase)
+Subject: Welcome to ComplianceWorxs — here’s your first step
+Preview: Your membership is live. Let’s get you started.
+Body:
+Congratulations and welcome!
+You now have access to dashboards, tools, and resources built for your career path.
+Here’s what to do today:
+1.	Log into your dashboard.
+2.	Download your starter ELSA playbook.
+3.	Explore your role-specific toolkit.
+This is the start of measurable clarity.
+CTA: → Access your dashboard now
+________________________________________
+Email 2 – AI Agent Upsell (Day 5)
+Subject: Automate your next win with AI Agents
+Preview: Scale your clarity, reduce your workload.
+Body:
+Your membership gives you clarity. But AI Agents take it further.
+•	Rising Leaders: Agents help you show impact and get recognition.
+•	Strategists: Agents cut cycle times and flag risks before they cost you.
+•	Architects: Agents track KPIs and deliver audit-ready intelligence.
+These are the tools professionals are using to save hours every week — and prove ROI effortlessly.
+CTA: → Meet your AI Agents today
+
+
+
+
+
+
+Here’s your Mailchimp Template Kit — everything the CMO Agent (or Mailchimp itself) needs to build branded templates consistent with ComplianceWorxs’ identity.
+________________________________________
+🎨 ComplianceWorxs Mailchimp Template Kit
+1. Brand Colors
+•	Primary Blue (Trust): #00407B
+•	Bright Blue (Clarity/CTA): #007BFF
+•	Accent Green (Growth/ROI): #10B981
+•	Dark Gray (Body Text): #333333
+•	Light Gray (Backgrounds/Dividers): #F5F7FA
+________________________________________
+2. Typography
+•	Headlines: Montserrat Bold, 28–36px, Primary Blue #00407B
+•	Subheadings / CTAs: Montserrat Semi-Bold, 18–22px, Bright Blue #007BFF
+•	Body Copy: Inter Regular, 16px, Dark Gray #333333
+•	Captions/Footers: Inter Light, 12–14px, Gray #666666
+Fallback: Arial, Helvetica, sans-serif.
+________________________________________
+3. Layout System
+•	Header (Hero Block):
+o	Logo left-aligned (or centered if standalone email).
+o	Hero headline: Montserrat Bold, 32px.
+o	Supporting line: Inter Regular, 18px.
+o	Hero CTA button directly under headline.
+•	Body Section:
+o	Background: white.
+o	Content width: 600px max.
+o	Use 2-column split (text left, image right) for case studies or ROI visuals.
+•	CTA Block:
+o	Full-width background in Bright Blue #007BFF.
+o	Headline: white text, Montserrat Bold.
+o	Button: white background with Primary Blue #00407B text.
+•	Footer:
+o	Background: Light Gray #F5F7FA.
+o	Small text links (privacy, unsubscribe).
+o	Social icons: LinkedIn primary.
+________________________________________
+4. Button Styles
+•	Primary CTA (Action):
+o	Background: Bright Blue #007BFF
+o	Text: White, Montserrat Semi-Bold, 16px
+o	Border radius: 6px
+o	Padding: 14px 28px
+•	Secondary CTA (Supportive):
+o	Background: White
+o	Border: 2px solid Primary Blue #00407B
+o	Text: Primary Blue, 16px, Montserrat Semi-Bold
+o	Border radius: 6px
+o	Padding: 14px 28px
+________________________________________
+5. Image Guidelines
+•	Style: Photo-realistic, professional, aspirational.
+•	Subjects: Life sciences professionals (diverse: Indian, Black, Asian, White), modern office or lab environments.
+•	Tone: Recognition, clarity, confidence (avoid stock clichés like people shaking hands).
+•	Format: PNG or high-res JPG, 1200px wide (Mailchimp scales down to ~600px).
+________________________________________
+6. Standard Email Modules
+•	Hero Module: Headline + supporting text + single CTA.
+•	Feature Module: 2-column layout with image + bullet list.
+•	Testimonial Module: Quote in italic, professional portrait thumbnail.
+•	CTA Banner: Full-width color block with single centered CTA.
+•	Footer Module: ComplianceWorxs logo, tagline (“AI-Powered Compliance Clarity”), contact links.
+________________________________________
+7. Example Template Structure
+Header: ComplianceWorxs logo (left)
+Hero: Headline, supporting text, CTA button
+Body Block 1: Persona-specific content (text + image split)
+Body Block 2: ROI highlight or bullet list
+CTA Banner: Bright Blue background, centered white CTA
+Footer: Links, tagline, LinkedIn icon
+________________________________________
+8. Mailchimp Theme JSON (Starter Snippet)
+{
+  "colors": {
+    "background": "#F5F7FA",
+    "text": "#333333",
+    "header": "#00407B",
+    "cta_primary_bg": "#007BFF",
+    "cta_primary_text": "#FFFFFF",
+    "cta_secondary_bg": "#FFFFFF",
+    "cta_secondary_border": "#00407B",
+    "cta_secondary_text": "#00407B"
+  },
+  "typography": {
+    "headline_font": "Montserrat, Arial, sans-serif",
+    "headline_size": "32px",
+    "headline_weight": "700",
+    "body_font": "Inter, Helvetica, sans-serif",
+    "body_size": "16px",
+    "body_weight": "400",
+    "button_font": "Montserrat, Arial, sans-serif",
+    "button_size": "16px",
+    "button_weight": "600"
+  },
+  "buttons": {
+    "border_radius": "6px",
+    "padding": "14px 28px"
+  }
+}
+________________________________________
+✅ With this kit:
+•	The CMO Agent can apply one consistent design across all 44 emails.
+•	Every CTA, font, and color aligns with ComplianceWorxs’ brand.
+•	You’ll never see mismatched templates or off-brand visuals.
+
+Here’s the Master Brief Pack Index — the single “table of contents + executive summary” your CEO Agent can ingest as the control document. Each section points to the right playbook or asset, so the agents know exactly where to look and what to execute.
+________________________________________
+📦 ComplianceWorxs Master Brief Pack Index
+Version: 1.0
+Owner: CEO Agent (SCI)
+Purpose: Centralize the Synergy Map, directives, and execution assets into one orchestrated Revenue Engine playbook.
+________________________________________
+1. 🎯 Executive Summary
+•	Core Objective: Transform siloed campaigns (ELSA, ROI Calculator, Membership Calculator, AI Agents, Memberships) into a single closed-loop Revenue Engine.
+•	Narrative: Clarity → ROI → Membership → AI Agents (Upsell).
+•	Ownership: CEO Agent is master orchestrator; all other agents follow role-specific directives.
+•	End State: Every asset drives progression, no dead ends, and revenue impact is tracked in real time.
+________________________________________
+2. 🗺️ Synergy Map Brief v1.0
+•	Funnel Phases: Attract & Diagnose → Quantify & Justify → Convert & Ascend.
+•	Entry Paths: Browser (low intent) vs Seeker (high intent).
+•	Handoff Rules: Each step has a CTA to the next.
+•	Segmentation: Rising Leader, Validation Strategist, Compliance Architect.
+•	Owned By: CEO Agent (strategic oversight).
+________________________________________
+3. 🤝 Agent Directives Pack
+•	CEO Agent (SCI): Master playbook, KPIs, reporting, risk escalation.
+•	CMO Agent: CTA Matrix, copy rewrites, persona drip campaigns, membership page alignment.
+•	CRO Agent: Dashboard schema, event definitions, weekly revenue pulse.
+•	COO Agent: Mailchimp automations, tracking events, QA loop.
+•	CCO Agent: Credibility language, snippet library, compliance-first framing.
+Format: JSON directive pack + handshake directive.
+________________________________________
+4. ⚙️ COO Automation Playbook
+•	Persona Tagging (Mailchimp).
+•	ROI → Journey triggers.
+•	Membership Calculator → tier-specific landing.
+•	Membership Purchase → welcome + upsell flows.
+•	Event schema (QuizCompleted, ROICalculated, MembershipRecommended, MembershipPurchased).
+•	GTM/DataLayer contract + SLA thresholds.
+•	QA Test Matrix + Rollback Plan.
