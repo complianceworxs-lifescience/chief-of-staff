@@ -20,6 +20,9 @@ import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
 import { dailyOrchestrator } from "./services/daily-orchestrator";
 import { policyGate } from "./services/policy-gate";
+import { COODataSanityCheck } from "./services/coo-data-sanity-check";
+import { AgentBriefingSystem } from "./services/agent-briefing-system";
+import { ContinuousOptimizationSystem } from "./services/continuous-optimization-system";
 import { 
   insertConflictSchema, 
   insertStrategicObjectiveSchema,
@@ -30,6 +33,12 @@ import {
   insertCampaignBriefSchema,
   insertBrandAssetSchema,
   insertContentAssetSchema,
+  insertAuditReportSchema,
+  insertCMOBriefingSchema,
+  insertCROBriefingSchema,
+  insertCEOBriefingSchema,
+  insertOptimizationCycleSchema,
+  insertRedFlagSchema,
   conflicts
 } from "@shared/schema";
 import { db } from "./db";
@@ -2750,6 +2759,269 @@ export async function registerRoutes(app: Express): Promise<Server> {
       scheduled_run_time: process.env.RUN_AT || "06:35",
       timezone: "UTC"
     });
+  });
+
+  // Initialize data-driven briefing services
+  const sanityChecker = new COODataSanityCheck();
+  const briefingSystem = new AgentBriefingSystem();
+  const optimizationSystem = new ContinuousOptimizationSystem();
+
+  // Data Sanity Check Routes
+  app.get("/api/sanity/latest", async (req, res) => {
+    try {
+      const latestReport = await storage.getLatestAuditReport();
+      if (!latestReport) {
+        return res.status(404).json({ message: "No audit report found" });
+      }
+      res.json(latestReport);
+    } catch (error) {
+      console.error("Error fetching latest audit report:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch audit report", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.post("/api/sanity/run", async (req, res) => {
+    try {
+      const report = await sanityChecker.performSanityCheck();
+      const savedReport = await storage.createAuditReport({
+        auditId: report.auditId,
+        auditDate: new Date(report.auditDate),
+        sampleSize: report.sampleSize,
+        customerJourneys: report.customerJourneys,
+        attributionComparison: report.attributionComparison,
+        dataQualityFlags: report.dataQualityFlags,
+        recommendations: report.recommendations,
+        overallConfidenceScore: report.overallConfidenceScore
+      });
+      console.log(`📊 Data sanity check completed: ${report.auditId} (confidence: ${report.overallConfidenceScore}%)`);
+      res.json(savedReport);
+    } catch (error) {
+      console.error("Error running sanity check:", error);
+      res.status(500).json({ 
+        message: "Failed to run sanity check", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Agent Briefing Routes
+  app.get("/api/briefings/cmo", async (req, res) => {
+    try {
+      // Check for cached briefing first
+      const latestBriefing = await storage.getLatestCMOBriefing();
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      if (latestBriefing && new Date(latestBriefing.generatedAt) > oneHourAgo) {
+        return res.json(latestBriefing);
+      }
+
+      // Generate new briefing
+      const briefing = await briefingSystem.generateCMOBriefing();
+      const latestAudit = await storage.getLatestAuditReport();
+      
+      const savedBriefing = await storage.createCMOBriefing({
+        briefingId: briefing.briefingId,
+        dataConfidence: briefing.dataConfidence,
+        top5Channels: briefing.top5Channels,
+        channelRecommendations: briefing.channelRecommendations,
+        contentStrategy: briefing.contentStrategy,
+        actionItems: briefing.actionItems,
+        nextBriefingDue: new Date(briefing.nextBriefingDue),
+        auditReportId: latestAudit?.auditId || 'unknown'
+      });
+      
+      console.log(`📈 CMO briefing generated: ${briefing.briefingId} (confidence: ${briefing.dataConfidence}%)`);
+      res.json(savedBriefing);
+    } catch (error) {
+      console.error("Error generating CMO briefing:", error);
+      res.status(500).json({ 
+        message: "Failed to generate CMO briefing", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/briefings/cro", async (req, res) => {
+    try {
+      // Check for cached briefing first
+      const latestBriefing = await storage.getLatestCROBriefing();
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      if (latestBriefing && new Date(latestBriefing.generatedAt) > oneHourAgo) {
+        return res.json(latestBriefing);
+      }
+
+      // Generate new briefing
+      const briefing = await briefingSystem.generateCROBriefing();
+      const latestAudit = await storage.getLatestAuditReport();
+      
+      const savedBriefing = await storage.createCROBriefing({
+        briefingId: briefing.briefingId,
+        dataConfidence: briefing.dataConfidence,
+        top3ContentPaths: briefing.top3ContentPaths,
+        conversionOptimization: briefing.conversionOptimization,
+        funnelAnalysis: briefing.funnelAnalysis,
+        actionItems: briefing.actionItems,
+        nextBriefingDue: new Date(briefing.nextBriefingDue),
+        auditReportId: latestAudit?.auditId || 'unknown'
+      });
+      
+      console.log(`💰 CRO briefing generated: ${briefing.briefingId} (confidence: ${briefing.dataConfidence}%)`);
+      res.json(savedBriefing);
+    } catch (error) {
+      console.error("Error generating CRO briefing:", error);
+      res.status(500).json({ 
+        message: "Failed to generate CRO briefing", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/briefings/ceo", async (req, res) => {
+    try {
+      // Check for cached briefing first
+      const latestBriefing = await storage.getLatestCEOBriefing();
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      
+      if (latestBriefing && new Date(latestBriefing.generatedAt) > oneHourAgo) {
+        return res.json(latestBriefing);
+      }
+
+      // Generate new briefing
+      const briefing = await briefingSystem.generateCEOBriefing();
+      const latestAudit = await storage.getLatestAuditReport();
+      
+      const savedBriefing = await storage.createCEOBriefing({
+        briefingId: briefing.briefingId,
+        dataConfidence: briefing.dataConfidence,
+        channelROIDashboard: briefing.channelROIDashboard,
+        strategicInsights: briefing.strategicInsights,
+        boardReadyMetrics: briefing.boardReadyMetrics,
+        actionItems: briefing.actionItems,
+        nextBriefingDue: new Date(briefing.nextBriefingDue),
+        auditReportId: latestAudit?.auditId || 'unknown'
+      });
+      
+      console.log(`👔 CEO briefing generated: ${briefing.briefingId} (confidence: ${briefing.dataConfidence}%)`);
+      res.json(savedBriefing);
+    } catch (error) {
+      console.error("Error generating CEO briefing:", error);
+      res.status(500).json({ 
+        message: "Failed to generate CEO briefing", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Optimization Cycle Routes
+  app.post("/api/optimization/cycle", async (req, res) => {
+    try {
+      const cycle = await optimizationSystem.runOptimizationCycle();
+      const savedCycle = await storage.createOptimizationCycle({
+        cycleId: cycle.cycleId,
+        endDate: new Date(cycle.endDate),
+        phase: cycle.phase,
+        guardrailsStatus: cycle.guardrailsStatus,
+        performanceMetrics: cycle.performanceMetrics,
+        optimizationActions: cycle.optimizationActions,
+        nextCycleDue: new Date(cycle.nextCycleDue)
+      });
+
+      // Store any red flags from the cycle
+      for (const flag of cycle.redFlags) {
+        await storage.createRedFlag({
+          flagId: flag.flagId,
+          type: flag.type,
+          severity: flag.severity,
+          description: flag.description,
+          affectedData: flag.affectedData,
+          recommendedActions: flag.recommendedActions,
+          autoResolved: flag.autoResolved,
+          cycleId: cycle.cycleId
+        });
+      }
+      
+      console.log(`🔧 Optimization cycle completed: ${cycle.cycleId} (status: ${cycle.guardrailsStatus})`);
+      res.json(savedCycle);
+    } catch (error) {
+      console.error("Error running optimization cycle:", error);
+      res.status(500).json({ 
+        message: "Failed to run optimization cycle", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/optimization/cycles", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const cycles = await storage.getOptimizationCycles(limit);
+      res.json(cycles);
+    } catch (error) {
+      console.error("Error fetching optimization cycles:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch optimization cycles", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.get("/api/optimization/cycles/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const cycle = await storage.getOptimizationCycle(id);
+      if (!cycle) {
+        return res.status(404).json({ message: "Optimization cycle not found" });
+      }
+      res.json(cycle);
+    } catch (error) {
+      console.error("Error fetching optimization cycle:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch optimization cycle", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Red Flags Routes
+  app.get("/api/redflags", async (req, res) => {
+    try {
+      const cycleId = req.query.cycleId as string;
+      const activeOnly = req.query.active === 'true';
+      
+      let flags;
+      if (activeOnly) {
+        flags = await storage.getActiveRedFlags();
+      } else {
+        flags = await storage.getRedFlags(cycleId);
+      }
+      
+      res.json(flags);
+    } catch (error) {
+      console.error("Error fetching red flags:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch red flags", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  app.patch("/api/redflags/:id/resolve", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const resolvedFlag = await storage.resolveRedFlag(id);
+      console.log(`🚩 Red flag resolved: ${resolvedFlag.flagId}`);
+      res.json(resolvedFlag);
+    } catch (error) {
+      console.error("Error resolving red flag:", error);
+      res.status(500).json({ 
+        message: "Failed to resolve red flag", 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
   });
 
   const httpServer = createServer(app);

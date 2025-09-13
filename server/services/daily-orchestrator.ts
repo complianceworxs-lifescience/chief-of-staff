@@ -3,6 +3,10 @@ import { AgentDispatchService } from "./agent-dispatch";
 import { odarGovernance, type ODARObservation, type ODARDiagnosis, type ODARAction, type ODARReview } from "./odar-governance";
 import { policyGate, type AIDirective, type DirectiveAssessment } from "./policy-gate";
 import { emailIngest } from "./email-ingest";
+import { COODataSanityCheck } from "./coo-data-sanity-check";
+import { AgentBriefingSystem } from "./agent-briefing-system";
+import { ContinuousOptimizationSystem } from "./continuous-optimization-system";
+import { storage } from "../storage";
 import fs from "fs/promises";
 import path from "path";
 
@@ -46,6 +50,9 @@ export class DailyOrchestrator {
   private config: OrchestrationConfig;
   private llmEngine: LLMDirectiveEngine;
   private agentDispatch: AgentDispatchService;
+  private sanityChecker: COODataSanityCheck;
+  private briefingSystem: AgentBriefingSystem;
+  private optimizationSystem: ContinuousOptimizationSystem;
   private isRunning: boolean = false;
   private scheduledTimeout?: NodeJS.Timeout;
 
@@ -61,6 +68,9 @@ export class DailyOrchestrator {
 
     this.llmEngine = new LLMDirectiveEngine();
     this.agentDispatch = new AgentDispatchService();
+    this.sanityChecker = new COODataSanityCheck();
+    this.briefingSystem = new AgentBriefingSystem();
+    this.optimizationSystem = new ContinuousOptimizationSystem();
   }
 
   async start(): Promise<void> {
@@ -120,6 +130,28 @@ export class DailyOrchestrator {
       
       if (observation.quality_score < 60) {
         throw new Error(`Data quality too low (${observation.quality_score}%). Gaps: ${observation.data_gaps.join(', ')}`);
+      }
+
+      // OBSERVE ENHANCEMENT: Run data sanity check for attribution data
+      console.log("📊 OBSERVE: Running data sanity check for attribution analysis...");
+      let sanityReport;
+      try {
+        sanityReport = await this.sanityChecker.performSanityCheck();
+        await storage.createAuditReport({
+          auditId: sanityReport.auditId,
+          auditDate: new Date(sanityReport.auditDate),
+          sampleSize: sanityReport.sampleSize,
+          customerJourneys: sanityReport.customerJourneys,
+          attributionComparison: sanityReport.attributionComparison,
+          dataQualityFlags: sanityReport.dataQualityFlags,
+          recommendations: sanityReport.recommendations,
+          overallConfidenceScore: sanityReport.overallConfidenceScore
+        });
+        console.log(`✅ Data sanity check: ${sanityReport.auditId} (confidence: ${sanityReport.overallConfidenceScore}%)`);
+      } catch (sanityError) {
+        console.error("⚠️  Data sanity check failed:", sanityError);
+        // Continue with orchestration even if sanity check fails
+        sanityReport = null;
       }
 
       // DIAGNOSE: AI analysis with business framing
@@ -196,12 +228,20 @@ export class DailyOrchestrator {
           console.log("📨 Routing approval requests...");
           await this.routeApprovalRequests(needsApproval);
         }
+
+        // ACT ENHANCEMENT: Generate data-driven agent briefings
+        console.log("📈 ACT: Generating data-driven agent briefings...");
+        await this.generateAgentBriefings(sanityReport);
       }
 
       // REVIEW: Close the loop and learn
       console.log("📊 REVIEW: Learning and adjustments...");
       const previousResults = await this.loadPreviousResults();
       const review = await odarGovernance.review(previousResults);
+
+      // REVIEW ENHANCEMENT: Run optimization cycle and monitor red flags
+      console.log("🔧 REVIEW: Running continuous optimization cycle...");
+      await this.runOptimizationCycle();
 
       // Calculate business metrics
       const businessMetrics = {
@@ -581,6 +621,130 @@ Generated automatically by ComplianceWorxs CEO Agent — ${new Date().toLocaleTi
       next_scheduled_run: this.scheduledTimeout ? "scheduled" : "none",
       status: this.isRunning ? "running" : "idle"
     };
+  }
+
+  /**
+   * Generate data-driven briefings for CMO, CRO, and CEO agents
+   */
+  private async generateAgentBriefings(sanityReport: any): Promise<void> {
+    try {
+      // Only generate briefings if we have valid sanity data
+      if (!sanityReport || sanityReport.overallConfidenceScore < 70) {
+        console.log("⚠️  Skipping briefing generation due to low data confidence");
+        return;
+      }
+
+      // Generate CMO briefing - focused on marketing channels
+      try {
+        const cmoBriefing = await this.briefingSystem.generateCMOBriefing();
+        await storage.createCMOBriefing({
+          briefingId: cmoBriefing.briefingId,
+          dataConfidence: cmoBriefing.dataConfidence,
+          top5Channels: cmoBriefing.top5Channels,
+          channelRecommendations: cmoBriefing.channelRecommendations,
+          contentStrategy: cmoBriefing.contentStrategy,
+          actionItems: cmoBriefing.actionItems,
+          nextBriefingDue: new Date(cmoBriefing.nextBriefingDue),
+          auditReportId: sanityReport.auditId
+        });
+        console.log(`📈 CMO briefing generated: ${cmoBriefing.briefingId} (${cmoBriefing.dataConfidence}% confidence)`);
+      } catch (cmoError) {
+        console.error("⚠️  CMO briefing generation failed:", cmoError);
+      }
+
+      // Generate CRO briefing - focused on conversion optimization
+      try {
+        const croBriefing = await this.briefingSystem.generateCROBriefing();
+        await storage.createCROBriefing({
+          briefingId: croBriefing.briefingId,
+          dataConfidence: croBriefing.dataConfidence,
+          top3ContentPaths: croBriefing.top3ContentPaths,
+          conversionOptimization: croBriefing.conversionOptimization,
+          funnelAnalysis: croBriefing.funnelAnalysis,
+          actionItems: croBriefing.actionItems,
+          nextBriefingDue: new Date(croBriefing.nextBriefingDue),
+          auditReportId: sanityReport.auditId
+        });
+        console.log(`💰 CRO briefing generated: ${croBriefing.briefingId} (${croBriefing.dataConfidence}% confidence)`);
+      } catch (croError) {
+        console.error("⚠️  CRO briefing generation failed:", croError);
+      }
+
+      // Generate CEO briefing - focused on strategic ROI insights
+      try {
+        const ceoBriefing = await this.briefingSystem.generateCEOBriefing();
+        await storage.createCEOBriefing({
+          briefingId: ceoBriefing.briefingId,
+          dataConfidence: ceoBriefing.dataConfidence,
+          channelROIDashboard: ceoBriefing.channelROIDashboard,
+          strategicInsights: ceoBriefing.strategicInsights,
+          boardReadyMetrics: ceoBriefing.boardReadyMetrics,
+          actionItems: ceoBriefing.actionItems,
+          nextBriefingDue: new Date(ceoBriefing.nextBriefingDue),
+          auditReportId: sanityReport.auditId
+        });
+        console.log(`👔 CEO briefing generated: ${ceoBriefing.briefingId} (${ceoBriefing.dataConfidence}% confidence)`);
+      } catch (ceoError) {
+        console.error("⚠️  CEO briefing generation failed:", ceoError);
+      }
+
+    } catch (error) {
+      console.error("⚠️  Agent briefing generation failed:", error);
+    }
+  }
+
+  /**
+   * Run continuous optimization cycle and handle red flags
+   */
+  private async runOptimizationCycle(): Promise<void> {
+    try {
+      console.log("🔧 Running optimization cycle with guardrails...");
+      const cycle = await this.optimizationSystem.runOptimizationCycle();
+      
+      // Store the optimization cycle
+      const savedCycle = await storage.createOptimizationCycle({
+        cycleId: cycle.cycleId,
+        endDate: new Date(cycle.endDate),
+        phase: cycle.phase,
+        guardrailsStatus: cycle.guardrailsStatus,
+        performanceMetrics: cycle.performanceMetrics,
+        optimizationActions: cycle.optimizationActions,
+        nextCycleDue: new Date(cycle.nextCycleDue)
+      });
+
+      console.log(`✅ Optimization cycle: ${cycle.cycleId} (status: ${cycle.guardrailsStatus})`);
+
+      // Handle red flags from the cycle
+      for (const flag of cycle.redFlags) {
+        try {
+          await storage.createRedFlag({
+            flagId: flag.flagId,
+            type: flag.type,
+            severity: flag.severity,
+            description: flag.description,
+            affectedData: flag.affectedData,
+            recommendedActions: flag.recommendedActions,
+            autoResolved: flag.autoResolved,
+            cycleId: cycle.cycleId
+          });
+
+          // Log critical red flags
+          if (flag.severity === 'critical' || flag.severity === 'high') {
+            console.log(`🚩 ${flag.severity.toUpperCase()} RED FLAG: ${flag.description}`);
+          }
+        } catch (flagError) {
+          console.error("⚠️  Failed to store red flag:", flagError);
+        }
+      }
+
+      // Log optimization actions summary
+      const autoActions = cycle.optimizationActions.filter(a => a.approved).length;
+      const pendingActions = cycle.optimizationActions.filter(a => !a.approved).length;
+      console.log(`🎯 Optimization: ${autoActions} auto-executed, ${pendingActions} need approval`);
+
+    } catch (error) {
+      console.error("⚠️  Optimization cycle failed:", error);
+    }
   }
 }
 

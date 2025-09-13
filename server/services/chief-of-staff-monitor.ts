@@ -1,4 +1,5 @@
 import { storage } from '../storage.js';
+import type { RedFlag, OptimizationCycle, AuditReport } from '../../shared/schema.js';
 
 /**
  * Chief of Staff Monitoring System
@@ -288,13 +289,19 @@ export class ChiefOfStaffMonitor {
     const issues = this.getTodayIssues();
     const escalations = this.getTodayEscalations();
 
+    // Fetch red flags and optimization status
+    const redFlagsStatus = await this.getRedFlagsStatus();
+    const optimizationStatus = await this.getOptimizationStatus();
+
     const report = [
       'COS-DAILY:',
       `- Delivery: ${delivered}/${totalScheduled} on-time (${((delivered / totalScheduled) * 100).toFixed(0)}%)`,
       `- Commentary present: ${delivered}/${totalScheduled} (${commentaryRate.toFixed(0)}%)`,
       `- Issues: ${issues.length > 0 ? issues.join(', ') : 'none'} | Escalations: ${escalations}`,
       `- Changes today: ${this.getTodayChanges()}`,
-      `- Risks: ${this.getIdentifiedRisks()}`
+      `- Risks: ${this.getIdentifiedRisks()}`,
+      `- Data Health: ${redFlagsStatus}`,
+      `- Optimization: ${optimizationStatus}`
     ].join('\n');
 
     console.log('📊 CHIEF OF STAFF DAILY REPORT:');
@@ -406,6 +413,69 @@ export class ChiefOfStaffMonitor {
       status: issues.length === 0 ? 'ok' : 'issues',
       details: issues
     };
+  }
+
+  /**
+   * Get current red flags status for Chief of Staff report
+   */
+  private async getRedFlagsStatus(): Promise<string> {
+    try {
+      const redFlags = await storage.getRedFlags();
+      const today = new Date().toDateString();
+      const todayFlags = redFlags.filter(flag => 
+        new Date(flag.detectedAt).toDateString() === today
+      );
+
+      if (todayFlags.length === 0) {
+        return "✅ No red flags detected";
+      }
+
+      const criticalFlags = todayFlags.filter(flag => flag.severity === 'critical');
+      const highFlags = todayFlags.filter(flag => flag.severity === 'high');
+      const autoResolved = todayFlags.filter(flag => flag.autoResolved).length;
+
+      if (criticalFlags.length > 0) {
+        return `🚨 ${criticalFlags.length} critical flags, ${highFlags.length} high severity`;
+      } else if (highFlags.length > 0) {
+        return `⚠️ ${highFlags.length} high severity flags (${autoResolved} auto-resolved)`;
+      } else {
+        return `ℹ️ ${todayFlags.length} minor flags (${autoResolved} auto-resolved)`;
+      }
+    } catch (error) {
+      console.error('Failed to get red flags status:', error);
+      return "❓ Red flags status unavailable";
+    }
+  }
+
+  /**
+   * Get current optimization status for Chief of Staff report
+   */
+  private async getOptimizationStatus(): Promise<string> {
+    try {
+      const cycles = await storage.getOptimizationCycles();
+      if (cycles.length === 0) {
+        return "⏳ No optimization cycles run";
+      }
+
+      // Get the latest cycle
+      const latest = cycles.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+
+      const autoActions = latest.optimizationActions.filter(a => a.approved).length;
+      const pendingActions = latest.optimizationActions.filter(a => !a.approved).length;
+
+      if (latest.guardrailsStatus === 'healthy') {
+        return `🎯 Cycle ${latest.cycleId}: ${autoActions} actions executed, ${pendingActions} pending`;
+      } else if (latest.guardrailsStatus === 'cautious') {
+        return `⚠️ Cycle ${latest.cycleId}: cautious mode, ${pendingActions} actions need approval`;
+      } else {
+        return `🛑 Cycle ${latest.cycleId}: guardrails triggered, optimization paused`;
+      }
+    } catch (error) {
+      console.error('Failed to get optimization status:', error);
+      return "❓ Optimization status unavailable";
+    }
   }
 }
 

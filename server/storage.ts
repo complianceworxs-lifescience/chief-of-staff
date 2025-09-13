@@ -47,6 +47,18 @@ import {
   type InsertProject,
   type AbTest,
   type InsertAbTest,
+  type AuditReport,
+  type InsertAuditReport,
+  type CMOBriefing,
+  type InsertCMOBriefing,
+  type CROBriefing,
+  type InsertCROBriefing,
+  type CEOBriefing,
+  type InsertCEOBriefing,
+  type OptimizationCycle,
+  type InsertOptimizationCycle,
+  type RedFlag,
+  type InsertRedFlag,
   agents,
   conflicts,
   strategicObjectives,
@@ -70,7 +82,13 @@ import {
   strategicPlans,
   partners,
   projects,
-  abTests
+  abTests,
+  auditReports,
+  cmoBriefings,
+  croBriefings,
+  ceoBriefings,
+  optimizationCycles,
+  redFlags
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -212,6 +230,46 @@ export interface IStorage {
   getAbTests(): Promise<AbTest[]>;
   getActiveAbTests(): Promise<AbTest[]>;
   updateAbTest(id: string, updates: Partial<AbTest>): Promise<AbTest>;
+
+  // Data-Driven Agent Briefing and Optimization
+  // Audit Reports
+  createAuditReport(report: InsertAuditReport): Promise<AuditReport>;
+  getLatestAuditReport(): Promise<AuditReport | undefined>;
+  getAuditReports(limit?: number): Promise<AuditReport[]>;
+  getAuditReport(id: string): Promise<AuditReport | undefined>;
+  
+  // CMO Briefings
+  createCMOBriefing(briefing: InsertCMOBriefing): Promise<CMOBriefing>;
+  getLatestCMOBriefing(): Promise<CMOBriefing | undefined>;
+  getCMOBriefings(limit?: number): Promise<CMOBriefing[]>;
+  getCMOBriefing(id: string): Promise<CMOBriefing | undefined>;
+  
+  // CRO Briefings
+  createCROBriefing(briefing: InsertCROBriefing): Promise<CROBriefing>;
+  getLatestCROBriefing(): Promise<CROBriefing | undefined>;
+  getCROBriefings(limit?: number): Promise<CROBriefing[]>;
+  getCROBriefing(id: string): Promise<CROBriefing | undefined>;
+  
+  // CEO Briefings
+  createCEOBriefing(briefing: InsertCEOBriefing): Promise<CEOBriefing>;
+  getLatestCEOBriefing(): Promise<CEOBriefing | undefined>;
+  getCEOBriefings(limit?: number): Promise<CEOBriefing[]>;
+  getCEOBriefing(id: string): Promise<CEOBriefing | undefined>;
+  
+  // Optimization Cycles
+  createOptimizationCycle(cycle: InsertOptimizationCycle): Promise<OptimizationCycle>;
+  getLatestOptimizationCycle(): Promise<OptimizationCycle | undefined>;
+  getOptimizationCycles(limit?: number): Promise<OptimizationCycle[]>;
+  getOptimizationCycle(id: string): Promise<OptimizationCycle | undefined>;
+  updateOptimizationCycle(id: string, updates: Partial<OptimizationCycle>): Promise<OptimizationCycle>;
+  
+  // Red Flags
+  createRedFlag(flag: InsertRedFlag): Promise<RedFlag>;
+  getActiveRedFlags(): Promise<RedFlag[]>;
+  getRedFlags(cycleId?: string): Promise<RedFlag[]>;
+  getRedFlag(id: string): Promise<RedFlag | undefined>;
+  updateRedFlag(id: string, updates: Partial<RedFlag>): Promise<RedFlag>;
+  resolveRedFlag(id: string): Promise<RedFlag>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1001,6 +1059,192 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.update(abTests)
       .set(updates)
       .where(eq(abTests.id, id))
+      .returning();
+    return result;
+  }
+
+  // Data-Driven Agent Briefing and Optimization Methods
+  // Audit Reports Methods
+  async createAuditReport(report: InsertAuditReport): Promise<AuditReport> {
+    const [result] = await db.insert(auditReports).values(report).returning();
+    return result;
+  }
+
+  async getLatestAuditReport(): Promise<AuditReport | undefined> {
+    const [result] = await db.select().from(auditReports)
+      .orderBy(desc(auditReports.auditDate))
+      .limit(1);
+    return result;
+  }
+
+  async getAuditReports(limit = 10): Promise<AuditReport[]> {
+    return await db.select().from(auditReports)
+      .orderBy(desc(auditReports.auditDate))
+      .limit(limit);
+  }
+
+  async getAuditReport(id: string): Promise<AuditReport | undefined> {
+    const [result] = await db.select().from(auditReports)
+      .where(eq(auditReports.id, id))
+      .limit(1);
+    return result;
+  }
+
+  // CMO Briefings Methods
+  async createCMOBriefing(briefing: InsertCMOBriefing): Promise<CMOBriefing> {
+    const [result] = await db.insert(cmoBriefings).values(briefing).returning();
+    return result;
+  }
+
+  async getLatestCMOBriefing(): Promise<CMOBriefing | undefined> {
+    const [result] = await db.select().from(cmoBriefings)
+      .orderBy(desc(cmoBriefings.generatedAt))
+      .limit(1);
+    return result;
+  }
+
+  async getCMOBriefings(limit = 10): Promise<CMOBriefing[]> {
+    return await db.select().from(cmoBriefings)
+      .orderBy(desc(cmoBriefings.generatedAt))
+      .limit(limit);
+  }
+
+  async getCMOBriefing(id: string): Promise<CMOBriefing | undefined> {
+    const [result] = await db.select().from(cmoBriefings)
+      .where(eq(cmoBriefings.id, id))
+      .limit(1);
+    return result;
+  }
+
+  // CRO Briefings Methods
+  async createCROBriefing(briefing: InsertCROBriefing): Promise<CROBriefing> {
+    const [result] = await db.insert(croBriefings).values(briefing).returning();
+    return result;
+  }
+
+  async getLatestCROBriefing(): Promise<CROBriefing | undefined> {
+    const [result] = await db.select().from(croBriefings)
+      .orderBy(desc(croBriefings.generatedAt))
+      .limit(1);
+    return result;
+  }
+
+  async getCROBriefings(limit = 10): Promise<CROBriefing[]> {
+    return await db.select().from(croBriefings)
+      .orderBy(desc(croBriefings.generatedAt))
+      .limit(limit);
+  }
+
+  async getCROBriefing(id: string): Promise<CROBriefing | undefined> {
+    const [result] = await db.select().from(croBriefings)
+      .where(eq(croBriefings.id, id))
+      .limit(1);
+    return result;
+  }
+
+  // CEO Briefings Methods
+  async createCEOBriefing(briefing: InsertCEOBriefing): Promise<CEOBriefing> {
+    const [result] = await db.insert(ceoBriefings).values(briefing).returning();
+    return result;
+  }
+
+  async getLatestCEOBriefing(): Promise<CEOBriefing | undefined> {
+    const [result] = await db.select().from(ceoBriefings)
+      .orderBy(desc(ceoBriefings.generatedAt))
+      .limit(1);
+    return result;
+  }
+
+  async getCEOBriefings(limit = 10): Promise<CEOBriefing[]> {
+    return await db.select().from(ceoBriefings)
+      .orderBy(desc(ceoBriefings.generatedAt))
+      .limit(limit);
+  }
+
+  async getCEOBriefing(id: string): Promise<CEOBriefing | undefined> {
+    const [result] = await db.select().from(ceoBriefings)
+      .where(eq(ceoBriefings.id, id))
+      .limit(1);
+    return result;
+  }
+
+  // Optimization Cycles Methods
+  async createOptimizationCycle(cycle: InsertOptimizationCycle): Promise<OptimizationCycle> {
+    const [result] = await db.insert(optimizationCycles).values(cycle).returning();
+    return result;
+  }
+
+  async getLatestOptimizationCycle(): Promise<OptimizationCycle | undefined> {
+    const [result] = await db.select().from(optimizationCycles)
+      .orderBy(desc(optimizationCycles.startDate))
+      .limit(1);
+    return result;
+  }
+
+  async getOptimizationCycles(limit = 10): Promise<OptimizationCycle[]> {
+    return await db.select().from(optimizationCycles)
+      .orderBy(desc(optimizationCycles.startDate))
+      .limit(limit);
+  }
+
+  async getOptimizationCycle(id: string): Promise<OptimizationCycle | undefined> {
+    const [result] = await db.select().from(optimizationCycles)
+      .where(eq(optimizationCycles.id, id))
+      .limit(1);
+    return result;
+  }
+
+  async updateOptimizationCycle(id: string, updates: Partial<OptimizationCycle>): Promise<OptimizationCycle> {
+    const [result] = await db.update(optimizationCycles)
+      .set(updates)
+      .where(eq(optimizationCycles.id, id))
+      .returning();
+    return result;
+  }
+
+  // Red Flags Methods
+  async createRedFlag(flag: InsertRedFlag): Promise<RedFlag> {
+    const [result] = await db.insert(redFlags).values(flag).returning();
+    return result;
+  }
+
+  async getActiveRedFlags(): Promise<RedFlag[]> {
+    return await db.select().from(redFlags)
+      .where(eq(redFlags.autoResolved, false))
+      .orderBy(desc(redFlags.detectedAt));
+  }
+
+  async getRedFlags(cycleId?: string): Promise<RedFlag[]> {
+    const query = db.select().from(redFlags);
+    if (cycleId) {
+      return await query.where(eq(redFlags.cycleId, cycleId))
+        .orderBy(desc(redFlags.detectedAt));
+    }
+    return await query.orderBy(desc(redFlags.detectedAt));
+  }
+
+  async getRedFlag(id: string): Promise<RedFlag | undefined> {
+    const [result] = await db.select().from(redFlags)
+      .where(eq(redFlags.id, id))
+      .limit(1);
+    return result;
+  }
+
+  async updateRedFlag(id: string, updates: Partial<RedFlag>): Promise<RedFlag> {
+    const [result] = await db.update(redFlags)
+      .set(updates)
+      .where(eq(redFlags.id, id))
+      .returning();
+    return result;
+  }
+
+  async resolveRedFlag(id: string): Promise<RedFlag> {
+    const [result] = await db.update(redFlags)
+      .set({ 
+        autoResolved: true, 
+        resolvedAt: new Date() 
+      })
+      .where(eq(redFlags.id, id))
       .returning();
     return result;
   }

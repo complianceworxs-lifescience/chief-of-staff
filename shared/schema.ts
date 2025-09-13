@@ -483,7 +483,160 @@ export const abTests = pgTable("ab_tests", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Data Sanity Check and Agent Briefing Tables
+export const auditReports = pgTable("audit_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  auditId: text("audit_id").notNull().unique(),
+  auditDate: timestamp("audit_date").defaultNow().notNull(),
+  sampleSize: integer("sample_size").notNull(),
+  customerJourneys: json("customer_journeys").$type<any[]>().notNull(),
+  attributionComparison: json("attribution_comparison").$type<any[]>().notNull(),
+  dataQualityFlags: json("data_quality_flags").$type<{
+    missingTouchpoints: number;
+    duplicateEvents: number;
+    sessionStitchingErrors: number;
+    attributionDiscrepancies: number;
+  }>().notNull(),
+  recommendations: json("recommendations").$type<string[]>().notNull(),
+  overallConfidenceScore: integer("overall_confidence_score").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const cmoBriefings = pgTable("cmo_briefings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  briefingId: text("briefing_id").notNull().unique(),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  dataConfidence: integer("data_confidence").notNull(),
+  top5Channels: json("top5_channels").$type<any[]>().notNull(),
+  channelRecommendations: json("channel_recommendations").$type<{
+    doubleDown: string[];
+    investigate: string[];
+    pause: string[];
+  }>().notNull(),
+  contentStrategy: json("content_strategy").$type<{
+    highPerformingTopics: string[];
+    underperformingAreas: string[];
+    gapAnalysis: string[];
+  }>().notNull(),
+  actionItems: json("action_items").$type<string[]>().notNull(),
+  nextBriefingDue: timestamp("next_briefing_due").notNull(),
+  auditReportId: text("audit_report_id").notNull(),
+});
+
+export const croBriefings = pgTable("cro_briefings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  briefingId: text("briefing_id").notNull().unique(),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  dataConfidence: integer("data_confidence").notNull(),
+  top3ContentPaths: json("top3_content_paths").$type<any[]>().notNull(),
+  conversionOptimization: json("conversion_optimization").$type<{
+    highImpactTests: Array<{
+      testType: 'landing_page' | 'email' | 'flow';
+      description: string;
+      expectedImpact: number;
+      effort: 'low' | 'medium' | 'high';
+    }>;
+    quickWins: string[];
+    longTermProjects: string[];
+  }>().notNull(),
+  funnelAnalysis: json("funnel_analysis").$type<{
+    dropoffPoints: Array<{
+      step: string;
+      dropoffRate: number;
+      opportunity: number;
+    }>;
+    improvements: string[];
+  }>().notNull(),
+  actionItems: json("action_items").$type<string[]>().notNull(),
+  nextBriefingDue: timestamp("next_briefing_due").notNull(),
+  auditReportId: text("audit_report_id").notNull(),
+});
+
+export const ceoBriefings = pgTable("ceo_briefings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  briefingId: text("briefing_id").notNull().unique(),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  dataConfidence: integer("data_confidence").notNull(),
+  channelROIDashboard: json("channel_roi_dashboard").$type<{
+    topPerformers: Array<{
+      channel: string;
+      spend: number;
+      revenue: number;
+      roi: number;
+      trend: string;
+    }>;
+    portfolioHealth: {
+      diversificationScore: number;
+      riskAssessment: string;
+      sustainabilityRating: 'high' | 'medium' | 'low';
+    };
+    competitivePosition: {
+      marketShare: number;
+      growthRate: number;
+      efficiency: number;
+    };
+  }>().notNull(),
+  strategicInsights: json("strategic_insights").$type<{
+    opportunities: string[];
+    threats: string[];
+    recommendations: string[];
+  }>().notNull(),
+  boardReadyMetrics: json("board_ready_metrics").$type<{
+    totalROI: number;
+    costPerAcquisition: number;
+    customerLifetimeValue: number;
+    paybackPeriod: number;
+  }>().notNull(),
+  actionItems: json("action_items").$type<string[]>().notNull(),
+  nextBriefingDue: timestamp("next_briefing_due").notNull(),
+  auditReportId: text("audit_report_id").notNull(),
+});
+
+export const optimizationCycles = pgTable("optimization_cycles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  cycleId: text("cycle_id").notNull().unique(),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date").notNull(),
+  phase: text("phase").notNull(),
+  guardrailsStatus: text("guardrails_status").notNull(), // "compliant", "warning", "violation"
+  performanceMetrics: json("performance_metrics").$type<{
+    dataQuality: number;
+    attributionConfidence: number;
+    conversionVolume: number;
+    systemHealth: number;
+  }>().notNull(),
+  optimizationActions: json("optimization_actions").$type<Array<{
+    action: string;
+    impact: number;
+    approved: boolean;
+    executedAt?: string;
+  }>>().notNull(),
+  nextCycleDue: timestamp("next_cycle_due").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const redFlags = pgTable("red_flags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  flagId: text("flag_id").notNull().unique(),
+  type: text("type").notNull(), // "data_sparsity", "cookie_loss", "direct_traffic_anomaly", "attribution_error", "collection_failure"
+  severity: text("severity").notNull(), // "low", "medium", "high", "critical"
+  description: text("description").notNull(),
+  detectedAt: timestamp("detected_at").defaultNow().notNull(),
+  affectedData: json("affected_data").$type<string[]>().notNull(),
+  recommendedActions: json("recommended_actions").$type<string[]>().notNull(),
+  autoResolved: boolean("auto_resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  cycleId: text("cycle_id"), // link to optimization cycle
+});
+
 // Insert schemas for new tables
+export const insertAuditReportSchema = createInsertSchema(auditReports).omit({ id: true, createdAt: true });
+export const insertCMOBriefingSchema = createInsertSchema(cmoBriefings).omit({ id: true, generatedAt: true });
+export const insertCROBriefingSchema = createInsertSchema(croBriefings).omit({ id: true, generatedAt: true });
+export const insertCEOBriefingSchema = createInsertSchema(ceoBriefings).omit({ id: true, generatedAt: true });
+export const insertOptimizationCycleSchema = createInsertSchema(optimizationCycles).omit({ id: true, startDate: true, createdAt: true });
+export const insertRedFlagSchema = createInsertSchema(redFlags).omit({ id: true, detectedAt: true });
+
 export const insertMarketSignalSchema = createInsertSchema(marketSignals).omit({ id: true, flaggedAt: true });
 export const insertStrategicPlanSchema = createInsertSchema(strategicPlans).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertPartnerSchema = createInsertSchema(partners).omit({ id: true, lastActive: true, joinedAt: true });
@@ -554,3 +707,17 @@ export type BrandAsset = typeof brandAssets.$inferSelect;
 export type InsertBrandAsset = z.infer<typeof insertBrandAssetSchema>;
 export type ContentAsset = typeof contentAssets.$inferSelect;
 export type InsertContentAsset = z.infer<typeof insertContentAssetSchema>;
+
+// Data-Driven Agent Briefing Types
+export type AuditReport = typeof auditReports.$inferSelect;
+export type InsertAuditReport = z.infer<typeof insertAuditReportSchema>;
+export type CMOBriefing = typeof cmoBriefings.$inferSelect;
+export type InsertCMOBriefing = z.infer<typeof insertCMOBriefingSchema>;
+export type CROBriefing = typeof croBriefings.$inferSelect;
+export type InsertCROBriefing = z.infer<typeof insertCROBriefingSchema>;
+export type CEOBriefing = typeof ceoBriefings.$inferSelect;
+export type InsertCEOBriefing = z.infer<typeof insertCEOBriefingSchema>;
+export type OptimizationCycle = typeof optimizationCycles.$inferSelect;
+export type InsertOptimizationCycle = z.infer<typeof insertOptimizationCycleSchema>;
+export type RedFlag = typeof redFlags.$inferSelect;
+export type InsertRedFlag = z.infer<typeof insertRedFlagSchema>;
