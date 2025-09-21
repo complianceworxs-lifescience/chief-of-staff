@@ -59,6 +59,12 @@ import {
   type InsertOptimizationCycle,
   type RedFlag,
   type InsertRedFlag,
+  type ZeroCostProposal,
+  type InsertZeroCostProposal,
+  type ZeroCostAdoption,
+  type InsertZeroCostAdoption,
+  type ZeroCostAuditLog,
+  type InsertZeroCostAuditLog,
   agents,
   conflicts,
   strategicObjectives,
@@ -88,7 +94,10 @@ import {
   croBriefings,
   ceoBriefings,
   optimizationCycles,
-  redFlags
+  redFlags,
+  zeroCostProposals,
+  zeroCostAdoptions,
+  zeroCostAuditLog
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -270,6 +279,20 @@ export interface IStorage {
   getRedFlag(id: string): Promise<RedFlag | undefined>;
   updateRedFlag(id: string, updates: Partial<RedFlag>): Promise<RedFlag>;
   resolveRedFlag(id: string): Promise<RedFlag>;
+
+  // Zero-Cost Enhancement Methods
+  createZeroCostProposal(proposal: InsertZeroCostProposal): Promise<ZeroCostProposal>;
+  getZeroCostProposals(status?: string): Promise<ZeroCostProposal[]>;
+  getZeroCostProposal(proposalId: string): Promise<ZeroCostProposal | undefined>;
+  updateZeroCostProposal(proposalId: string, updates: Partial<ZeroCostProposal>): Promise<ZeroCostProposal>;
+  
+  createZeroCostAdoption(adoption: InsertZeroCostAdoption): Promise<ZeroCostAdoption>;
+  getZeroCostAdoptions(limit?: number): Promise<ZeroCostAdoption[]>;
+  getZeroCostAdoption(adoptionId: string): Promise<ZeroCostAdoption | undefined>;
+  
+  createZeroCostAuditLog(log: InsertZeroCostAuditLog): Promise<ZeroCostAuditLog>;
+  getZeroCostAuditLogs(proposalId?: string, limit?: number): Promise<ZeroCostAuditLog[]>;
+  getZeroCostAuditLog(auditId: string): Promise<ZeroCostAuditLog | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1283,6 +1306,77 @@ export class DatabaseStorage implements IStorage {
     return this.actionRecords
       .sort((a, b) => new Date(b.created_ts || b.created_at).getTime() - new Date(a.created_ts || a.created_at).getTime())
       .slice(0, limit);
+  }
+
+  // Zero-Cost Enhancement Methods Implementation
+  async createZeroCostProposal(proposal: InsertZeroCostProposal): Promise<ZeroCostProposal> {
+    const [result] = await db.insert(zeroCostProposals).values(proposal).returning();
+    return result;
+  }
+
+  async getZeroCostProposals(status?: string): Promise<ZeroCostProposal[]> {
+    const query = db.select().from(zeroCostProposals);
+    if (status) {
+      return await query.where(eq(zeroCostProposals.status, status))
+        .orderBy(desc(zeroCostProposals.createdAt));
+    }
+    return await query.orderBy(desc(zeroCostProposals.createdAt));
+  }
+
+  async getZeroCostProposal(proposalId: string): Promise<ZeroCostProposal | undefined> {
+    const [result] = await db.select().from(zeroCostProposals)
+      .where(eq(zeroCostProposals.proposalId, proposalId))
+      .limit(1);
+    return result;
+  }
+
+  async updateZeroCostProposal(proposalId: string, updates: Partial<ZeroCostProposal>): Promise<ZeroCostProposal> {
+    const [result] = await db.update(zeroCostProposals)
+      .set(updates)
+      .where(eq(zeroCostProposals.proposalId, proposalId))
+      .returning();
+    return result;
+  }
+
+  async createZeroCostAdoption(adoption: InsertZeroCostAdoption): Promise<ZeroCostAdoption> {
+    const [result] = await db.insert(zeroCostAdoptions).values(adoption).returning();
+    return result;
+  }
+
+  async getZeroCostAdoptions(limit = 10): Promise<ZeroCostAdoption[]> {
+    return await db.select().from(zeroCostAdoptions)
+      .orderBy(desc(zeroCostAdoptions.deployedAt))
+      .limit(limit);
+  }
+
+  async getZeroCostAdoption(adoptionId: string): Promise<ZeroCostAdoption | undefined> {
+    const [result] = await db.select().from(zeroCostAdoptions)
+      .where(eq(zeroCostAdoptions.adoptionId, adoptionId))
+      .limit(1);
+    return result;
+  }
+
+  async createZeroCostAuditLog(log: InsertZeroCostAuditLog): Promise<ZeroCostAuditLog> {
+    const [result] = await db.insert(zeroCostAuditLog).values(log).returning();
+    return result;
+  }
+
+  async getZeroCostAuditLogs(proposalId?: string, limit = 20): Promise<ZeroCostAuditLog[]> {
+    const query = db.select().from(zeroCostAuditLog);
+    if (proposalId) {
+      return await query.where(eq(zeroCostAuditLog.proposalId, proposalId))
+        .orderBy(desc(zeroCostAuditLog.actionAt))
+        .limit(limit);
+    }
+    return await query.orderBy(desc(zeroCostAuditLog.actionAt))
+      .limit(limit);
+  }
+
+  async getZeroCostAuditLog(auditId: string): Promise<ZeroCostAuditLog | undefined> {
+    const [result] = await db.select().from(zeroCostAuditLog)
+      .where(eq(zeroCostAuditLog.auditId, auditId))
+      .limit(1);
+    return result;
   }
 }
 

@@ -629,6 +629,110 @@ export const redFlags = pgTable("red_flags", {
   cycleId: text("cycle_id"), // link to optimization cycle
 });
 
+// COO Zero-Cost Enhancement Tables
+export const zeroCostProposals = pgTable("zero_cost_proposals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  proposalId: text("proposal_id").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // "workflow_optimization", "duplicate_processing", "idle_cycles", "log_management", "task_sequencing", "function_merging"
+  currentInefficiency: json("current_inefficiency").$type<{
+    type: string;
+    description: string;
+    frequency: string;
+    estimatedWasteHours: number;
+  }>().notNull(),
+  proposedSolution: json("proposed_solution").$type<{
+    approach: string;
+    implementation: string[];
+    estimatedEfficiencyGain: number;
+  }>().notNull(),
+  sandboxTestResults: json("sandbox_test_results").$type<{
+    testDate: string;
+    baselineMetrics: Record<string, number>;
+    testMetrics: Record<string, number>;
+    performanceDelta: number;
+    reliability: number;
+    riskAssessment: string;
+  }>(),
+  projectedImpact: json("projected_impact").$type<{
+    efficiencyImprovement: number;
+    timeReduction: number;
+    resourceSavings: number;
+    reliabilityIncrease: number;
+  }>().notNull(),
+  priority: text("priority").notNull(), // "low", "medium", "high", "critical"
+  status: text("status").notNull().default("proposed"), // "proposed", "testing", "ready_for_approval", "approved", "rejected"
+  detectedBy: text("detected_by").notNull().default("COO"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  rejectionReason: text("rejection_reason"),
+});
+
+export const zeroCostAdoptions = pgTable("zero_cost_adoptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adoptionId: text("adoption_id").notNull().unique(),
+  proposalId: text("proposal_id").references(() => zeroCostProposals.proposalId).notNull(),
+  title: text("title").notNull(),
+  deployedAt: timestamp("deployed_at").defaultNow().notNull(),
+  deploymentMethod: text("deployment_method").notNull(),
+  preDeploymentMetrics: json("pre_deployment_metrics").$type<Record<string, number>>().notNull(),
+  postDeploymentMetrics: json("post_deployment_metrics").$type<Record<string, number>>().notNull(),
+  actualPerformanceImprovement: json("actual_performance_improvement").$type<{
+    efficiencyGain: number;
+    timeReduction: number;
+    resourceSavings: number;
+    reliabilityIncrease: number;
+  }>().notNull(),
+  revenueAlignment: json("revenue_alignment").$type<{
+    ceoApproved: boolean;
+    alignmentScore: number;
+    revenueImpact: number;
+    strategicBenefit: string;
+  }>().notNull(),
+  complianceCheck: json("compliance_check").$type<{
+    ccoValidated: boolean;
+    dataIntegrityImpact: string;
+    complianceRisk: string;
+  }>().notNull(),
+  rollbackPlan: json("rollback_plan").$type<{
+    canRollback: boolean;
+    rollbackSteps: string[];
+    rollbackTime: number;
+  }>().notNull(),
+  monthlyImpact: json("monthly_impact").$type<{
+    efficiencyHoursGained: number;
+    costSavingsUSD: number;
+    systemHealthImprovement: number;
+  }>().notNull(),
+  createdBy: text("created_by").notNull().default("COO"),
+  approvedBy: text("approved_by").notNull(),
+});
+
+export const zeroCostAuditLog = pgTable("zero_cost_audit_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  auditId: text("audit_id").notNull().unique(),
+  proposalId: text("proposal_id").references(() => zeroCostProposals.proposalId).notNull(),
+  action: text("action").notNull(), // "proposed", "tested", "approved", "deployed", "rejected", "failed", "rolled_back"
+  actionBy: text("action_by").notNull(),
+  actionAt: timestamp("action_at").defaultNow().notNull(),
+  reason: text("reason").notNull(),
+  details: json("details").$type<Record<string, any>>().notNull(),
+  impact: json("impact").$type<{
+    performance: number;
+    reliability: number;
+    efficiency: number;
+  }>(),
+  notes: text("notes"),
+  traceabilityChain: json("traceability_chain").$type<string[]>().notNull(),
+});
+
+// Zero-cost enhancement insert schemas
+export const insertZeroCostProposalSchema = createInsertSchema(zeroCostProposals).omit({ id: true, createdAt: true });
+export const insertZeroCostAdoptionSchema = createInsertSchema(zeroCostAdoptions).omit({ id: true, deployedAt: true });
+export const insertZeroCostAuditLogSchema = createInsertSchema(zeroCostAuditLog).omit({ id: true, actionAt: true });
+
 // Insert schemas for new tables
 export const insertAuditReportSchema = createInsertSchema(auditReports).omit({ id: true, createdAt: true });
 export const insertCMOBriefingSchema = createInsertSchema(cmoBriefings).omit({ id: true, generatedAt: true });
@@ -721,3 +825,11 @@ export type OptimizationCycle = typeof optimizationCycles.$inferSelect;
 export type InsertOptimizationCycle = z.infer<typeof insertOptimizationCycleSchema>;
 export type RedFlag = typeof redFlags.$inferSelect;
 export type InsertRedFlag = z.infer<typeof insertRedFlagSchema>;
+
+// Zero-Cost Enhancement Types
+export type ZeroCostProposal = typeof zeroCostProposals.$inferSelect;
+export type InsertZeroCostProposal = z.infer<typeof insertZeroCostProposalSchema>;
+export type ZeroCostAdoption = typeof zeroCostAdoptions.$inferSelect;
+export type InsertZeroCostAdoption = z.infer<typeof insertZeroCostAdoptionSchema>;
+export type ZeroCostAuditLog = typeof zeroCostAuditLog.$inferSelect;
+export type InsertZeroCostAuditLog = z.infer<typeof insertZeroCostAuditLogSchema>;

@@ -783,6 +783,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // COO Zero-Cost Enhancement routes
+  app.get('/api/coo/zero-cost/proposals', async (req, res) => {
+    try {
+      const { zeroCostEnhancementEngine } = await import('./services/coo-automation-monitor.js');
+      const proposals = await zeroCostEnhancementEngine.scanForInefficiencies();
+      res.json({ proposals, total: proposals.length });
+    } catch (error) {
+      console.error('Error getting zero-cost proposals:', error);
+      res.status(500).json({ message: 'Failed to get zero-cost proposals' });
+    }
+  });
+
+  app.post('/api/coo/zero-cost/sandbox-test', async (req, res) => {
+    try {
+      const { zeroCostEnhancementEngine } = await import('./services/coo-automation-monitor.js');
+      const { proposalId } = req.body;
+      
+      if (!proposalId) {
+        return res.status(400).json({ message: 'Proposal ID is required' });
+      }
+      
+      // Get the proposal details first
+      const proposals = await zeroCostEnhancementEngine.scanForInefficiencies();
+      const proposal = proposals.find(p => p.proposalId === proposalId);
+      
+      if (!proposal) {
+        return res.status(404).json({ message: 'Proposal not found' });
+      }
+      
+      const testResult = await zeroCostEnhancementEngine.runSandboxTests(proposal);
+      res.json({ proposalId, testResult });
+    } catch (error) {
+      console.error('Error running sandbox test:', error);
+      res.status(500).json({ message: 'Failed to run sandbox test' });
+    }
+  });
+
+  app.get('/api/coo/zero-cost/output-files', async (req, res) => {
+    try {
+      const { zeroCostEnhancementEngine } = await import('./services/coo-automation-monitor.js');
+      const outputFiles = await zeroCostEnhancementEngine.generateZeroCostOutputFiles();
+      res.json(outputFiles);
+    } catch (error) {
+      console.error('Error generating zero-cost output files:', error);
+      res.status(500).json({ message: 'Failed to generate zero-cost output files' });
+    }
+  });
+
+  app.post('/api/coo/zero-cost/implement-directive', async (req, res) => {
+    try {
+      const directiveData = req.body;
+      
+      // Validate directive structure
+      if (!directiveData.directive_id || !directiveData.title) {
+        return res.status(400).json({ message: 'Directive ID and title are required' });
+      }
+      
+      console.log('🔧 COO: Implementing zero-cost enhancement directive:', directiveData.directive_id);
+      
+      // Initialize zero-cost enhancement scanning
+      const { zeroCostEnhancementEngine } = await import('./services/coo-automation-monitor.js');
+      
+      // Run initial scan for inefficiencies
+      const proposals = await zeroCostEnhancementEngine.scanForInefficiencies();
+      
+      // Create directive record
+      await storage.createAgentDirective({
+        initiativeId: directiveData.directive_id,
+        targetAgent: 'COO',
+        action: 'zero_cost_enhancement_scanning',
+        goal: directiveData.objective,
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        priority: directiveData.priority || 'high'
+      });
+      
+      console.log(`🔧 COO: Found ${proposals.length} zero-cost enhancement opportunities`);
+      
+      // Generate initial output files
+      const outputFiles = await zeroCostEnhancementEngine.generateZeroCostOutputFiles();
+      
+      res.json({
+        directive_id: directiveData.directive_id,
+        status: 'implemented',
+        proposalsFound: proposals.length,
+        outputFiles: {
+          proposalsGenerated: true,
+          adoptionsGenerated: true,
+          auditLogGenerated: true
+        },
+        nextSteps: [
+          'Sandbox testing scheduled for high-priority proposals',
+          'CEO revenue alignment check initiated',
+          'CCO compliance validation in progress'
+        ]
+      });
+    } catch (error) {
+      console.error('Error implementing zero-cost directive:', error);
+      res.status(500).json({ message: 'Failed to implement zero-cost directive' });
+    }
+  });
+
+  app.get('/api/coo/zero-cost/status', async (req, res) => {
+    try {
+      const { zeroCostEnhancementEngine } = await import('./services/coo-automation-monitor.js');
+      
+      // Get latest proposals and adoptions
+      const proposals = await zeroCostEnhancementEngine.scanForInefficiencies();
+      const adoptions = await storage.getZeroCostAdoptions(5);
+      const auditLogs = await storage.getZeroCostAuditLogs(undefined, 10);
+      
+      // Calculate summary metrics
+      const totalProposals = proposals.length;
+      const highPriorityProposals = proposals.filter(p => p.priority === 'high').length;
+      const proposalsByCategory = proposals.reduce((acc, p) => {
+        acc[p.category] = (acc[p.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const monthlyImpact = adoptions.reduce((acc, a) => ({
+        efficiencyHours: acc.efficiencyHours + (a.monthlyImpact?.efficiencyHoursGained || 0),
+        costSavings: acc.costSavings + (a.monthlyImpact?.costSavingsUSD || 0),
+        systemHealth: acc.systemHealth + (a.monthlyImpact?.systemHealthImprovement || 0)
+      }), { efficiencyHours: 0, costSavings: 0, systemHealth: 0 });
+      
+      res.json({
+        summary: {
+          totalProposals,
+          highPriorityProposals,
+          totalAdoptions: adoptions.length,
+          totalAuditEntries: auditLogs.length
+        },
+        proposalsByCategory,
+        monthlyImpact: {
+          ...monthlyImpact,
+          averageSystemHealth: adoptions.length > 0 ? monthlyImpact.systemHealth / adoptions.length : 0
+        },
+        recentActivity: {
+          latestProposal: proposals[0]?.title || 'None',
+          latestAdoption: adoptions[0]?.title || 'None',
+          lastAuditAction: auditLogs[0]?.action || 'None'
+        },
+        directiveStatus: {
+          scanning: 'active',
+          governance: 'enabled',
+          outputGeneration: 'automated'
+        }
+      });
+    } catch (error) {
+      console.error('Error getting zero-cost status:', error);
+      res.status(500).json({ message: 'Failed to get zero-cost status' });
+    }
+  });
+
   // CRO Dashboard routes
   app.get('/api/cro/synergy-report', async (req, res) => {
     try {

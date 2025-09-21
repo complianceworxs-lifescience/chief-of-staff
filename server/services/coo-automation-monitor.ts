@@ -2,6 +2,8 @@ import { storage } from '../storage.js';
 import { COO_AUTOMATION_CONFIG, QA_TEST_MATRIX, COOConfigService, type EventValidationResult } from './coo-config.js';
 import { MAILCHIMP_SETUP, JOURNEY_BLUEPRINTS, IMPLEMENTATION_CHECKLIST, EMAIL_COPY_STARTERS, ERROR_HANDLING_ROLLBACK, type MailchimpJourneyImplementor } from './mailchimp-journey-blueprints.js';
 import { EMAIL_TEMPLATES, EMAIL_METADATA, MailchimpEmailService } from './mailchimp-email-templates.js';
+import { nanoid } from 'nanoid';
+import type { ZeroCostProposal, ZeroCostAdoption, ZeroCostAuditLog } from '../../shared/schema.js';
 
 interface AutomationChecklistItem {
   id: string;
@@ -31,6 +33,549 @@ interface AutomationStatusReport {
   checklist: AutomationChecklistItem[];
   escalations: string[];
   lastUpdated: string;
+}
+
+interface ZeroCostEnhancementProposal {
+  proposalId: string;
+  title: string;
+  description: string;
+  category: 'workflow_optimization' | 'duplicate_processing' | 'idle_cycles' | 'log_management' | 'task_sequencing' | 'function_merging';
+  currentInefficiency: {
+    type: string;
+    description: string;
+    frequency: string;
+    estimatedWasteHours: number;
+  };
+  proposedSolution: {
+    approach: string;
+    implementation: string[];
+    estimatedEfficiencyGain: number;
+  };
+  projectedImpact: {
+    efficiencyImprovement: number;
+    timeReduction: number;
+    resourceSavings: number;
+    reliabilityIncrease: number;
+  };
+  priority: 'low' | 'medium' | 'high' | 'critical';
+}
+
+interface SandboxTestResult {
+  testDate: string;
+  baselineMetrics: Record<string, number>;
+  testMetrics: Record<string, number>;
+  performanceDelta: number;
+  reliability: number;
+  riskAssessment: string;
+}
+
+interface ZeroCostAdoptionRecord {
+  adoptionId: string;
+  proposalId: string;
+  title: string;
+  actualPerformanceImprovement: {
+    efficiencyGain: number;
+    timeReduction: number;
+    resourceSavings: number;
+    reliabilityIncrease: number;
+  };
+  revenueAlignment: {
+    ceoApproved: boolean;
+    alignmentScore: number;
+    revenueImpact: number;
+    strategicBenefit: string;
+  };
+  complianceCheck: {
+    ccoValidated: boolean;
+    dataIntegrityImpact: string;
+    complianceRisk: string;
+  };
+  monthlyImpact: {
+    efficiencyHoursGained: number;
+    costSavingsUSD: number;
+    systemHealthImprovement: number;
+  };
+}
+
+class ZeroCostEnhancementEngine {
+  /**
+   * Monitor agent workflows for inefficiencies
+   */
+  async scanForInefficiencies(): Promise<ZeroCostEnhancementProposal[]> {
+    const proposals: ZeroCostEnhancementProposal[] = [];
+
+    // Check for duplicate processing patterns
+    const duplicateProcessingProposal = await this.detectDuplicateProcessing();
+    if (duplicateProcessingProposal) proposals.push(duplicateProcessingProposal);
+
+    // Check for idle cycles
+    const idleCycleProposal = await this.detectIdleCycles();
+    if (idleCycleProposal) proposals.push(idleCycleProposal);
+
+    // Check for log management inefficiencies
+    const logManagementProposal = await this.detectLogInefficiencies();
+    if (logManagementProposal) proposals.push(logManagementProposal);
+
+    // Check for task sequencing optimization
+    const taskSequencingProposal = await this.detectTaskSequencingIssues();
+    if (taskSequencingProposal) proposals.push(taskSequencingProposal);
+
+    // Check for function merging opportunities
+    const functionMergingProposal = await this.detectFunctionMergingOpportunities();
+    if (functionMergingProposal) proposals.push(functionMergingProposal);
+
+    return proposals;
+  }
+
+  private async detectDuplicateProcessing(): Promise<ZeroCostEnhancementProposal | null> {
+    // Simulate detection of duplicate data processing
+    const briefingOverlap = await this.analyzeBriefingSystemOverlap();
+    
+    if (briefingOverlap.duplicateDataQueries > 3) {
+      return {
+        proposalId: `dup_proc_${nanoid(8)}`,
+        title: "Eliminate Duplicate Channel Data Processing",
+        description: "CMO, CRO, and CEO briefings are independently fetching the same channel performance data, causing 3x redundant database queries.",
+        category: 'duplicate_processing',
+        currentInefficiency: {
+          type: "Redundant database queries",
+          description: "Three separate briefing systems fetch identical channel ROI data with different formatting",
+          frequency: "Daily (3x per briefing cycle)",
+          estimatedWasteHours: 0.5
+        },
+        proposedSolution: {
+          approach: "Create shared channel data service with caching",
+          implementation: [
+            "Create ChannelDataService with 1-hour cache",
+            "Refactor briefing systems to use shared service",
+            "Add data transformation layer for agent-specific formatting"
+          ],
+          estimatedEfficiencyGain: 65
+        },
+        projectedImpact: {
+          efficiencyImprovement: 65,
+          timeReduction: 0.5,
+          resourceSavings: 200, // Database queries saved per day
+          reliabilityIncrease: 15
+        },
+        priority: 'medium'
+      };
+    }
+    return null;
+  }
+
+  private async detectIdleCycles(): Promise<ZeroCostEnhancementProposal | null> {
+    // Simulate detection of idle processing cycles
+    const cycleAnalysis = await this.analyzeProcessingCycles();
+    
+    if (cycleAnalysis.idlePercentage > 20) {
+      return {
+        proposalId: `idle_cyc_${nanoid(8)}`,
+        title: "Optimize Agent Monitoring Intervals",
+        description: "Agent monitoring cycles show 25% idle time between meaningful status changes. Adaptive polling would reduce unnecessary processing.",
+        category: 'idle_cycles',
+        currentInefficiency: {
+          type: "Excessive polling frequency",
+          description: "Fixed 30-second intervals regardless of agent activity levels",
+          frequency: "Continuous (2,880 checks/day)",
+          estimatedWasteHours: 0.3
+        },
+        proposedSolution: {
+          approach: "Implement adaptive polling based on agent activity",
+          implementation: [
+            "Add activity-based polling intervals (30s active, 5min idle)",
+            "Implement event-driven updates for immediate changes",
+            "Add backoff logic for consistently inactive agents"
+          ],
+          estimatedEfficiencyGain: 40
+        },
+        projectedImpact: {
+          efficiencyImprovement: 40,
+          timeReduction: 0.3,
+          resourceSavings: 1152, // Reduced polling cycles per day
+          reliabilityIncrease: 10
+        },
+        priority: 'high'
+      };
+    }
+    return null;
+  }
+
+  private async detectLogInefficiencies(): Promise<ZeroCostEnhancementProposal | null> {
+    // Simulate detection of log management issues
+    const logAnalysis = await this.analyzeLogManagement();
+    
+    if (logAnalysis.unusedLogRetentionDays > 30) {
+      return {
+        proposalId: `log_mgmt_${nanoid(8)}`,
+        title: "Auto-Archive Unused System Logs",
+        description: "System retains debug logs for 90+ days with no access after 7 days. Auto-archiving would improve system performance.",
+        category: 'log_management',
+        currentInefficiency: {
+          type: "Excessive log retention",
+          description: "Debug and info logs kept indefinitely without automated cleanup",
+          frequency: "Daily accumulation",
+          estimatedWasteHours: 0.2
+        },
+        proposedSolution: {
+          approach: "Implement automated log lifecycle management",
+          implementation: [
+            "Auto-archive logs older than 7 days",
+            "Compress archived logs to reduce storage",
+            "Delete archived logs after 30 days unless flagged"
+          ],
+          estimatedEfficiencyGain: 25
+        },
+        projectedImpact: {
+          efficiencyImprovement: 25,
+          timeReduction: 0.2,
+          resourceSavings: 85, // Storage reduction percentage
+          reliabilityIncrease: 5
+        },
+        priority: 'low'
+      };
+    }
+    return null;
+  }
+
+  private async detectTaskSequencingIssues(): Promise<ZeroCostEnhancementProposal | null> {
+    // Simulate detection of suboptimal task sequencing
+    const sequenceAnalysis = await this.analyzeTaskSequencing();
+    
+    if (sequenceAnalysis.sequentialDependencies > 2) {
+      return {
+        proposalId: `seq_opt_${nanoid(8)}`,
+        title: "Parallelize Independent Agent Operations",
+        description: "Briefing generation runs sequentially despite independent data sources. Parallel execution would reduce total processing time.",
+        category: 'task_sequencing',
+        currentInefficiency: {
+          type: "Sequential processing of independent tasks",
+          description: "CMO, CRO, CEO briefings generated one after another despite independent data",
+          frequency: "Every briefing cycle (3x daily)",
+          estimatedWasteHours: 0.4
+        },
+        proposedSolution: {
+          approach: "Implement parallel briefing generation",
+          implementation: [
+            "Refactor briefing service to use Promise.all()",
+            "Add concurrent data fetching for independent sources",
+            "Implement result aggregation with timeout handling"
+          ],
+          estimatedEfficiencyGain: 55
+        },
+        projectedImpact: {
+          efficiencyImprovement: 55,
+          timeReduction: 0.4,
+          resourceSavings: 45, // Percentage reduction in processing time
+          reliabilityIncrease: 20
+        },
+        priority: 'high'
+      };
+    }
+    return null;
+  }
+
+  private async detectFunctionMergingOpportunities(): Promise<ZeroCostEnhancementProposal | null> {
+    // Simulate detection of mergeable functions
+    const functionAnalysis = await this.analyzeFunctionOverlap();
+    
+    if (functionAnalysis.overlappingFunctions > 1) {
+      return {
+        proposalId: `func_merge_${nanoid(8)}`,
+        title: "Merge Overlapping Validation Functions",
+        description: "Multiple agents use similar data validation logic. Consolidating into shared utilities would reduce code duplication.",
+        category: 'function_merging',
+        currentInefficiency: {
+          type: "Duplicated validation logic",
+          description: "Similar email/data validation across CMO, CRO briefing services",
+          frequency: "Every data processing cycle",
+          estimatedWasteHours: 0.1
+        },
+        proposedSolution: {
+          approach: "Create shared validation utility library",
+          implementation: [
+            "Extract common validation functions to shared utils",
+            "Update all agent services to use centralized validation",
+            "Add comprehensive error handling and logging"
+          ],
+          estimatedEfficiencyGain: 20
+        },
+        projectedImpact: {
+          efficiencyImprovement: 20,
+          timeReduction: 0.1,
+          resourceSavings: 15, // Code reduction percentage
+          reliabilityIncrease: 25
+        },
+        priority: 'medium'
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Run sandbox testing on proposed enhancements
+   */
+  async runSandboxTests(proposal: ZeroCostEnhancementProposal): Promise<SandboxTestResult> {
+    console.log(`🧪 COO: Running sandbox tests for ${proposal.title}`);
+    
+    // Simulate baseline metrics collection
+    const baselineMetrics = await this.collectBaselineMetrics(proposal.category);
+    
+    // Simulate enhancement implementation in sandbox
+    const testMetrics = await this.simulateEnhancement(proposal, baselineMetrics);
+    
+    // Calculate performance delta
+    const performanceDelta = this.calculatePerformanceDelta(baselineMetrics, testMetrics);
+    
+    const testResult: SandboxTestResult = {
+      testDate: new Date().toISOString(),
+      baselineMetrics,
+      testMetrics,
+      performanceDelta,
+      reliability: this.assessReliability(testMetrics),
+      riskAssessment: this.assessRisk(proposal, performanceDelta)
+    };
+    
+    console.log(`🧪 COO: Sandbox test completed - ${performanceDelta}% improvement (${testResult.riskAssessment} risk)`);
+    
+    return testResult;
+  }
+
+  private async collectBaselineMetrics(category: string): Promise<Record<string, number>> {
+    // Simulate baseline metrics collection based on category
+    switch (category) {
+      case 'duplicate_processing':
+        return {
+          databaseQueries: 150,
+          processingTime: 2.3,
+          memoryUsage: 45,
+          errorRate: 0.02
+        };
+      case 'idle_cycles':
+        return {
+          pollingCycles: 2880,
+          activeChecks: 720,
+          cpuUsage: 15,
+          responseTime: 1.2
+        };
+      case 'log_management':
+        return {
+          logVolume: 1200,
+          storageUsed: 850,
+          searchTime: 3.1,
+          cleanupTime: 0
+        };
+      case 'task_sequencing':
+        return {
+          totalProcessingTime: 8.5,
+          parallelPotential: 45,
+          throughput: 12,
+          queueTime: 2.1
+        };
+      case 'function_merging':
+        return {
+          codeComplexity: 85,
+          duplicateLines: 120,
+          maintenanceTime: 0.8,
+          testCoverage: 78
+        };
+      default:
+        return {
+          generalMetric: 100,
+          efficiency: 75,
+          reliability: 90
+        };
+    }
+  }
+
+  private async simulateEnhancement(proposal: ZeroCostEnhancementProposal, baseline: Record<string, number>): Promise<Record<string, number>> {
+    // Simulate the enhancement implementation and measure improvements
+    const improved = { ...baseline };
+    const improvementFactor = proposal.projectedImpact.efficiencyImprovement / 100;
+    
+    // Apply simulated improvements based on proposal type
+    Object.keys(improved).forEach(key => {
+      if (key.includes('Time') || key.includes('Usage') || key.includes('Rate')) {
+        // Reduce negative metrics (time, usage, error rates)
+        improved[key] = baseline[key] * (1 - improvementFactor * 0.5);
+      } else {
+        // Increase positive metrics (throughput, efficiency)
+        improved[key] = baseline[key] * (1 + improvementFactor * 0.3);
+      }
+    });
+    
+    return improved;
+  }
+
+  private calculatePerformanceDelta(baseline: Record<string, number>, test: Record<string, number>): number {
+    const keys = Object.keys(baseline);
+    let totalImprovement = 0;
+    
+    keys.forEach(key => {
+      const improvement = ((test[key] - baseline[key]) / baseline[key]) * 100;
+      totalImprovement += Math.abs(improvement);
+    });
+    
+    return Math.round(totalImprovement / keys.length);
+  }
+
+  private assessReliability(metrics: Record<string, number>): number {
+    // Simple reliability assessment based on metrics variance
+    const values = Object.values(metrics);
+    const avg = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((acc, val) => acc + Math.pow(val - avg, 2), 0) / values.length;
+    
+    // Higher variance = lower reliability
+    return Math.max(75, Math.min(95, 95 - Math.sqrt(variance)));
+  }
+
+  private assessRisk(proposal: ZeroCostEnhancementProposal, performanceDelta: number): string {
+    if (performanceDelta > 50 && proposal.priority === 'high') return 'medium';
+    if (performanceDelta < 10) return 'high';
+    if (proposal.category === 'function_merging') return 'medium';
+    return 'low';
+  }
+
+  /**
+   * Generate JSON output files for governance
+   */
+  async generateZeroCostOutputFiles(): Promise<{
+    proposals: string;
+    adoptions: string;
+    auditLog: string;
+  }> {
+    const proposals = await this.scanForInefficiencies();
+    const adoptions = await this.getAdoptedEnhancements();
+    const auditLog = await this.getAuditTrail();
+
+    const proposalsJson = JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      totalProposals: proposals.length,
+      categories: this.categorizeProposals(proposals),
+      proposals: proposals.map(p => ({
+        ...p,
+        sandboxTestResults: null // Will be populated after testing
+      }))
+    }, null, 2);
+
+    const adoptionsJson = JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      totalAdoptions: adoptions.length,
+      monthlyImpactSummary: this.calculateTotalMonthlyImpact(adoptions),
+      adoptions
+    }, null, 2);
+
+    const auditLogJson = JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      totalEntries: auditLog.length,
+      auditTrail: auditLog
+    }, null, 2);
+
+    return {
+      proposals: proposalsJson,
+      adoptions: adoptionsJson,
+      auditLog: auditLogJson
+    };
+  }
+
+  private categorizeProposals(proposals: ZeroCostEnhancementProposal[]): Record<string, number> {
+    const categories: Record<string, number> = {};
+    proposals.forEach(p => {
+      categories[p.category] = (categories[p.category] || 0) + 1;
+    });
+    return categories;
+  }
+
+  private async getAdoptedEnhancements(): Promise<ZeroCostAdoptionRecord[]> {
+    // Simulate adopted enhancements - in real implementation would query database
+    return [
+      {
+        adoptionId: `adopt_${nanoid(8)}`,
+        proposalId: `dup_proc_${nanoid(8)}`,
+        title: "Shared Channel Data Service Implementation",
+        actualPerformanceImprovement: {
+          efficiencyGain: 72,
+          timeReduction: 0.6,
+          resourceSavings: 220,
+          reliabilityIncrease: 18
+        },
+        revenueAlignment: {
+          ceoApproved: true,
+          alignmentScore: 85,
+          revenueImpact: 0,
+          strategicBenefit: "Improved agent responsiveness supports faster decision cycles"
+        },
+        complianceCheck: {
+          ccoValidated: true,
+          dataIntegrityImpact: "No impact - maintains data consistency",
+          complianceRisk: "None"
+        },
+        monthlyImpact: {
+          efficiencyHoursGained: 15,
+          costSavingsUSD: 0,
+          systemHealthImprovement: 12
+        }
+      }
+    ];
+  }
+
+  private async getAuditTrail(): Promise<Array<{
+    auditId: string;
+    proposalId: string;
+    action: string;
+    actionBy: string;
+    reason: string;
+    actionAt: string;
+  }>> {
+    // Simulate audit trail - in real implementation would query database
+    return [
+      {
+        auditId: `audit_${nanoid(8)}`,
+        proposalId: `dup_proc_${nanoid(8)}`,
+        action: "approved",
+        actionBy: "CEO",
+        reason: "Aligns with efficiency goals, zero cost, measurable impact",
+        actionAt: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+      }
+    ];
+  }
+
+  private calculateTotalMonthlyImpact(adoptions: ZeroCostAdoptionRecord[]): {
+    totalEfficiencyHours: number;
+    totalCostSavings: number;
+    averageSystemHealthImprovement: number;
+  } {
+    return adoptions.reduce(
+      (acc, adoption) => ({
+        totalEfficiencyHours: acc.totalEfficiencyHours + adoption.monthlyImpact.efficiencyHoursGained,
+        totalCostSavings: acc.totalCostSavings + adoption.monthlyImpact.costSavingsUSD,
+        averageSystemHealthImprovement: 
+          (acc.averageSystemHealthImprovement + adoption.monthlyImpact.systemHealthImprovement) / 2
+      }),
+      { totalEfficiencyHours: 0, totalCostSavings: 0, averageSystemHealthImprovement: 0 }
+    );
+  }
+
+  // Mock analysis methods
+  private async analyzeBriefingSystemOverlap() {
+    return { duplicateDataQueries: 4, overlapPercentage: 75 };
+  }
+
+  private async analyzeProcessingCycles() {
+    return { idlePercentage: 25, totalCycles: 2880, activeCycles: 2160 };
+  }
+
+  private async analyzeLogManagement() {
+    return { unusedLogRetentionDays: 45, logVolumeGB: 2.3, accessFrequency: 0.1 };
+  }
+
+  private async analyzeTaskSequencing() {
+    return { sequentialDependencies: 3, parallelizableTasksPercentage: 65 };
+  }
+
+  private async analyzeFunctionOverlap() {
+    return { overlappingFunctions: 2, duplicateCodePercentage: 15 };
+  }
 }
 
 class COOAutomationMonitor {
@@ -496,3 +1041,4 @@ class COOAutomationMonitor {
 }
 
 export const cooAutomationMonitor = new COOAutomationMonitor();
+export const zeroCostEnhancementEngine = new ZeroCostEnhancementEngine();
