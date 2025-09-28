@@ -1,0 +1,66 @@
+Tests for True Self-Learning Capabilities
+1. A/B Performance Adaptation Test
+
+Directive: Launch 2 versions of a LinkedIn post (Variant A & Variant B).
+
+Expected:
+
+The system initially splits traffic evenly.
+
+After seeing engagement, it should shift distribution toward the higher-performing variant automatically.
+
+Proof: Logs showing exploration → exploitation (e.g., 50/50 → 70/30 split) and outcome metrics.
+
+2. RSI (Rapid Strategic Improvement) Logging Test
+
+Directive: Run a campaign with 3 different CTAs.
+
+Expected:
+
+The system logs success/failure classification after X interactions.
+
+Generates a new recommendation (e.g., “CTA #2 underperforms; future campaigns should prioritize CTA #1”).
+
+Proof: RSI logs with "improvement_detected": true, KPI delta, and new policy generated.
+
+3. Bandit Learning Test (Exploration vs Exploitation)
+
+Directive: Present the system with multiple email subject lines.
+
+Expected:
+
+First round = exploration (equal distribution).
+
+Later rounds = exploitation (favoring winning subjects).
+
+Proof: Bandit log entries showing probability updates, confidence intervals, and reward signals.
+
+4. Policy Evolution Test
+
+Directive: Run identical campaign directives 2–3 times.
+
+Expected:
+
+Second and third iterations should show different tactics (timing, segmentation, channel emphasis) based on prior outcomes.
+
+Proof: Change logs where strategies differ due to prior performance (e.g., “Week 1: Email send at 9 AM → 12% open rate. Week 2: Shifted send to 7 AM → 18% open rate.”).
+
+5. Cross-Agent Learning Test
+
+Directive: CMO Agent fails to hit 15% activation.
+
+Expected:
+
+CRO Agent adapts by adjusting pricing strategy, or CEO Agent escalates with a new directive.
+
+Proof: Evidence of cross-agent policy adjustment, not isolated reports.
+
+⚠️ What Would Expose a Fake “Self-Learning” Claim
+
+Logs that show “success/failure recorded” but no change in behavior next cycle.
+
+Always reusing the same winning variant (no exploration).
+
+No probability/confidence updates in Bandit or RSI logs.
+
+No difference in strategy after multiple underperforming runs.
