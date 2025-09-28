@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CoSMonitoring } from "@/components/CoSMonitoring";
+import { ExternalVerificationDemo } from "@/components/ExternalVerificationDemo";
 import { 
   DollarSign, TrendingUp, Shield, Gauge, Users, 
   AlertTriangle, Target, CheckCircle, Send, 
@@ -519,6 +520,9 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* External AI Learning Verification - GA4 Integration */}
+      <ExternalVerificationDemo />
     </div>
   );
 }
