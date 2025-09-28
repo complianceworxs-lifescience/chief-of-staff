@@ -1,5 +1,6 @@
 import { storage } from '../storage.js';
 import { COODataSanityCheck, type SanityCheckReport, type CustomerJourney, type AttributionComparison } from './coo-data-sanity-check.js';
+import { learningIntegration, type LearningOutcome } from './learning-integration.js';
 import { nanoid } from 'nanoid';
 
 interface ChannelPerformance {
@@ -116,6 +117,7 @@ class AgentBriefingSystem {
 
   /**
    * Generate comprehensive briefing for CMO Agent focusing on high-intent traffic channels
+   * NOW ENHANCED: Uses learning integration to adapt strategies based on past performance
    */
   async generateCMOBriefing(): Promise<CMOBriefing> {
     // Get validated data from sanity check
@@ -124,11 +126,15 @@ class AgentBriefingSystem {
     // Generate top 5 channels based on validated attribution data
     const top5Channels = await this.calculateTop5Channels(sanityReport);
     
-    // Generate channel recommendations
-    const channelRecommendations = this.generateChannelRecommendations(top5Channels, sanityReport.attributionComparison);
+    // 🧠 LEARNING INTEGRATION: Get CMO strategy recommendations based on past performance
+    const learningRecommendations = learningIntegration.getStrategyRecommendations('cmo');
+    const strategyAdaptation = learningIntegration.adaptAgentStrategies('cmo', 'content_marketing_expansion');
     
-    // Analyze content strategy opportunities
-    const contentStrategy = await this.analyzeContentStrategy(sanityReport.customerJourneys);
+    // Generate channel recommendations enhanced with learning data
+    const channelRecommendations = this.generateChannelRecommendations(top5Channels, sanityReport.attributionComparison, learningRecommendations);
+    
+    // Analyze content strategy opportunities with learning insights
+    const contentStrategy = await this.analyzeContentStrategy(sanityReport.customerJourneys, strategyAdaptation);
     
     const briefing: CMOBriefing = {
       briefingId: `cmo_brief_${nanoid(8)}`,
@@ -137,15 +143,28 @@ class AgentBriefingSystem {
       top5Channels,
       channelRecommendations,
       contentStrategy,
-      actionItems: this.generateCMOActionItems(top5Channels, channelRecommendations, contentStrategy),
+      actionItems: this.generateCMOActionItems(top5Channels, channelRecommendations, contentStrategy, learningRecommendations),
       nextBriefingDue: this.getNextBriefingDate('weekly')
     };
+    
+    // 📚 RECORD LEARNING OUTCOME: Track this briefing generation for future adaptation
+    const outcome: LearningOutcome = {
+      agent: 'cmo',
+      strategy: 'content_marketing_expansion',
+      outcome: sanityReport.overallConfidenceScore > 80 ? 'success' : 'partial',
+      cost: 5, // Cost of generating briefing
+      impact: Math.round(sanityReport.overallConfidenceScore),
+      confidence: sanityReport.overallConfidenceScore,
+      timestamp: new Date().toISOString()
+    };
+    learningIntegration.recordOutcome(outcome);
     
     return briefing;
   }
 
   /**
    * Generate comprehensive briefing for CRO Agent focusing on conversion optimization
+   * NOW ENHANCED: Uses learning integration to adapt conversion strategies based on past performance
    */
   async generateCROBriefing(): Promise<CROBriefing> {
     const sanityReport = await this.sanityChecker.performSanityCheck();
@@ -153,11 +172,15 @@ class AgentBriefingSystem {
     // Identify top 3 content paths that precede sales
     const top3ContentPaths = await this.identifyTop3ContentPaths(sanityReport.customerJourneys);
     
-    // Generate conversion optimization recommendations
-    const conversionOptimization = this.generateConversionOptimization(top3ContentPaths, sanityReport);
+    // 🧠 LEARNING INTEGRATION: Get CRO strategy recommendations based on past conversion performance
+    const learningRecommendations = learningIntegration.getStrategyRecommendations('cro');
+    const strategyAdaptation = learningIntegration.adaptAgentStrategies('cro', 'funnel_optimization');
     
-    // Analyze funnel for dropoff points
-    const funnelAnalysis = await this.analyzeFunnelDropoffs(sanityReport.customerJourneys);
+    // Generate conversion optimization recommendations enhanced with learning data
+    const conversionOptimization = this.generateConversionOptimization(top3ContentPaths, sanityReport, learningRecommendations);
+    
+    // Analyze funnel for dropoff points with learning insights
+    const funnelAnalysis = await this.analyzeFunnelDropoffs(sanityReport.customerJourneys, strategyAdaptation);
     
     const briefing: CROBriefing = {
       briefingId: `cro_brief_${nanoid(8)}`,
@@ -166,9 +189,21 @@ class AgentBriefingSystem {
       top3ContentPaths,
       conversionOptimization,
       funnelAnalysis,
-      actionItems: this.generateCROActionItems(top3ContentPaths, conversionOptimization, funnelAnalysis),
+      actionItems: this.generateCROActionItems(top3ContentPaths, conversionOptimization, funnelAnalysis, learningRecommendations),
       nextBriefingDue: this.getNextBriefingDate('bi-weekly')
     };
+    
+    // 📚 RECORD LEARNING OUTCOME: Track conversion optimization success for future adaptation
+    const outcome: LearningOutcome = {
+      agent: 'cro',
+      strategy: 'funnel_optimization',
+      outcome: sanityReport.overallConfidenceScore > 80 ? 'success' : 'partial',
+      cost: 8, // Cost of conversion analysis
+      impact: Math.round(sanityReport.overallConfidenceScore),
+      confidence: sanityReport.overallConfidenceScore,
+      timestamp: new Date().toISOString()
+    };
+    learningIntegration.recordOutcome(outcome);
     
     return briefing;
   }

@@ -298,8 +298,13 @@ Book your free strategy session today.
 
   // Initialize default brand assets for the system
   async initializeBrandAssets(): Promise<void> {
-    const existingAssets = await this.storage.getBrandAssets();
-    if (existingAssets.length > 0) return;
+    try {
+      const existingAssets = await this.storage.getBrandAssets();
+      if (existingAssets.length > 0) return;
+    } catch (error) {
+      console.warn('Database not available during startup, skipping brand asset initialization:', error.message);
+      return;
+    }
 
     const defaultAssets: InsertBrandAsset[] = [
       {

@@ -2637,12 +2637,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Unified Autonomy Layer routes
   app.use("/api/autonomy", (await import("./routes/autonomy")).autonomyRouter);
+  app.use("/api/autonomy/tier2", (await import("./routes/autonomy")).autonomyRouter);
+  app.use("/api/autonomy/tier3", (await import("./routes/tier3")).default);
   app.use("/api/autonomy/traffic-lights", (await import("./routes/traffic-lights")).default);
   app.use("/api/intervention", (await import("./routes/active-intervention")).default);
   app.use("/api/workloads", (await import("./routes/workloads")).default);
   app.use("/api/recommendations", (await import("./routes/recommendations")).default);
   app.use("/api/tier2", (await import("./routes/tier2")).default);
   app.use("/api/tier3", (await import("./routes/tier3")).default);
+  
+  // ODAR Governance and Learning Services
+  app.use("/api/odar", (await import("./routes/odar")).default);
+  app.use("/api/learning", (await import("./routes/learning")).default);
   
   // Experiment OS integration
   app.use("/experiments", (await import("./routes/experiments")).default);
