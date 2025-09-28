@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { initGA } from "./lib/analytics";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
@@ -44,7 +45,17 @@ function Router() {
 
 function App() {
   useEffect(() => {
+    // Initialize Server-Sent Events
     const cleanup = attachSSE();
+    
+    // Initialize Google Analytics for external self-learning verification
+    if (import.meta.env.VITE_GA_MEASUREMENT_ID) {
+      initGA();
+      console.log('🔍 GA4 initialized for external learning verification');
+    } else {
+      console.warn('GA4 Measurement ID not found - external verification unavailable');
+    }
+    
     return cleanup;
   }, []);
 

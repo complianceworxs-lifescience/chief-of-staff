@@ -184,8 +184,8 @@ export class LearningIntegrationService {
       total_decisions: agentHistory.length,
       success_rate: successRate,
       top_strategies: topStrategies,
-      learning_velocity,
-      next_optimization
+      learning_velocity: learningVelocity,
+      next_optimization: nextOptimization
     };
   }
 
