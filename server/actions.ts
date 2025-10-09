@@ -39,7 +39,7 @@ function append(event: ActionEvent): void {
   fs.appendFileSync(LOG_PATH, line, 'utf-8');
 }
 
-export function actOnRecommendation(reco: Recommendation): any {
+export async function actOnRecommendation(reco: Recommendation): Promise<any> {
   const actionId = randomUUID();
   const agent = reco.owner || "unknown_agent";
   const action = reco.action || "unspecified";
@@ -72,10 +72,34 @@ export function actOnRecommendation(reco: Recommendation): any {
 
   // Execute or queue according to governance
   let outcome: any;
-  if (policy.auto_execute) {
+  if (policy.auto_execute && !dry) {
+    // REAL EXECUTION - Call actual business operations
+    const { actionExecutor } = await import('./services/action-executor.js');
+    const executionResult = await actionExecutor.execute({
+      action_id: actionId,
+      agent,
+      action,
+      title: reco.title || action,
+      payload: reco.payload,
+      risk,
+      spend_cents: spendCents
+    });
+
+    outcome = {
+      result: executionResult.success ? "executed" : "failed",
+      action_taken: executionResult.action_taken,
+      details: executionResult.details,
+      outcome_data: executionResult.outcome_data,
+      error: executionResult.error,
+      notes: "REAL business execution via action-executor"
+    };
+
+    console.log(`🎯 EXECUTION COMPLETE: ${actionId} | ${executionResult.success ? 'SUCCESS' : 'FAILED'}`);
+    completeAction(actionId, agent, executionResult.success, outcome, spendCents);
+  } else if (policy.auto_execute && dry) {
     outcome = { 
-      result: dry ? "simulated" : "executed", 
-      notes: "auto-exec via governance" 
+      result: "simulated", 
+      notes: "dry-run mode - no real execution" 
     };
     completeAction(actionId, agent, true, outcome, spendCents);
   } else {

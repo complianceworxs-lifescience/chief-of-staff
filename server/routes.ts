@@ -2624,7 +2624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      const result = actOnRecommendation(recommendation);
+      const result = await actOnRecommendation(recommendation);
       res.json(result);
     } catch (error) {
       console.error('Error processing recommendation:', error);

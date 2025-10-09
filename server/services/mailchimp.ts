@@ -29,12 +29,15 @@ export class MailChimpService {
 
   constructor() {
     const apiKey = process.env.MAILCHIMP_API_KEY;
-    const serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
+    let serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX;
     const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
 
     if (!apiKey || !serverPrefix || !audienceId) {
       throw new Error('MailChimp credentials not configured. Set MAILCHIMP_API_KEY, MAILCHIMP_SERVER_PREFIX, MAILCHIMP_AUDIENCE_ID');
     }
+
+    // Fix server prefix format - remove dashes (us-19 -> us19)
+    serverPrefix = serverPrefix.replace(/-/g, '');
 
     this.config = { apiKey, serverPrefix, audienceId };
     this.baseUrl = `https://${serverPrefix}.api.mailchimp.com/3.0`;
