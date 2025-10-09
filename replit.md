@@ -10,7 +10,10 @@ Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflic
 Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
-## Recent Changes (August 22, 2025)
+## Recent Changes (October 9, 2025)
+- **REAL EXECUTION MODE ENABLED**: System transitioned from DRY_RUN simulation to real business execution (dry_run: false)
+- **MailChimp Integration Active**: Real email campaign execution enabled with API credentials configured (MAILCHIMP_API_KEY, MAILCHIMP_SERVER_PREFIX, MAILCHIMP_AUDIENCE_ID)
+- **MailChimp Service Created**: Full-featured service for adding members, creating campaigns, sending emails, managing tags, and tracking audience stats
 - **Strategic Execution Engine Implemented**: Autonomous agent assignment system that detects overdue strategic goals and automatically assigns specific agents with action plans, deadlines, and Experiment Contracts
 - **Exceptions-Only Execution**: Complete governance enforcement with action assignments for every recommendation including owner, due date, Expected outcome contracts. Auto-executes if risk ≤ low, spend = $0, canary ≥10, within $100/mo budget
 - **Action Assignment System**: Critical/Warning items automatically converted to assigned actions with [Owner | KPI | Expected | Outcome | Result | Next Action | Due] tracking

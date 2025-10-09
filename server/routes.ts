@@ -2608,7 +2608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       canary_min: parseInt(process.env.CANARY_MIN || "10"),
       outcome_sla_hours: parseInt(process.env.OUTCOME_SLA_HOURS || "24"),
       escalate_owner: process.env.ESCALATE_OWNER || "ChiefOfStaff",
-      dry_run: (process.env.DRY_RUN || "true").toLowerCase() === "true"
+      dry_run: (process.env.DRY_RUN || "false").toLowerCase() === "true"
     });
   });
 
