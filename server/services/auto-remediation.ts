@@ -4,7 +4,7 @@ import { eq, and, desc } from "drizzle-orm";
 
 // Configuration with fallbacks - Tier 1 Must-haves for Real Autonomy
 const CONFIG = {
-  AUTO_REMEDIATE: process.env.AUTO_REMEDIATE === 'true' || true, // Default enabled for demo
+  AUTO_REMEDIATE: process.env.AUTO_REMEDIATE === 'false' ? false : true, // REAL EXECUTION enabled
   AUTOREM_MAX_ATTEMPTS: parseInt(process.env.AUTOREM_MAX_ATTEMPTS || '2'),
   
   // SLOs per agent: success ≥ 94%, alignment ≥ 95%, backlog age ≤ 15m

@@ -40,9 +40,9 @@ type Playbook = {
   successCriteria: Criteria;
 };
 
-// Configuration from environment
+// Configuration from environment - REAL EXECUTION MODE
 const CONFIG = {
-  AUTO_REMEDIATE: process.env.AUTO_REMEDIATE === 'true' || true,
+  AUTO_REMEDIATE: process.env.AUTO_REMEDIATE === 'false' ? false : true, // REAL EXECUTION enabled
   MAX_ATTEMPTS: parseInt(process.env.AUTOREM_MAX_ATTEMPTS || '2'),
   SLO: {
     success: parseFloat(process.env.AUTOREM_SLO_SUCCESS || '0.94'),

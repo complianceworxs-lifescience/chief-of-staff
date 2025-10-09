@@ -46,7 +46,7 @@ export function actOnRecommendation(reco: Recommendation): any {
   const risk = (reco.risk || "low").toLowerCase();
   const canaryN = reco.canary_n || 10;
   const spendCents = reco.spend_cents || 0;
-  const dry = (process.env.DRY_RUN || "true").toLowerCase() === "true";
+  const dry = (process.env.DRY_RUN || "false").toLowerCase() === "true"; // REAL EXECUTION - no simulation
 
   const policy = policyDecision(reco, LOG_PATH);
 

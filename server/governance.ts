@@ -70,7 +70,7 @@ export function policyDecision(reco: Recommendation, logPath: string): PolicyDec
   const risk = (reco.risk || "low").toLowerCase();
   const canaryN = reco.canary_n || envInt("CANARY_MIN", 10);
   const spendCents = reco.spend_cents || 0;
-  const dry = (process.env.DRY_RUN || "true").toLowerCase() === "true";
+  const dry = (process.env.DRY_RUN || "false").toLowerCase() === "true"; // REAL EXECUTION - no simulation
   
   const allowAutoRisk = (process.env.ALLOW_AUTO_RISK || "low").toLowerCase();
   const budgetCap = envInt("BUDGET_CAP_CENTS", 10000); // $100 default
