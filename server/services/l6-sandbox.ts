@@ -1,5 +1,6 @@
 import { revenuePredictiveModel } from './revenue-predictive-model';
 import { l5AgentHealthMonitor } from './l5-agent-health-monitor';
+import { l6ReadinessAssessment, L6ReadinessAssessment } from './l6-readiness-assessment';
 
 export type L6ExperimentType = 
   | 'new_narrative'
@@ -73,6 +74,14 @@ interface SandboxActivationCheck {
   activeExperimentCount: number;
   maxSimultaneousExperiments: number;
   reasons: string[];
+  readinessAssessment?: L6ReadinessAssessment;
+  criticalThresholds: {
+    revenueStability: { ready: boolean; status: string };
+    rpmStability: { ready: boolean; status: string };
+    objectionStability: { ready: boolean; status: string };
+    blueprintPerformance: { ready: boolean; status: string };
+    systemCoherence: { ready: boolean; status: string };
+  };
 }
 
 interface L6SandboxConfig {
@@ -156,6 +165,10 @@ class L6SandboxService {
   }
 
   private checkActivationConditions(): SandboxActivationCheck {
+    // L6 TRANSITION READINESS FRAMEWORK - ALL FIVE must be TRUE
+    const readinessAssessment = l6ReadinessAssessment.getReadinessAssessment();
+    const transitionCheck = l6ReadinessAssessment.canTransitionToL6();
+    
     const forecast = revenuePredictiveModel.getLatestForecast();
     const rpmAccuracy = forecast?.confidenceScore || 0;
     
@@ -169,24 +182,54 @@ class L6SandboxService {
     const reasons: string[] = [];
     let canActivate = true;
 
-    if (rpmAccuracy < this.config.rpmAccuracyThreshold) {
+    // PRIMARY GATE: All 5 Critical Thresholds must be met
+    // L6 = Meta-autonomy (agents redesigning the business model)
+    // This is NOT negotiable - the transition is ONLY triggered when ALL five meet thresholds
+    if (!transitionCheck.allowed) {
       canActivate = false;
-      reasons.push(`RPM accuracy ${rpmAccuracy}% below threshold ${this.config.rpmAccuracyThreshold}%`);
+      reasons.push(...transitionCheck.blockers);
     }
 
-    if (unresolvedDriftCount > this.config.maxDriftIndicatorsAllowed) {
+    // Secondary: Check active experiment capacity
+    if (activeExperiments >= this.config.maxSimultaneousExperiments) {
       canActivate = false;
-      reasons.push(`${unresolvedDriftCount} unresolved drift indicators (max: ${this.config.maxDriftIndicatorsAllowed})`);
+      reasons.push(`Maximum ${this.config.maxSimultaneousExperiments} simultaneous experiments reached`);
     }
+
+    // Build critical thresholds summary
+    const criticalThresholds = {
+      revenueStability: {
+        ready: readinessAssessment.metrics.revenueStability.status === 'ready',
+        status: readinessAssessment.metrics.revenueStability.currentValue
+      },
+      rpmStability: {
+        ready: readinessAssessment.metrics.rpmStability.status === 'ready',
+        status: readinessAssessment.metrics.rpmStability.currentValue
+      },
+      objectionStability: {
+        ready: readinessAssessment.metrics.objectionStability.status === 'ready',
+        status: readinessAssessment.metrics.objectionStability.currentValue
+      },
+      blueprintPerformance: {
+        ready: readinessAssessment.metrics.blueprintPerformance.status === 'ready',
+        status: readinessAssessment.metrics.blueprintPerformance.currentValue
+      },
+      systemCoherence: {
+        ready: readinessAssessment.metrics.systemCoherence.status === 'ready',
+        status: readinessAssessment.metrics.systemCoherence.currentValue
+      }
+    };
 
     return {
       canActivate,
       rpmAccuracy,
-      rpmThreshold: this.config.rpmAccuracyThreshold,
+      rpmThreshold: 92, // Updated to framework threshold
       unresolvedDriftCount,
       activeExperimentCount: activeExperiments,
       maxSimultaneousExperiments: this.config.maxSimultaneousExperiments,
-      reasons
+      reasons,
+      readinessAssessment,
+      criticalThresholds
     };
   }
 

@@ -3,9 +3,212 @@ import { l6Sandbox } from '../services/l6-sandbox.js';
 import { l6CoSGovernance } from '../services/l6-cos-governance.js';
 import { l6MicroCohortTesting } from '../services/l6-micro-cohort-testing.js';
 import { l6MethodologyLock } from '../services/l6-methodology-lock.js';
+import { l6ReadinessAssessment } from '../services/l6-readiness-assessment.js';
 import { L6_TRANSITION_PROTOCOLS } from '../services/agent-operating-context.js';
 
 const router = Router();
+
+// ===== L6 READINESS ASSESSMENT ENDPOINTS =====
+// L6 = Meta-autonomy (agents redesigning the business model)
+// ALL FIVE critical thresholds must be met simultaneously
+
+router.get('/readiness', (req, res) => {
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  const transitionCheck = l6ReadinessAssessment.canTransitionToL6();
+  
+  res.json({
+    frameworkVersion: 'L6-TRANSITION-READINESS-v1.0',
+    purpose: 'L6 is meta-autonomy - agents redesigning the business model itself',
+    riskProfile: 'Regulatory, reputation-sensitive, audit-grade',
+    transitionRule: 'ALL FIVE critical thresholds must be TRUE. NOT SOME. ALL.',
+    ...assessment,
+    canTransition: transitionCheck.allowed,
+    blockers: transitionCheck.blockers,
+    thresholds: {
+      revenueStability: '≥85% target for 6 consecutive weeks',
+      rpmStability: '≥92% accuracy for 30 consecutive days',
+      objectionStability: 'No new categories for 30 days',
+      blueprintPerformance: 'All archetypes within ±15% variance',
+      systemCoherence: 'Zero incidents for 48 hours (2 ODAR cycles)'
+    }
+  });
+});
+
+router.get('/readiness/metrics', (req, res) => {
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  res.json({
+    metrics: assessment.metrics,
+    readinessScore: assessment.readinessScore,
+    metricsReady: assessment.metricsReady,
+    metricTotal: assessment.metricTotal,
+    overallReady: assessment.overallReady
+  });
+});
+
+router.get('/readiness/revenue-sprints', (req, res) => {
+  const history = l6ReadinessAssessment.getRevenueSprintHistory();
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    metric: assessment.metrics.revenueStability,
+    threshold: '≥85% target for 6 consecutive weeks',
+    why: 'An unstable revenue system cannot support strategic redesign. L6 introduces experimentation that can temporarily reduce performance.',
+    history
+  });
+});
+
+router.get('/readiness/rpm-accuracy', (req, res) => {
+  const history = l6ReadinessAssessment.getRPMAccuracyHistory();
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    metric: assessment.metrics.rpmStability,
+    threshold: '≥92% accuracy for 30 consecutive days',
+    why: 'If predictions are unstable, any L6-level redesign will destabilize the core engine. 92% ensures low variance and trustworthy forecasts.',
+    history
+  });
+});
+
+router.get('/readiness/objections', (req, res) => {
+  const categories = l6ReadinessAssessment.getObjectionCategories();
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    metric: assessment.metrics.objectionStability,
+    threshold: 'No new objection categories for 30 days',
+    why: 'L6 experimentation is impossible if the system is still discovering baseline objections. You need stable, known friction before changing product or narrative.',
+    categories
+  });
+});
+
+router.get('/readiness/archetypes', (req, res) => {
+  const performance = l6ReadinessAssessment.getArchetypePerformance();
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    metric: assessment.metrics.blueprintPerformance,
+    threshold: 'CMO Archetype variance within ±15%',
+    why: 'L6 requires the demand engine to be stable at scale - predictable, trust-efficient, modular, and ready to support new markets.',
+    performance
+  });
+});
+
+router.get('/readiness/coherence', (req, res) => {
+  const unresolvedOnly = req.query.unresolved === 'true';
+  const incidents = l6ReadinessAssessment.getCoherenceIncidents(unresolvedOnly);
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    metric: assessment.metrics.systemCoherence,
+    threshold: 'Zero contradictions for 48 hours (2 ODAR cycles)',
+    why: 'L6 redesign requires the system to behave as a single agent, not four independent units.',
+    incidentTypes: [
+      'strategist_misalignment',
+      'cro_deviation',
+      'packet_friction',
+      'udl_failure',
+      'wis_anomaly',
+      'vqs_tension'
+    ],
+    incidents
+  });
+});
+
+router.get('/readiness/safety-signals', (req, res) => {
+  const assessment = l6ReadinessAssessment.getReadinessAssessment();
+  
+  res.json({
+    description: 'Optional but strong predictors of L6 readiness',
+    signals: assessment.safetySignals,
+    requirements: {
+      trustMomentum: 'Positive for 30 days (saves, re-engagement, comment quality)',
+      conversionVelocity: 'Trend up + stable (tier movement, micro-offer, CTA rates)',
+      vqsTension: 'No tension detected for 30 days'
+    }
+  });
+});
+
+router.post('/readiness/record-revenue-sprint', (req, res) => {
+  const { weekNumber, startDate, endDate, targetRevenue, actualRevenue, percentageAchieved } = req.body;
+  
+  if (!weekNumber || !startDate || !endDate || !targetRevenue || !actualRevenue || !percentageAchieved) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  l6ReadinessAssessment.recordRevenueSprintWeek({
+    weekNumber,
+    startDate,
+    endDate,
+    targetRevenue,
+    actualRevenue,
+    percentageAchieved
+  });
+  
+  res.json({ success: true, message: 'Revenue sprint recorded' });
+});
+
+router.post('/readiness/record-rpm-accuracy', (req, res) => {
+  const { date, predictedRevenue, actualRevenue, accuracy } = req.body;
+  
+  if (!date || predictedRevenue === undefined || actualRevenue === undefined || accuracy === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  
+  l6ReadinessAssessment.recordRPMAccuracy({
+    date,
+    predictedRevenue,
+    actualRevenue,
+    accuracy
+  });
+  
+  res.json({ success: true, message: 'RPM accuracy recorded' });
+});
+
+router.post('/readiness/record-objection', (req, res) => {
+  const { category } = req.body;
+  
+  if (!category) {
+    return res.status(400).json({ error: 'Category required' });
+  }
+  
+  l6ReadinessAssessment.recordObjectionCategory(category);
+  res.json({ success: true, message: 'Objection category recorded' });
+});
+
+router.post('/readiness/record-coherence-incident', (req, res) => {
+  const { type, description } = req.body;
+  
+  const validTypes = ['strategist_misalignment', 'cro_deviation', 'packet_friction', 'udl_failure', 'wis_anomaly', 'vqs_tension'];
+  
+  if (!type || !validTypes.includes(type)) {
+    return res.status(400).json({ error: 'Valid type required', validTypes });
+  }
+  
+  if (!description) {
+    return res.status(400).json({ error: 'Description required' });
+  }
+  
+  l6ReadinessAssessment.recordCoherenceIncident({ type, description });
+  res.json({ success: true, message: 'Coherence incident recorded' });
+});
+
+router.post('/readiness/resolve-coherence-incident', (req, res) => {
+  const { incidentId } = req.body;
+  
+  if (!incidentId) {
+    return res.status(400).json({ error: 'Incident ID required' });
+  }
+  
+  const resolved = l6ReadinessAssessment.resolveCoherenceIncident(incidentId);
+  
+  if (resolved) {
+    res.json({ success: true, message: 'Incident resolved' });
+  } else {
+    res.status(404).json({ error: 'Incident not found' });
+  }
+});
+
+// ===== L6 STATUS ENDPOINT =====
 
 router.get('/status', (req, res) => {
   const sandboxStatus = l6Sandbox.getStatus();
@@ -13,11 +216,54 @@ router.get('/status', (req, res) => {
   const cohortStatus = l6MicroCohortTesting.getStatus();
   const methodologyStatus = l6MethodologyLock.getStatus();
   const methodologyIntegrity = l6MethodologyLock.validateMethodologyIntegrity();
+  
+  // Include L6 Readiness Assessment - ALL FIVE thresholds must be TRUE
+  const readinessAssessment = l6ReadinessAssessment.getReadinessAssessment();
+  const transitionCheck = l6ReadinessAssessment.canTransitionToL6();
 
   res.json({
     version: L6_TRANSITION_PROTOCOLS.version,
     l5Dominant: true,
     l6SandboxMode: sandboxStatus.isActive,
+    
+    // L6 TRANSITION READINESS - The core gate
+    l6Readiness: {
+      overallReady: readinessAssessment.overallReady,
+      readinessScore: readinessAssessment.readinessScore,
+      metricsReady: `${readinessAssessment.metricsReady}/${readinessAssessment.metricTotal}`,
+      canTransition: transitionCheck.allowed,
+      blockers: transitionCheck.blockers,
+      estimatedTimeToReady: readinessAssessment.estimatedTimeToReady,
+      criticalThresholds: {
+        revenueStability: {
+          status: readinessAssessment.metrics.revenueStability.status,
+          threshold: '≥85% for 6 consecutive weeks',
+          current: readinessAssessment.metrics.revenueStability.currentValue
+        },
+        rpmStability: {
+          status: readinessAssessment.metrics.rpmStability.status,
+          threshold: '≥92% for 30 consecutive days',
+          current: readinessAssessment.metrics.rpmStability.currentValue
+        },
+        objectionStability: {
+          status: readinessAssessment.metrics.objectionStability.status,
+          threshold: 'No new categories for 30 days',
+          current: readinessAssessment.metrics.objectionStability.currentValue
+        },
+        blueprintPerformance: {
+          status: readinessAssessment.metrics.blueprintPerformance.status,
+          threshold: 'Within ±15% variance',
+          current: readinessAssessment.metrics.blueprintPerformance.currentValue
+        },
+        systemCoherence: {
+          status: readinessAssessment.metrics.systemCoherence.status,
+          threshold: 'Zero incidents for 48 hours',
+          current: readinessAssessment.metrics.systemCoherence.currentValue
+        }
+      },
+      safetySignals: readinessAssessment.safetySignals
+    },
+    
     components: {
       sandbox: {
         active: sandboxStatus.isActive,
