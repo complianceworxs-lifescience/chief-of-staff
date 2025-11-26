@@ -24,6 +24,7 @@ import {
   getMaturityCapabilities,
   generateCoSBriefTemplate
 } from '../services/agent-operating-context.js';
+import { l5MetricsConfirmation } from '../services/l5-metrics-confirmation.js';
 
 const router = Router();
 
@@ -286,6 +287,83 @@ router.get('/l5/dashboard', (req, res) => {
       immutable: GOVERNANCE_RULES.immutable
     },
     status: "L5 Revenue Optimization Intelligence ACTIVE"
+  });
+});
+
+// ========================================
+// L5 METRICS CONFIRMATION ENDPOINTS
+// Primary L5 Metrics Required for L6 Transition
+// ========================================
+
+// Get complete L5 confirmation state
+router.get('/l5/confirmation', (req, res) => {
+  res.json(l5MetricsConfirmation.getConfirmationState());
+});
+
+// Get L6 readiness report
+router.get('/l5/l6-readiness', (req, res) => {
+  res.json(l5MetricsConfirmation.getL6ReadinessReport());
+});
+
+// Get specific metric details
+router.get('/l5/metrics/:metric', (req, res) => {
+  const metric = req.params.metric as 'revenuePredictability' | 'acvExpansion' | 'frictionReduction';
+  const validMetrics = ['revenuePredictability', 'acvExpansion', 'frictionReduction'];
+  
+  if (!validMetrics.includes(metric)) {
+    return res.status(400).json({ 
+      error: "Invalid metric. Use: revenuePredictability, acvExpansion, frictionReduction" 
+    });
+  }
+  
+  res.json(l5MetricsConfirmation.getMetricDetails(metric));
+});
+
+// Update revenue sprint data (for ODAR integration)
+router.post('/l5/metrics/revenue-sprint', (req, res) => {
+  const { week, target, actual } = req.body;
+  
+  if (!week || target === undefined || actual === undefined) {
+    return res.status(400).json({ error: "Required: week, target, actual" });
+  }
+  
+  l5MetricsConfirmation.updateRevenueSprint(week, target, actual);
+  res.json({ 
+    success: true, 
+    message: "Revenue sprint data updated",
+    state: l5MetricsConfirmation.getConfirmationState()
+  });
+});
+
+// Update ACV data (for offer ladder tracking)
+router.post('/l5/metrics/acv', (req, res) => {
+  const { currentACV } = req.body;
+  
+  if (currentACV === undefined) {
+    return res.status(400).json({ error: "Required: currentACV" });
+  }
+  
+  l5MetricsConfirmation.updateACVData(currentACV);
+  res.json({ 
+    success: true, 
+    message: "ACV data updated",
+    state: l5MetricsConfirmation.getConfirmationState()
+  });
+});
+
+// Record objection spike (for friction reduction tracking)
+router.post('/l5/metrics/objection', (req, res) => {
+  const { count, resolved } = req.body;
+  
+  if (count === undefined || resolved === undefined) {
+    return res.status(400).json({ error: "Required: count, resolved" });
+  }
+  
+  l5MetricsConfirmation.recordObjectionSpike(count, resolved);
+  res.json({ 
+    success: true, 
+    message: "Objection spike recorded",
+    state: l5MetricsConfirmation.getConfirmationState()
   });
 });
 
