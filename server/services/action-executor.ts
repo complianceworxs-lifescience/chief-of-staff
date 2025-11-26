@@ -167,16 +167,7 @@ export class ActionExecutor {
         previewText: 'Special offer - Limited time opportunity',
         fromName: 'ComplianceWorxs Revenue Team',
         replyTo: process.env.COMPANY_EMAIL || 'sales@complianceworxs.com',
-        htmlContent: campaignDetails.html,
-        segmentCriteria: {
-          match: 'all',
-          conditions: [{
-            condition_type: 'Interests',
-            field: 'interests',
-            op: 'interestcontains',
-            value: ['high-value-prospects', 'active-customers']
-          }]
-        }
+        htmlContent: campaignDetails.html
       });
 
       await mailchimp.sendCampaign(campaign.id);
@@ -232,16 +223,7 @@ export class ActionExecutor {
         previewText: 'Your success is our priority',
         fromName: 'ComplianceWorxs Customer Success',
         replyTo: process.env.COMPANY_EMAIL || 'success@complianceworxs.com',
-        htmlContent: engagementEmail,
-        segmentCriteria: {
-          match: 'all',
-          conditions: [{
-            condition_type: 'Interests',
-            field: 'interests',
-            op: 'interestcontains',
-            value: ['active-customers', 'retention-focus']
-          }]
-        }
+        htmlContent: engagementEmail
       });
 
       await mailchimp.sendCampaign(campaign.id);

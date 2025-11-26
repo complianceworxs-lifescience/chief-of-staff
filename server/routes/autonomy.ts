@@ -5,6 +5,26 @@ import type { Signal } from "../services/autonomy";
 
 const router = Router();
 
+// Autonomy system status endpoint
+router.get("/status", async (req, res) => {
+  try {
+    const kpis = AutonomyTier2.getTier2KPIMetrics();
+    const lineage = Autonomy.getDecisionLineage();
+    
+    res.json({
+      status: 'active',
+      tier: 2,
+      enabled: true,
+      kpis,
+      recentDecisions: lineage.slice(-5),
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Failed to get autonomy status:", error);
+    res.status(500).json({ error: "Failed to get autonomy status" });
+  }
+});
+
 // Standard signal processing endpoint - all agents use this
 router.post("/execute", async (req, res) => {
   try {

@@ -23,6 +23,13 @@ interface CampaignConfig {
   segmentCriteria?: any;
 }
 
+interface CampaignResponse {
+  id: string;
+  web_id: number;
+  type: string;
+  status: string;
+}
+
 export class MailChimpService {
   private config: MailChimpConfig;
   private baseUrl: string;
@@ -87,7 +94,7 @@ export class MailChimpService {
     );
   }
 
-  async createCampaign(config: CampaignConfig) {
+  async createCampaign(config: CampaignConfig): Promise<CampaignResponse> {
     const campaignData = {
       type: 'regular',
       recipients: {
@@ -103,7 +110,7 @@ export class MailChimpService {
       }
     };
 
-    const campaign = await this.request('POST', '/campaigns', campaignData);
+    const campaign = await this.request('POST', '/campaigns', campaignData) as CampaignResponse;
     
     await this.request(
       'PUT',

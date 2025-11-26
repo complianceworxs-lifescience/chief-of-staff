@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: directiveData.title,
           rationale: directiveData.rationale,
           objective: directiveData.objective,
-          tasks: directiveData.tasks.filter(task => !task.owner_hint || task.owner_hint === agent || task.owner_hint.toUpperCase() === agent),
+          tasks: directiveData.tasks.filter((task: { owner_hint?: string }) => !task.owner_hint || task.owner_hint === agent || task.owner_hint.toUpperCase() === agent),
           success_criteria: directiveData.success_criteria || [],
           deadline: directiveData.deadline,
           escalation_after_hours: directiveData.escalation_after_hours,
@@ -1925,9 +1925,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/directives/templates", async (req, res) => {
     try {
       // Mock context data for template generation - in production would come from actual data sources
-      const insights = [];
-      const decisions = [];
-      const meetings = [];
+      const insights: { id: string; title: string }[] = [];
+      const decisions: { id: string; title: string }[] = [];
+      const meetings: { id: string; title: string }[] = [];
       
       const templates = [
         {
@@ -2212,10 +2212,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'application/json');
     
     try {
-      // Import MI services
+      // Import MI services (JS modules)
+      // @ts-ignore - JS module
       const { loadConfig } = await import('./services/mi/config.js');
+      // @ts-ignore - JS module
       const { collectFromFeeds } = await import('./services/mi/collectors.js');
+      // @ts-ignore - JS module
       const { MiScorer } = await import('./services/mi/scorer.js');
+      // @ts-ignore - JS module
       const { MiStore, ensureStores } = await import('./services/mi/store.js');
       
       await ensureStores();
@@ -2263,6 +2267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Stats - what dashboard queries
   app.get("/api/mi/stats", async (req, res) => {
     try {
+      // @ts-ignore - JS module
       const { MiStore, ensureStores } = await import('./services/mi/store.js');
       await ensureStores();
       const stats = await MiStore.stats();
@@ -2276,6 +2281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Config endpoint
   app.get("/api/mi/config", async (req, res) => {
     try {
+      // @ts-ignore - JS module
       const { loadConfig } = await import('./services/mi/config.js');
       const cfg = await loadConfig();
       res.json(cfg ?? { empty: true });
@@ -2287,6 +2293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/mi/config", async (req, res) => {
     try {
+      // @ts-ignore - JS module
       const { saveConfig } = await import('./services/mi/config.js');
       const savedConfig = await saveConfig(req.body || {});
       res.json({ ok: true, message: "MI config updated successfully", config: savedConfig });
@@ -2299,6 +2306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Market Intelligence Active Signals - what dashboard queries
   app.get("/api/mi/active", async (req, res) => {
     try {
+      // @ts-ignore - JS module
       const { MiStore, ensureStores } = await import('./services/mi/store.js');
       await ensureStores();
       const signals = await MiStore.listActive();
@@ -2306,6 +2314,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("MI Active signals error:", error);
       res.status(500).json({ message: "Failed to fetch active MI signals", error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  // MI Signals shortcut route
+  app.get("/api/mi/signals", async (req, res) => {
+    try {
+      // @ts-ignore - JS module
+      const { MiStore, ensureStores } = await import('./services/mi/store.js');
+      await ensureStores();
+      const signals = await MiStore.listActive();
+      res.json(signals);
+    } catch (error) {
+      console.error("MI Signals error:", error);
+      res.status(500).json({ message: "Failed to fetch MI signals", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -2987,8 +3009,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         auditId: report.auditId,
         auditDate: new Date(report.auditDate),
         sampleSize: report.sampleSize,
-        customerJourneys: report.customerJourneys,
-        attributionComparison: report.attributionComparison,
+        customerJourneys: report.customerJourneys as any[],
+        attributionComparison: report.attributionComparison as any[],
         dataQualityFlags: report.dataQualityFlags,
         recommendations: report.recommendations,
         overallConfidenceScore: report.overallConfidenceScore
@@ -3022,7 +3044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savedBriefing = await storage.createCMOBriefing({
         briefingId: briefing.briefingId,
         dataConfidence: briefing.dataConfidence,
-        top5Channels: briefing.top5Channels,
+        top5Channels: briefing.top5Channels as any[],
         channelRecommendations: briefing.channelRecommendations,
         contentStrategy: briefing.contentStrategy,
         actionItems: briefing.actionItems,
@@ -3058,7 +3080,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savedBriefing = await storage.createCROBriefing({
         briefingId: briefing.briefingId,
         dataConfidence: briefing.dataConfidence,
-        top3ContentPaths: briefing.top3ContentPaths,
+        top3ContentPaths: briefing.top3ContentPaths as any[],
         conversionOptimization: briefing.conversionOptimization,
         funnelAnalysis: briefing.funnelAnalysis,
         actionItems: briefing.actionItems,
