@@ -593,11 +593,11 @@ export const PLANNING_CYCLES = {
   }
 };
 
-// 11. MATURITY MODEL (5 LEVELS) - v1.5 Updated
+// 11. MATURITY MODEL (6 LEVELS) - v1.6 Updated with L6 Preview
 export const MATURITY_MODEL = {
   description: "Defines how agents evolve as data accumulates",
   currentState: "L5 - Revenue Optimization Intelligence",
-  transitionNote: "The implementation of the Unified Data Layer and Objection Intelligence Loop formalizes the transition to L5",
+  transitionNote: "L5 is the dominant live system. L6 Sandbox Mode enabled for controlled experimentation.",
   
   levels: {
     L1: {
@@ -620,9 +620,30 @@ export const MATURITY_MODEL = {
       name: "Revenue Optimization Intelligence",
       description: "System is now self-improving and revenue-optimized. Forecasts revenue, adjusts conversion paths, and reallocates agent effort.",
       active: true
+    },
+    L6: {
+      name: "Controlled Strategic Innovation",
+      description: "Agents can propose new products, markets, pricing, narratives, and methodology enhancements via isolated Sandbox with 5% micro-cohort testing.",
+      preview: true,
+      sandboxMode: true,
+      capabilities: [
+        "New narrative proposals",
+        "New pricing model experiments",
+        "New product idea validation",
+        "Category reframe testing",
+        "Methodology enhancement proposals",
+        "Offer ladder re-architecture",
+        "Market expansion hypothesis testing"
+      ],
+      protections: [
+        "Methodology Lock (VQS Protection)",
+        "5% Micro-Cohort Cap",
+        "CoS Gatekeeper Approval",
+        "Rollback Protocol on drift"
+      ]
     }
   },
-  v15: true
+  v16: true
 };
 
 // 12. REVENUE SENSITIVITY MODEL (FINANCIAL RIGOR) - v1.5 Updated
@@ -694,6 +715,135 @@ export const FINAL_DIRECTIVE = {
   v15: true
 };
 
+// 15. L6 TRANSITION PROTOCOLS (Controlled Innovation)
+export const L6_TRANSITION_PROTOCOLS = {
+  version: "L6-Transition-v1.0",
+  purpose: "Enable controlled L6 experimentation WITHOUT destabilizing the L5 system",
+  governingAgents: ["Strategist (primary)", "CoS (enforcement)", "CRO", "CMO", "Content Manager"],
+  
+  methodologyLock: {
+    name: "Methodology Lock (VQS Protection)",
+    description: "All core methodologies are locked and protected",
+    protectedMethodologies: [
+      "Dunford Positioning",
+      "Walker Narrative",
+      "Kern Category Creation",
+      "VQS Framework",
+      "Offer Ladder",
+      "Content Archetypes (A-H)"
+    ],
+    changeRequirements: [
+      "Strategist simulation validation",
+      "Regulatory compliance validation",
+      "Conservativeness proof (safer than current)",
+      "Minimum conservativeness score: 70%",
+      "Maximum VQS risk: low"
+    ],
+    allowedChangeTypes: ["enhancement", "extension"]
+  },
+  
+  microCohortTesting: {
+    name: "Micro-Cohort Testing (5% Audience Cap)",
+    description: "All L6 experiments must run on limited audience segments",
+    maxAudiencePercent: 5,
+    totalAudienceSize: 13000,
+    segmentationOptions: [
+      "Archetype filter",
+      "Engagement level",
+      "Industry focus",
+      "Company size"
+    ],
+    metricsTracked: [
+      "Trust signals (positive/neutral/negative)",
+      "Conversion patterns",
+      "Friction events",
+      "Skepticism indicators"
+    ],
+    frictionReporting: "CRO must report friction to CoS immediately"
+  },
+  
+  sandboxBoundaries: {
+    name: "L6 Strategic Sandbox",
+    description: "Fully isolated experimental environment",
+    experimentTypes: [
+      "New narratives",
+      "New pricing models",
+      "New product ideas",
+      "Category reframes",
+      "Methodology enhancements",
+      "Offer ladder re-architecture",
+      "Market expansion hypotheses"
+    ],
+    sandboxRequirements: [
+      "Log all outputs to segregated UDL partition (L6_Sandbox)",
+      "Never overwrite L5 models (VQS, Offer Ladder, RPM, Packets)",
+      "Never publish content to main audience",
+      "Never trigger the CRO Ladder automatically",
+      "Never modify Strategist RPM weights outside Sandbox"
+    ],
+    activationConditions: [
+      "RPM accuracy ≥ 85%",
+      "No unresolved drift indicators"
+    ]
+  },
+  
+  cosGovernance: {
+    name: "CoS L6 Governance Addendum",
+    description: "CoS becomes the L6 Gatekeeper",
+    approvalRequirements: [
+      "VQS Methodology Lock requirements met",
+      "Micro-Cohort Testing results positive",
+      "RPM stability maintained",
+      "Trust signal impact neutral or positive",
+      "No friction increase from stakeholder packets"
+    ],
+    experimentCaps: {
+      maxTokensPerExperiment: 500,
+      maxDuration: "7 days",
+      maxSimultaneousExperiments: 3
+    },
+    rollbackTriggers: [
+      "Trust signal decline",
+      "Rising skepticism",
+      "Conversion drop",
+      "Confusion in objections",
+      "VQS boundary risk"
+    ],
+    experimentTracking: [
+      "Proposed experiments",
+      "Active experiments",
+      "Completed experiments",
+      "Abandoned experiments",
+      "Graduated experiments (promoted to L5)"
+    ]
+  },
+  
+  graduationCriteria: {
+    description: "Sandbox output can graduate to L5 only if:",
+    requirements: [
+      "Micro-cohort signals strong",
+      "No trust erosion",
+      "RPM remains stable",
+      "No friction spikes in stakeholder packets",
+      "Strategist simulations confirm viability",
+      "CoS signs off"
+    ],
+    architectApproval: "optional (not required)"
+  },
+  
+  priorityHierarchyUpdate: {
+    description: "L6 Controlled Innovation added to priority hierarchy",
+    order: [
+      "1. Revenue Integrity",
+      "2. Audit Defensibility",
+      "3. Strategic Alignment",
+      "4. Operational Efficiency",
+      "5. L6 Controlled Innovation (NEW)",
+      "6. Human Oversight"
+    ]
+  }
+};
+
 // Complete Operating Context Export
 export const AGENT_OPERATING_CONTEXT = {
   version: OPERATING_CONTEXT_VERSION,
@@ -711,7 +861,8 @@ export const AGENT_OPERATING_CONTEXT = {
   maturityModel: MATURITY_MODEL,
   revenueSensitivityModel: REVENUE_SENSITIVITY_MODEL,
   cosEscalationProtocols: COS_ESCALATION_PROTOCOLS,
-  finalDirective: FINAL_DIRECTIVE
+  finalDirective: FINAL_DIRECTIVE,
+  l6TransitionProtocols: L6_TRANSITION_PROTOCOLS
 };
 
 // Helper: Check if output violates VQS

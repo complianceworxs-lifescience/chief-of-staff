@@ -2693,6 +2693,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // L5 Agent Health Monitor routes (2-Hour Autonomous Validation Cycle)
   app.use("/api/health-monitor", (await import("./routes/l5-health-monitor")).default);
   
+  // L6 Transition Package routes (Sandbox Mode, CoS Governance, Micro-Cohort Testing, Methodology Lock)
+  app.use("/api/l6", (await import("./routes/l6-transition")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
