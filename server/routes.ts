@@ -2652,6 +2652,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Experiment OS integration
   app.use("/experiments", (await import("./routes/experiments")).default);
+  
+  // Multimillion-Dollar Directive routes
+  app.use("/api/directive", (await import("./routes/directive")).default);
 
   // ====================================
   // LLM DIRECTIVE ENGINE - External AI Integration

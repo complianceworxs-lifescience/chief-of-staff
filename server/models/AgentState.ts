@@ -1,5 +1,5 @@
 export type AgentId =
-  | "ceo" | "coo" | "cmo" | "cro" | "cco" | "content-manager" | "chief-of-staff" | "market-intelligence";
+  | "ceo" | "coo" | "cmo" | "cro" | "cco" | "cfo" | "content-manager" | "chief-of-staff" | "market-intelligence";
 
 export type AgentStatus = "idle" | "running" | "blocked" | "resolved" | "error" | "healthy" | "degraded";
 

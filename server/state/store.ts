@@ -85,16 +85,17 @@ function emitEvent(type: string, payload: any) {
   _eventListeners.forEach(fn => fn({ type, payload }));
 }
 
-// Seed initial agent states
-const initialAgents: { id: AgentId; displayName: string }[] = [
-  { id: "ceo", displayName: "CEO Agent" },
-  { id: "coo", displayName: "COO Agent" },
-  { id: "cmo", displayName: "CMO Agent" },
-  { id: "cro", displayName: "CRO Agent" },
-  { id: "cco", displayName: "CCO Agent" },
-  { id: "content-manager", displayName: "Content Manager" },
-  { id: "chief-of-staff", displayName: "Chief of Staff" },
-  { id: "market-intelligence", displayName: "Market Intelligence Agent" }
+// Seed initial agent states with Multimillion-Dollar Directive responsibilities
+const initialAgents: { id: AgentId; displayName: string; mandate?: string }[] = [
+  { id: "ceo", displayName: "CEO Agent", mandate: "Maintain the $5M growth line. Translate system outputs into strategy. Ensure ODAR discipline." },
+  { id: "coo", displayName: "COO Agent", mandate: "Operational engine room. Manage workflow efficiency, productivity metrics, sprint execution." },
+  { id: "cmo", displayName: "CMO Agent", mandate: "Ensure content velocity, CTR, conversion rate, and CAC/ROAS meet thresholds. Drive experiments." },
+  { id: "cro", displayName: "CRO Agent", mandate: "Grow subscription ARR and upsells. Monitor persona monetization funnel ($99 → $149 → $499)." },
+  { id: "cco", displayName: "CCO Agent", mandate: "AI Governance and Product Integrity. Ensure compliance with ISO, FDA standards." },
+  { id: "cfo", displayName: "CFO Agent", mandate: "Monitor burn, runway, unit costs. Enforce CAC guardrails. Project 30/90-day forecasts." },
+  { id: "content-manager", displayName: "Content Manager", mandate: "Execute content calendar. Ensure Feynman Technique simplicity. Track production velocity." },
+  { id: "chief-of-staff", displayName: "Chief of Staff", mandate: "Drive execution velocity. Enforce operational thresholds. Consolidate briefs for CEO." },
+  { id: "market-intelligence", displayName: "Market Intelligence Agent", mandate: "Monitor regulatory, competitive, and market signals for strategic decisions." }
 ];
 
 initialAgents.forEach(({ id, displayName }) => {

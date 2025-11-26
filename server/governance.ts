@@ -109,20 +109,62 @@ export function overdueCutoff(hours: number): Date {
   return new Date(Date.now() - hours * 60 * 60 * 1000);
 }
 
-// Governance KPI thresholds for escalation
+// Governance KPI thresholds for escalation (Multimillion-Dollar Directive aligned)
 export interface GovernanceThresholds {
-  auto_resolve_min: number;
-  mttr_max_minutes: number;
-  max_escalations_per_day: number;
+  // Ops thresholds
+  auto_resolve_min: number;         // ≥85%
+  mttr_max_minutes: number;         // ≤5 min
+  max_escalations_per_day: number;  // ≤5/day
+  delivery_rate_min: number;        // ≥98%
   missing_outcome_hours: number;
+  
+  // Marketing thresholds
+  ctr_min: number;                  // ≥1%
+  conversion_min: number;           // ≥1%
+  cta_yield_min: number;            // ≥5%
+  cac_max: number;                  // ≤$50
+  
+  // Revenue thresholds
+  churn_max: number;                // ≤5%
+  arr_growth_min: number;           // ≥10% MoM
+  
+  // Finance thresholds
+  runway_min_months: number;        // ≥12 months
+  roas_min: number;                 // ≥2x
+  
+  // Compliance thresholds
+  sop_overdue_max_days: number;     // ≤7 days
+  validation_max_days: number;      // ≤3 days
+  deviation_backlog_max: number;    // ≤5
 }
 
 export function getGovernanceThresholds(): GovernanceThresholds {
   return {
+    // Ops (from Multimillion-Dollar Directive)
     auto_resolve_min: envInt("AUTO_RESOLVE_MIN_PERCENT", 85),
     mttr_max_minutes: envInt("MTTR_MAX_MINUTES", 5),
     max_escalations_per_day: envInt("MAX_ESCALATIONS_PER_DAY", 5),
-    missing_outcome_hours: envInt("MISSING_OUTCOME_HOURS", 24)
+    delivery_rate_min: envInt("DELIVERY_RATE_MIN_PERCENT", 98),
+    missing_outcome_hours: envInt("MISSING_OUTCOME_HOURS", 24),
+    
+    // Marketing
+    ctr_min: parseFloat(process.env.CTR_MIN_PERCENT || "1.0"),
+    conversion_min: parseFloat(process.env.CONVERSION_MIN_PERCENT || "1.0"),
+    cta_yield_min: parseFloat(process.env.CTA_YIELD_MIN_PERCENT || "5.0"),
+    cac_max: envInt("CAC_MAX_DOLLARS", 50),
+    
+    // Revenue
+    churn_max: parseFloat(process.env.CHURN_MAX_PERCENT || "5.0"),
+    arr_growth_min: parseFloat(process.env.ARR_GROWTH_MIN_PERCENT || "10.0"),
+    
+    // Finance
+    runway_min_months: envInt("RUNWAY_MIN_MONTHS", 12),
+    roas_min: parseFloat(process.env.ROAS_MIN || "2.0"),
+    
+    // Compliance
+    sop_overdue_max_days: envInt("SOP_OVERDUE_MAX_DAYS", 7),
+    validation_max_days: envInt("VALIDATION_MAX_DAYS", 3),
+    deviation_backlog_max: envInt("DEVIATION_BACKLOG_MAX", 5)
   };
 }
 
