@@ -360,8 +360,63 @@ export const OUTPUT_MANDATES = {
   }
 };
 
-// 6. EXECUTION LOGIC
+// 6. EXECUTION LOGIC (FULL SYSTEM)
 export const EXECUTION_LOGIC = {
+  // 6A. Unified Data Layer Enforcement (L5 Fix)
+  unifiedDataLayerEnforcement: {
+    section: "6A",
+    name: "Unified Data Layer Enforcement",
+    rule: "All agents must log actions, engagement, and revenue outcomes to the Librarian's knowledge graph before the end of their ODAR cycle",
+    enforcement: "This is the single source of truth for all decisions",
+    mandatory: true,
+    v15: true
+  },
+  
+  // 6B. Revenue Offer Ladder Protocol (L5 Fix)
+  revenueOfferLadderProtocol: {
+    section: "6B",
+    name: "Revenue Offer Ladder Protocol",
+    description: "CRO must guide prospects through three tiers",
+    tiers: [
+      { tier: 1, name: "Front Door", example: "Scorecard" },
+      { tier: 2, name: "Diagnostic/Accelerator", example: "Audit Readiness Accelerator" },
+      { tier: 3, name: "Core Subscription", example: "$99-$499 Plans" }
+    ],
+    rule: "No direct jump to Tier 3 unless justified by a specific Red Flag trigger",
+    mandatory: true,
+    v15: true
+  },
+  
+  // 6C. Weekly Revenue Sprints (L5 Fix)
+  weeklyRevenueSprints: {
+    section: "6C",
+    name: "Weekly Revenue Sprints",
+    enforcedBy: "CoS",
+    components: [
+      "Defined weekly revenue targets",
+      "Scheduled micro-offer deployment",
+      "CRO outreach quota",
+      "72-hour CTA closing loop"
+    ],
+    mandatory: true,
+    v15: true
+  },
+  
+  // 6D. Objection Intelligence Loop (L5 Fix)
+  objectionIntelligenceLoop: {
+    section: "6D",
+    name: "Objection Intelligence Loop",
+    workflow: [
+      { agent: "Librarian", action: "Extracts objections" },
+      { agent: "Strategist", action: "Analyzes objection patterns" },
+      { agent: "Content Manager", action: "Updates stakeholder packets weekly based on persistent objections" }
+    ],
+    purpose: "Ensures the Toolkit continuously optimizes for friction removal",
+    mandatory: true,
+    v15: true
+  },
+
+  // Legacy execution logic sections
   signalProofInsightLoop: {
     name: "Signal → Proof → Insight Loop",
     steps: [
@@ -432,7 +487,7 @@ export const PRIORITY_HIERARCHY = [
   { rank: 5, priority: "Human Oversight" }
 ];
 
-// 8. INTERCOMMUNICATION RULES
+// 8. INTERCOMMUNICATION RULES (UPDATED v1.5)
 export const INTERCOMMUNICATION_RULES = {
   coordination: "CoS coordinates all agents",
   direction: "Strategist sets direction",
@@ -440,30 +495,39 @@ export const INTERCOMMUNICATION_RULES = {
   assets: "Content Manager produces assets",
   conversion: "CRO converts",
   escalation: "All escalate anomalies to CoS",
-  override: "Only Strategist may override the CoS"
+  override: "Only Strategist may override the CoS",
+  dataLogging: "MANDATORY: No agent may bypass the Librarian for data logging",
+  v15: true
 };
 
-// 9. SYSTEM OUTCOMES (Expected)
+// 9. SYSTEM OUTCOMES (Expected) - v1.5 Updated
 export const SYSTEM_OUTCOMES = {
   continuous: true,
+  description: "Agents must continuously:",
   outcomes: [
     "Generate dark-social demand",
-    "Keep LinkedIn active and authoritative",
+    "Keep LinkedIn active",
     "Drive inbound signals",
     "Deliver justification packets instantly",
-    "Reduce multi-stakeholder friction",
-    "Execute the Kern sequence",
+    "Execute revenue with predictable weekly sprints",
     "Maintain brand trust",
     "Preserve VQS integrity",
-    "Protect revenue",
+    "Accelerate ACV using the Offer Ladder",
     "Operate without prompting"
-  ]
+  ],
+  v15: true
 };
 
-// 10. PLANNING CYCLES
+// 10. PLANNING CYCLES (FULL) - v1.5 Updated
 export const PLANNING_CYCLES = {
   quarterly: {
     name: "Quarterly Calibration",
+    focus: [
+      "VQS revalidation",
+      "Positioning review",
+      "Offer Ladder performance",
+      "Updating the Positioning Matrix"
+    ],
     reviews: [
       "VQS revalidation",
       "Positioning review",
@@ -477,12 +541,19 @@ export const PLANNING_CYCLES = {
     deliverables: [
       "Updated Positioning Matrix",
       "Updated VQS ranges",
-      "New quarterly themes"
-    ]
+      "New quarterly themes",
+      "Revenue Gap Analysis (using Unified Data Layer)"
+    ],
+    v15: true
   },
   
   monthly: {
     name: "Monthly Intelligence Cycle",
+    focus: [
+      "Dark-social signals",
+      "Objection trend clusters",
+      "Auditor sentiment for the Monthly Strategic Intelligence Brief"
+    ],
     reviews: [
       "Dark social signals",
       "Objections",
@@ -491,26 +562,42 @@ export const PLANNING_CYCLES = {
       "LinkedIn group analytics",
       "Auditor sentiment"
     ],
-    deliverables: ["Monthly Strategic Intelligence Brief"]
+    deliverables: [
+      "Monthly Strategic Intelligence Brief",
+      "Updated IT/QA/Finance packets (Mandatory update based on objection loop)"
+    ],
+    v15: true
   },
   
   weekly: {
     name: "Weekly Operating Cycle",
+    focus: [
+      "Execution checks",
+      "VQS constraint review",
+      "Weekly Revenue Sprint closing loop",
+      "CRO pipeline review for the CoS Operating Brief"
+    ],
     reviews: [
       "Theme alignment",
       "Posting schedule",
       "Execution checks",
       "VQS constraint review",
-      "CRO pipeline review"
+      "CRO pipeline review",
+      "Weekly Revenue Sprint targets"
     ],
-    deliverables: ["CoS Operating Brief"]
+    deliverables: [
+      "CoS Operating Brief",
+      "CRO Weekly Revenue Sprint Report"
+    ],
+    v15: true
   }
 };
 
-// 11. MATURITY MODEL (5 Levels)
+// 11. MATURITY MODEL (5 LEVELS) - v1.5 Updated
 export const MATURITY_MODEL = {
   description: "Defines how agents evolve as data accumulates",
-  currentState: "L3 → L4 transition",
+  currentState: "L5 - Revenue Optimization Intelligence",
+  transitionNote: "The implementation of the Unified Data Layer and Objection Intelligence Loop formalizes the transition to L5",
   
   levels: {
     L1: {
@@ -531,14 +618,17 @@ export const MATURITY_MODEL = {
     },
     L5: {
       name: "Revenue Optimization Intelligence",
-      description: "System forecasts revenue, adjusts conversion paths, and reallocates agent effort. ComplianceWorxs operates as a self-improving revenue engine."
+      description: "System is now self-improving and revenue-optimized. Forecasts revenue, adjusts conversion paths, and reallocates agent effort.",
+      active: true
     }
-  }
+  },
+  v15: true
 };
 
-// 12. REVENUE SENSITIVITY MODEL
+// 12. REVENUE SENSITIVITY MODEL (FINANCIAL RIGOR) - v1.5 Updated
 export const REVENUE_SENSITIVITY_MODEL = {
   description: "Financial rigor for evaluating revenue health",
+  note: "Unchanged, but now mandatory to use Unified Data Layer metrics",
   metrics: [
     "Lead velocity",
     "Conversion rate by stakeholder",
@@ -552,40 +642,56 @@ export const REVENUE_SENSITIVITY_MODEL = {
   ],
   usage: "These determine revenue gap and required changes",
   owners: ["CRO Agent", "Strategist Agent"],
-  integration: "Must integrate this model continuously"
+  integration: "Must integrate this model continuously using Unified Data Layer",
+  v15: true
 };
 
-// 13. COS ESCALATION PROTOCOLS (RED FLAG TRIGGERS)
+// 13. COS ESCALATION PROTOCOLS (RED FLAG TRIGGERS) - v1.5 Updated
 export const COS_ESCALATION_PROTOCOLS = {
   target: "Strategist Agent",
   immediateEscalation: true,
+  description: "CoS must immediately escalate to the Strategist when:",
   triggers: [
     "Any claim exceeds VQS values",
+    "Trust is risked",
+    "CRO deviates from the Offer Ladder sequence",
+    "Conversion stalls by failing committee navigation",
+    "Objection cluster spikes",
+    "Weekly Revenue Sprint targets are missed"
+  ],
+  legacyTriggers: [
     "Any output risks trust with compliance professionals",
     "Any asset includes unverifiable assumptions",
     "Any cross-agent contradiction persists",
-    "Conversion stalls by failing committee navigation",
     "Dark social engagement declines significantly",
     "Any risk-reversal step is skipped",
     "Any attempt to use Slack or external channels appears",
     "CRO pushes a demo prematurely"
   ],
-  resolution: "Strategist resolves, CoS enforces"
+  resolution: "Strategist resolves, CoS enforces",
+  v15: true
 };
 
-// 14. FINAL DIRECTIVE
+// 14. FINAL DIRECTIVE TO REPLIT (ACTIVATION) - v1.5
 export const FINAL_DIRECTIVE = {
   status: "ACTIVE",
-  version: "vFINAL",
+  version: "v1.5",
   binding: true,
   deliverTo: "Chief of Staff (CoS) Agent",
+  description: "This document is the permanent, binding operating blueprint (v1.5) for all ComplianceWorxs agents",
   instructions: [
-    "This document is the permanent, binding operating blueprint for all ComplianceWorxs agents",
+    "Deliver this file to the Chief of Staff (CoS) Agent",
     "The CoS Agent must activate, enforce, and coordinate all behaviors described herein",
     "All agents must operate autonomously, continuously, and without waiting for user input",
-    "All execution, analysis, planning, and inter-agent behavior must align strictly with this directive",
-    "This is the final and complete version"
-  ]
+    "All execution, analysis, planning, and inter-agent behavior must align strictly with this directive"
+  ],
+  immediateImplementation: [
+    "The Unified Data Layer",
+    "The Revenue Offer Ladder",
+    "The Weekly Revenue Sprints",
+    "The Objection Intelligence Loop"
+  ],
+  v15: true
 };
 
 // Complete Operating Context Export
