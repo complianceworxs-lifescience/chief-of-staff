@@ -161,6 +161,87 @@ export const MULTIMILLION_DIRECTIVE = {
       validationMaxDays: 3,    // Missed validation ≤ 3 days
       deviationBacklogMax: 5   // Deviation backlog ≤ 5
     }
+  },
+
+  // Success Criteria - Measurable targets for multimillion-dollar scale
+  successCriteria: {
+    revenue: {
+      target: "Predictable recurring revenue with visible ARR growth curve",
+      metric: "ARR growth 10%+ MoM",
+      status: "tracking"
+    },
+    operations: {
+      target: "Ops stable with delivery 98%+, cost per brief trending down",
+      metrics: ["Delivery rate ≥98%", "Cost per brief decreasing"],
+      status: "tracking"
+    },
+    marketing: {
+      target: "CAC < $50, CTR > 1%, conversion > 1.5%",
+      metrics: ["CAC <$50", "CTR >1%", "Conversion >1.5%"],
+      status: "tracking"
+    },
+    compliance: {
+      target: "Audit-ready 95% of days",
+      metric: "Audit readiness score ≥95%",
+      status: "tracking"
+    },
+    financial: {
+      target: "Cash runway consistently >12 months",
+      metric: "Runway ≥12 months",
+      status: "tracking"
+    }
+  },
+
+  // Revenue Model - Subscription-first thinking
+  revenueModel: {
+    subscriptions: {
+      strategy: "Scale ARR via tiered memberships with enterprise add-ons",
+      tiers: {
+        starter: { price: 99, target: "Rising Leaders", focus: "Entry compliance tools" },
+        professional: { price: 149, target: "Validation Strategists", focus: "Advanced frameworks" },
+        enterprise: { price: 499, target: "Quality Architects", focus: "Full suite + consulting" }
+      },
+      conversionPath: "$99 → $149 → $499 systematic upgrade funnel"
+    },
+    enterpriseAccounts: {
+      strategy: "Develop bundles for consulting firms, vendors, large pharma",
+      focus: "Multiple seats, volume licensing, custom integrations"
+    },
+    highMarginUpsells: {
+      products: ["ELSA reports", "Compliance dashboards", "Audit-prep templates"],
+      positioning: "Must-have add-ons for audit readiness"
+    }
+  },
+
+  // Brand & Market Positioning
+  brandPositioning: {
+    coreMessage: "Selling clarity in compliance, not just dashboards",
+    authority: {
+      strategy: "Authority First - dominate on positioning, not features",
+      channels: ["Weekly LinkedIn campaigns", "Validation & Regulatory Compliance Professionals group", "Industry whitepapers"]
+    },
+    trustLayer: {
+      elements: ["ISO standards alignment", "FDA guidance compliance", "AI explainability"],
+      positioning: "The safe bet for regulated industries"
+    },
+    industryFocus: "Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics"
+  },
+
+  // Metrics That Matter for $5M trajectory
+  metricsThatMatter: {
+    revenuePerSegment: {
+      question: "What would it take to systematically convert Rising Leaders → Validation Strategists → Quality Architects?",
+      tracking: ["Segment conversion rates", "Upgrade velocity", "LTV by persona"]
+    },
+    costEfficiency: {
+      metrics: ["API spend", "CAC per member", "ROI per channel"],
+      owners: ["CFO Agent", "COO Agent"],
+      visibility: "Daily"
+    },
+    scalingCurve: {
+      metrics: ["Subscription growth rates", "Partner ecosystem expansion"],
+      insight: "At multimillion scale, partnerships are multipliers"
+    }
   }
 };
 

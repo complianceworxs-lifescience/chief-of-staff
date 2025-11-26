@@ -23,8 +23,32 @@ router.get('/config', (req, res) => {
     guidingPrinciples: MULTIMILLION_DIRECTIVE.guidingPrinciples,
     growthLine: MULTIMILLION_DIRECTIVE.growthLine,
     executionFramework: MULTIMILLION_DIRECTIVE.executionFramework,
-    escalationThresholds: MULTIMILLION_DIRECTIVE.escalationThresholds
+    escalationThresholds: MULTIMILLION_DIRECTIVE.escalationThresholds,
+    successCriteria: MULTIMILLION_DIRECTIVE.successCriteria,
+    revenueModel: MULTIMILLION_DIRECTIVE.revenueModel,
+    brandPositioning: MULTIMILLION_DIRECTIVE.brandPositioning,
+    metricsThatMatter: MULTIMILLION_DIRECTIVE.metricsThatMatter
   });
+});
+
+// Get success criteria for tracking
+router.get('/success-criteria', (req, res) => {
+  res.json(MULTIMILLION_DIRECTIVE.successCriteria);
+});
+
+// Get revenue model thinking
+router.get('/revenue-model', (req, res) => {
+  res.json(MULTIMILLION_DIRECTIVE.revenueModel);
+});
+
+// Get brand positioning strategy
+router.get('/brand-positioning', (req, res) => {
+  res.json(MULTIMILLION_DIRECTIVE.brandPositioning);
+});
+
+// Get metrics that matter for $5M trajectory
+router.get('/metrics', (req, res) => {
+  res.json(MULTIMILLION_DIRECTIVE.metricsThatMatter);
 });
 
 // Get agent responsibilities per the directive
