@@ -1,4 +1,4 @@
-// API routes for Agent Operating Context vFINAL
+// API routes for Agent Operating Context v1.5
 import { Router } from 'express';
 import {
   AGENT_OPERATING_CONTEXT,
@@ -17,6 +17,8 @@ import {
   REVENUE_SENSITIVITY_MODEL,
   COS_ESCALATION_PROTOCOLS,
   FINAL_DIRECTIVE,
+  L5_STRUCTURAL_FIXES,
+  MATURITY_STATE,
   checkVQSCompliance,
   checkGovernanceCompliance,
   getMaturityCapabilities,
@@ -217,7 +219,73 @@ router.post('/activate', (req, res) => {
     deliveredTo: "Chief of Staff (CoS) Agent",
     activatedAt: new Date().toISOString(),
     instructions: FINAL_DIRECTIVE.instructions,
-    message: "Agent Operating Context vFINAL is now active. CoS Agent is the prime orchestrator. All agents must operate autonomously per this directive."
+    message: "Agent Operating Context v1.5 is now active. CoS Agent is the prime orchestrator. L5 Revenue Optimization Intelligence enabled."
+  });
+});
+
+// ========================================
+// L5 STRUCTURAL FIXES ENDPOINTS (v1.5)
+// ========================================
+
+// Get all L5 structural fixes
+router.get('/l5/fixes', (req, res) => {
+  res.json({
+    version: "v1.5",
+    transitionComplete: MATURITY_STATE.transitionComplete,
+    currentLevel: MATURITY_STATE.currentLevel,
+    fixes: L5_STRUCTURAL_FIXES
+  });
+});
+
+// Get current maturity state
+router.get('/l5/maturity', (req, res) => {
+  res.json(MATURITY_STATE);
+});
+
+// Get Unified Data Layer status
+router.get('/l5/unified-data-layer', (req, res) => {
+  res.json({
+    ...L5_STRUCTURAL_FIXES.unifiedDataLayer,
+    enforcement: "All agents must log to Librarian's knowledge graph before ODAR cycle completion"
+  });
+});
+
+// Get Revenue Offer Ladder
+router.get('/l5/offer-ladder', (req, res) => {
+  res.json(L5_STRUCTURAL_FIXES.revenueOfferLadder);
+});
+
+// Get Weekly Revenue Sprints configuration
+router.get('/l5/revenue-sprints', (req, res) => {
+  res.json({
+    ...L5_STRUCTURAL_FIXES.weeklyRevenueSprints,
+    currentWeek: new Date().toISOString(),
+    sprintActive: true
+  });
+});
+
+// Get Objection Intelligence Loop
+router.get('/l5/objection-loop', (req, res) => {
+  res.json(L5_STRUCTURAL_FIXES.objectionIntelligenceLoop);
+});
+
+// L5 Status Dashboard endpoint
+router.get('/l5/dashboard', (req, res) => {
+  res.json({
+    version: OPERATING_CONTEXT_VERSION,
+    maturity: MATURITY_STATE,
+    fixes: {
+      unifiedDataLayer: { ...L5_STRUCTURAL_FIXES.unifiedDataLayer },
+      revenueOfferLadder: { ...L5_STRUCTURAL_FIXES.revenueOfferLadder },
+      weeklyRevenueSprints: { ...L5_STRUCTURAL_FIXES.weeklyRevenueSprints },
+      objectionIntelligenceLoop: { ...L5_STRUCTURAL_FIXES.objectionIntelligenceLoop }
+    },
+    governance: {
+      rulesCount: GOVERNANCE_RULES.rules.length,
+      version: GOVERNANCE_RULES.version,
+      immutable: GOVERNANCE_RULES.immutable
+    },
+    status: "L5 Revenue Optimization Intelligence ACTIVE"
   });
 });
 

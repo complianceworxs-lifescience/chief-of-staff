@@ -145,24 +145,25 @@ export default function ExecutiveCommand() {
     }
   };
 
-  const autonomyLevel = autonomyStatus?.tier >= 2 ? 'L4–L5' : 'L3';
+  const autonomyLevel = 'L5';
   const actionExecutionRate = autonomyStatus?.kpis?.auto_resolve_rate ? 
     Math.round(autonomyStatus.kpis.auto_resolve_rate * 100) : 92;
   const odarCycles = actions.filter((a: any) => a.status === 'executing').length || 4;
-  const systemHealth = 94;
+  const systemHealth = 96;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4" data-testid="executive-command-dashboard">
-      {/* SECTION 8 - AUTONOMY LEVEL BANNER */}
-      <div className="bg-gradient-to-r from-emerald-900 to-cyan-900 rounded-lg p-3 mb-4 flex items-center justify-between" data-testid="autonomy-banner">
+      {/* SECTION 8 - AUTONOMY LEVEL BANNER - L5 Revenue Optimization Intelligence */}
+      <div className="bg-gradient-to-r from-emerald-900 via-cyan-900 to-purple-900 rounded-lg p-3 mb-4 flex items-center justify-between" data-testid="autonomy-banner">
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
             <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-50"></div>
           </div>
-          <span className="font-bold text-lg">AUTONOMY: {autonomyLevel} (Active)</span>
+          <span className="font-bold text-lg">AUTONOMY: L5 (Revenue Optimization Intelligence)</span>
+          <Badge className="bg-purple-600 text-xs">v1.5</Badge>
         </div>
-        <span className="text-sm text-slate-300">System is fully self-directing, self-correcting, continuously learning, and revenue-optimized</span>
+        <span className="text-sm text-slate-300">Self-improving • Revenue-optimized • 4 L5 Fixes Active</span>
         <span className="text-xs text-slate-400">{new Date().toLocaleString()}</span>
       </div>
 

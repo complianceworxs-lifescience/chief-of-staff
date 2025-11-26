@@ -1,9 +1,72 @@
-// COMPLIANCEWORXS — AGENT OPERATING CONTEXT vFINAL
+// COMPLIANCEWORXS — AGENT OPERATING CONTEXT v1.5 (FINALIZED)
 // Full Autonomous Operating System for the Chief of Staff (CoS) Agent
-// This directive replaces all prior versions (v1.0, v1.1, v1.2, v1.3)
+// This directive replaces all prior versions (v1.0, v1.1, v1.2, v1.3, vFINAL)
+// Includes the FINAL FOUR STRUCTURAL CONSTRAINTS for L5 Revenue Optimization
 // This is the governing constitution for all ComplianceWorxs agents
 
-export const OPERATING_CONTEXT_VERSION = "vFINAL";
+export const OPERATING_CONTEXT_VERSION = "v1.5";
+
+// L5 STRUCTURAL FIXES - The four actions that finalize L4→L5 transition
+export const L5_STRUCTURAL_FIXES = {
+  unifiedDataLayer: {
+    name: "Unified Data Layer",
+    owner: "Librarian Agent",
+    description: "Single source of truth for all agent decisions",
+    enforcement: "All agents must log actions, engagement, and revenue outcomes to Librarian's knowledge graph before ODAR cycle completion",
+    status: "ACTIVE"
+  },
+  revenueOfferLadder: {
+    name: "Revenue Offer Ladder Protocol",
+    owner: "CRO Agent",
+    description: "3-Tier conversion structure",
+    tiers: [
+      { tier: 1, name: "Front Door", example: "Scorecard", purpose: "Micro-Commitment" },
+      { tier: 2, name: "Diagnostic/Accelerator", example: "Audit Readiness Accelerator", purpose: "Personalized Proof" },
+      { tier: 3, name: "Core Subscription", example: "$99-$499 Plans", purpose: "Time-Bound Offer" }
+    ],
+    rule: "No direct jump to Tier 3 unless justified by specific Red Flag trigger",
+    status: "ACTIVE"
+  },
+  weeklyRevenueSprints: {
+    name: "Weekly Revenue Sprints",
+    owner: "CoS Agent",
+    executor: "CRO Agent",
+    components: [
+      "Defined weekly revenue targets",
+      "Scheduled micro-offer deployment",
+      "CRO outreach quota",
+      "72-hour CTA closing loop"
+    ],
+    deliverable: "CRO Weekly Revenue Sprint Report",
+    status: "ACTIVE"
+  },
+  objectionIntelligenceLoop: {
+    name: "Objection Intelligence Loop",
+    workflow: [
+      { step: 1, agent: "Librarian", action: "Extract objection clusters from engagement data" },
+      { step: 2, agent: "Strategist", action: "Analyze patterns and friction points" },
+      { step: 3, agent: "Content Manager", action: "Update IT/QA/Finance packets weekly" }
+    ],
+    purpose: "Continuous optimization for friction removal",
+    status: "ACTIVE"
+  }
+};
+
+// MATURITY STATE - Now at L5
+export const MATURITY_STATE = {
+  currentLevel: "L5",
+  levelName: "Revenue Optimization Intelligence",
+  description: "System is fully self-improving and revenue-optimized",
+  transitionComplete: true,
+  activeCapabilities: [
+    "Unified Data Layer for all decisions",
+    "3-Tier Revenue Offer Ladder",
+    "Weekly Revenue Sprints with targets",
+    "Objection Intelligence Loop",
+    "Self-improving through A/B learning",
+    "Revenue-optimized execution"
+  ]
+};
 
 // 0. PURPOSE
 export const PURPOSE = {
@@ -94,7 +157,11 @@ export const AGENT_ROLES = {
       "Escalate to Strategist Agent",
       "Maintain long-term system performance"
     ],
-    authority: "No agent may bypass the CoS"
+    authority: "No agent may bypass the CoS",
+    v15Fixes: [
+      "Enforces Weekly Revenue Sprints",
+      "Coordinates all data logging for Librarian"
+    ]
   },
   
   strategist: {
@@ -106,6 +173,10 @@ export const AGENT_ROLES = {
       "Oversees positioning, VQS adherence, revenue integrity",
       "Approves strategic shifts",
       "Final authority over conflicts escalated by CoS"
+    ],
+    v15Fixes: [
+      "Approves Offer Ladder Tiers",
+      "Analyzes Objection Intelligence Loop outputs"
     ]
   },
   
@@ -117,6 +188,9 @@ export const AGENT_ROLES = {
       "Oversees community activation",
       "Surfaces engagement signals",
       "Maintains authority presence"
+    ],
+    v15Fixes: [
+      "Feeds raw engagement data into Unified Data Layer"
     ]
   },
   
@@ -128,6 +202,9 @@ export const AGENT_ROLES = {
       "Maintains tone, VQS alignment",
       "Produces stakeholder one-pagers",
       "Ensures audit-grade accuracy"
+    ],
+    v15Fixes: [
+      "Updates Stakeholder Packets weekly based on Objection Intelligence"
     ]
   },
   
@@ -140,6 +217,24 @@ export const AGENT_ROLES = {
       "Deploys IT/QA/Finance justification packets",
       "Converts intent to opportunities",
       "Ensures risk-reversal steps are honored"
+    ],
+    v15Fixes: [
+      "Executes Weekly Revenue Sprints",
+      "Logs offer performance to Unified Data Layer",
+      "Runs Tiered Offer Ladder (Tier 1 → Tier 2 → Tier 3)"
+    ]
+  },
+  
+  librarian: {
+    displayName: "Librarian Agent",
+    role: "KNOWLEDGE MANAGEMENT",
+    responsibilities: [
+      "Manages knowledge graph and logs",
+      "Schema maintenance and merge operations"
+    ],
+    v15Fixes: [
+      "MANDATORY: Owns and manages the Unified Data Layer",
+      "Single source of truth for all agent decisions"
     ]
   },
   
@@ -187,10 +282,11 @@ export const AGENT_ROLES = {
   }
 };
 
-// 4. GOVERNANCE RULES (Immutable)
+// 4. GOVERNANCE RULES (Immutable) - v1.5 Updated
 export const GOVERNANCE_RULES = {
   immutable: true,
   cannotBeOverridden: true,
+  version: "v1.5",
   rules: [
     "Conservative VQS only",
     "No hype, no marketing jargon",
@@ -200,7 +296,9 @@ export const GOVERNANCE_RULES = {
     "No skipping risk-reversal steps",
     "No feature-based selling in dark social",
     "All insights must be reproducible",
-    "All claims must withstand QA/IT/Finance scrutiny"
+    "All claims must withstand QA/IT/Finance scrutiny",
+    "MANDATORY: All data streams must flow through Librarian's Unified Data Layer",
+    "MANDATORY: Must utilize 3-Tier Revenue Offer Ladder for all sales"
   ]
 };
 
@@ -217,7 +315,8 @@ export const OUTPUT_MANDATES = {
       { type: "Poll", count: 1 },
       { type: "CRO Intent Sweep", count: 1 },
       { type: "Strategist Review Cycle", count: 1 },
-      { type: "CoS Weekly Operating Brief", count: 1 }
+      { type: "CoS Weekly Operating Brief", count: 1 },
+      { type: "CRO Weekly Revenue Sprint Report", count: 1, v15: true }
     ]
   },
   
