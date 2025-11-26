@@ -24,7 +24,7 @@ The application uses a full-stack architecture with a React-based SPA frontend (
     - **Tier 2 Autonomy**: Advanced upgrade incorporating cost-aware playbook selection via Expected Utility, dynamic resource orchestration, data freshness contracts, bandit learning for playbook optimization, and risk-gated HITL escalation.
     - **Tier 3 Coordination**: Inter-agent coordination with conflict half-life <10min, cooperation efficiency tracking, and a simulation harness.
     - **Chief of Staff Runbook**: 6-tier autonomy rollout with daily KPI monitoring and automatic rollback protocols.
-    - **CoS DAILY MONITORING CHECKLIST**: 4-Agent optimized lean checklist with 6 categories (System Integrity, Revenue Engine, Demand & Dark Social, Content Intelligence, Strategist Oversight, CoS Actions) and automatic action generation.
+    - **CoS DAILY MONITORING CHECKLIST v2.0**: Enhanced 4-Agent optimized checklist with PFL (Product Feedback Loop), CSI (Competitor Signal Intelligence), and SVDP (Strategic VQS Defense Plan). Includes metric enforcement for Feature Objection Rate, MTTD ≤72h, Revenue Predictability ≥85%, and automatic VQS Defense Asset prioritization.
     - **ROLE CASCADE DIRECTIVE**: Remaps 6 missing agent roles into 4 active Replit agents + Gemini Strategist, ensuring L5-complete coverage.
     - **ADVANCED CAPABILITY PACK**: Activates three revenue-critical AI capabilities: Revenue Predictive Model, Autonomous Offer Optimization Engine, and Compliance Intelligence Reports.
     - **L5 METRICS CONFIRMATION SYSTEM**: Tracks Revenue Predictability, ACV Expansion, and Friction Reduction for L6 transition readiness.
