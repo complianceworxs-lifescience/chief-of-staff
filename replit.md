@@ -11,14 +11,27 @@ Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (T
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
 ## Recent Changes (November 26, 2025)
-- **MULTIMILLION-DOLLAR DIRECTIVE LOADED**: Comprehensive operating directive for $5M+ valuation scale implemented
+- **AGENT OPERATING CONTEXT vFINAL DEPLOYED**: Complete, final operating system directive delivered to Chief of Staff (CoS) Agent
+  - CoS Agent is now PRIME ORCHESTRATOR - no agent may bypass CoS
+  - Strategist Agent is final authority for escalations
+  - Strategic Framework: Dunford (Positioning) + Walker (Demand) + Kern (Conversion)
+  - VQS (Validated Quantified Statements): 14-28% workload reduction, $18K-$72K cost reduction, 15-35% performance improvement
+  - Maturity Model: Currently L3 → L4 transition (Adaptive Messaging → Strategic Autonomy)
+  - Planning Cycles: Weekly (CoS Operating Brief), Monthly (Intelligence Cycle), Quarterly (Calibration)
+  - Revenue Sensitivity Model with 9 financial rigor metrics
+  - 9 Immutable Governance Rules enforced by CoS
+  - Output Mandates: Fully autonomous execution without waiting for human commands
+- **MULTIMILLION-DOLLAR DIRECTIVE LOADED**: Comprehensive operating directive for $5M+ valuation scale
   - CEO Agent context block with ODAR discipline and $5M growth line tracking
-  - CFO Agent added with burn/runway monitoring, CAC guardrails, 30/90-day forecasts
-  - All 9 agents have defined mandates, KPIs, and escalation ownership
-  - Threshold escalation rules: Ops (85% auto-resolve, 5min MTTR), Marketing (1% CTR/conv, $50 CAC), Revenue (5% churn, 10% growth), Finance (12mo runway, 2x ROAS), Compliance (7d SOP, 3d validation)
-  - Execution framework: Daily briefs, weekly rollups, monthly forecasts, quarterly reviews
+  - CFO Agent: burn/runway monitoring, CAC guardrails, 30/90-day forecasts
+  - Success Criteria: ARR 10%+ MoM, Delivery 98%+, CAC <$50, CTR >1%, Conversion >1.5%, Runway ≥12mo
+  - Revenue Model: $99→$149→$499 subscription tiers, enterprise accounts, high-margin upsells
+  - Brand Positioning: "Selling clarity in compliance, not just dashboards" - the safe bet for regulated industries
 - **System-Driven Mindset**: "What systems must I install so ComplianceWorxs compounds into a $5M+ asset — without me in the weeds?"
-- **API Endpoints**: /api/directive/config, /api/directive/ceo-context, /api/directive/growth-line, /api/cfo/brief, /api/cfo/forecast/:period
+- **API Endpoints**: 
+  - Operating Context: /api/operating-context/complete, /api/operating-context/activate, /api/operating-context/governance, /api/operating-context/escalation, /api/operating-context/maturity
+  - Directive: /api/directive/config, /api/directive/success-criteria, /api/directive/revenue-model, /api/directive/brand-positioning
+  - CFO: /api/cfo/brief, /api/cfo/forecast/:period
 
 ## Previous Changes (October 9, 2025)
 - **REAL EXECUTION MODE ENABLED**: System transitioned from DRY_RUN simulation to real business execution (dry_run: false)
