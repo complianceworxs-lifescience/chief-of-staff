@@ -21,6 +21,7 @@ import l6AccelerationProtocolRouter from "./routes/l6-acceleration-protocol";
 import architectOversightMapRouter from "./routes/architect-oversight-map";
 import cosEnforcementDiagnosticsRouter from "./routes/cos-enforcement-diagnostics";
 import strategistRpmAnalysisRouter from "./routes/strategist-rpm-analysis";
+import architectDecisionFrameworkRouter from "./routes/architect-decision-framework";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -82,6 +83,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount STRATEGIST RPM ADVERSARIAL ANALYSIS routes
   app.use("/api/strategist-analysis", strategistRpmAnalysisRouter);
   console.log('🔬 STRATEGIST RPM ANALYSIS routes mounted at /api/strategist-analysis');
+  
+  // Mount ARCHITECT DECISION FRAMEWORK routes
+  app.use("/api/architect-framework", architectDecisionFrameworkRouter);
+  console.log('⚖️  ARCHITECT DECISION FRAMEWORK v1.0 routes mounted at /api/architect-framework');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
