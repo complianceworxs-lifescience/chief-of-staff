@@ -17,6 +17,7 @@ import { generativeStrategist } from "./services/generative-strategist";
 import { agentsRouter } from "./routes/agents";
 import architectCosContractRouter from "./routes/architect-cos-contract";
 import l5OperatingSuiteRouter from "./routes/l5-operating-suite";
+import l6AccelerationProtocolRouter from "./routes/l6-acceleration-protocol";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -62,6 +63,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L5 OPERATING SUITE v1.0 routes
   app.use("/api/l5-suite", l5OperatingSuiteRouter);
   console.log('🚀 L5 OPERATING SUITE v1.0 routes mounted at /api/l5-suite');
+  
+  // Mount L6 ACCELERATION PROTOCOL routes
+  app.use("/api/l6-acceleration", l6AccelerationProtocolRouter);
+  console.log('⚡ L6 ACCELERATION PROTOCOL routes mounted at /api/l6-acceleration');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {

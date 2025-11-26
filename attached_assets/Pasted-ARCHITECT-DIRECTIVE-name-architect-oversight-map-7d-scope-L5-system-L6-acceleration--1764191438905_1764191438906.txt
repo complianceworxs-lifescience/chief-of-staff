@@ -1,0 +1,152 @@
+ARCHITECT_DIRECTIVE {
+  name: "architect_oversight_map_7d",
+  scope: "L5_system, L6_acceleration",
+  horizon_days: 7,
+
+  objective: [
+    "Stabilize Revenue Stability toward 4/6 weeks",
+    "Increase RPM Confidence toward >= 0.95",
+    "Maintain strict L5 safety and L6 lock"
+  ],
+
+  daily_cycle: {
+    frequency_hours: 24,
+    owner: "Architect",
+    inputs: [
+      "cos_status_report",
+      "strategist_rpm_report",
+      "cmo_signal_report",
+      "cro_pipeline_report",
+      "content_objection_report"
+    ],
+    outputs: [
+      "architect_daily_readiness_decision",
+      "targeted_corrections_for_cos"
+    ]
+  },
+
+  metrics_tracked: [
+    {
+      name: "revenue_stability_weeks",
+      source: "CRO + CoS",
+      target: ">= 4/6",
+      alert_if_below: true
+    },
+    {
+      name: "rpm_confidence",
+      source: "Strategist",
+      target: ">= 0.95",
+      alert_if_below: true
+    },
+    {
+      name: "udl_freshness_minutes",
+      source: "CoS",
+      target: "<= 30",
+      alert_if_exceeds: true
+    },
+    {
+      name: "benchmark_post_volume",
+      source: "CMO",
+      target: "3x_baseline",
+      alert_if_below: true
+    },
+    {
+      name: "micro_offer_backlog",
+      source: "CRO",
+      target: "cleared_or_trending_down",
+      alert_if_not_improving: true
+    },
+    {
+      name: "drift_incidents_24h",
+      source: "CoS",
+      target: "0",
+      alert_if_above_zero: true
+    }
+  ],
+
+  daily_architect_view: [
+    "System Health Index (0–100)",
+    "Revenue Stability Status (weeks_hit / 6)",
+    "RPM Confidence (0–1, last 7 days trend)",
+    "UDL Freshness (max staleness in minutes)",
+    "Benchmark Post Impact (delta in signal density)",
+    "Micro-Offer Backlog Delta (24h change)",
+    "Escalations from CoS (list, if any)",
+    "L6 Readiness Score (informational only, L6 still locked)"
+  ],
+
+  day_by_day_focus: [
+    {
+      day: 1,
+      focus: [
+        "Confirm L6 Acceleration Protocol applied correctly",
+        "Verify UDL sync interval is truly <= 30 minutes",
+        "Baseline RPM Confidence and Revenue Stability"
+      ]
+    },
+    {
+      day: 2,
+      focus: [
+        "Check RPM Confidence delta vs Day 1",
+        "Check initial effect of 3x Benchmark Posts",
+        "Confirm CRO has begun clearing Tier 1 backlog"
+      ]
+    },
+    {
+      day: 3,
+      focus: [
+        "Identify persistent friction in pipeline stages",
+        "Verify no new objection clusters",
+        "Adjust CoS priorities if any metric is flat or negative"
+      ]
+    },
+    {
+      day: 4,
+      focus: [
+        "Evaluate trend toward 4/6 revenue stability",
+        "Check RPM Confidence trajectory against 0.95 target",
+        "Ensure no drift in Offer Ladder or positioning"
+      ]
+    },
+    {
+      day: 5,
+      focus: [
+        "Confirm backlog is substantially reduced or cleared",
+        "Confirm Benchmark Posts are impacting high-intent signals",
+        "Ensure CoS escalations have been addressed"
+      ]
+    },
+    {
+      day: 6,
+      focus: [
+        "Assess whether metrics are converging or plateauing",
+        "Decide if additional micro-corrections are needed",
+        "Confirm no L6 behavior has been activated"
+      ]
+    },
+    {
+      day: 7,
+      focus: [
+        "Render an Architect verdict: IMPROVING / STALLED",
+        "If IMPROVING: define next 7-day refinement cycle",
+        "If STALLED: instruct Strategist + CoS to generate a root-cause plan"
+      ]
+    }
+  ],
+
+  safety_guards: {
+    l6_activation: "PROHIBITED",
+    methodology_lock: "ENFORCED",
+    offer_ladder_changes: "PROHIBITED",
+    positioning_changes: "PROHIBITED",
+    experiment_audience_cap_percent: 5
+  },
+
+  architect_daily_decision_space: [
+    "no_action_required",
+    "minor_correction_to_cos",
+    "major_correction_request_to_strategist",
+    "freeze_specific_agent",
+    "reset_specific_metric_window"
+  ]
+}
