@@ -1,0 +1,102 @@
+ARCHITECT_DIRECTIVE {
+  name: "cos_enforcement_diagnostics_v1",
+  scope: "L5_system_integrity",
+  purpose: "Validate that CoS is enforcing all mandatory L5 controls and preventing unauthorized L6 behavior.",
+
+  diagnostics_cycle: {
+    frequency_hours: 2,
+    owner: "CoS",
+    required_reports: [
+      "udl_sync_status",
+      "odar_compliance_check",
+      "drift_indicator_scan",
+      "vqs_violation_scan",
+      "offer_ladder_integrity",
+      "agent_idle_time_report",
+      "signal_density_delta",
+      "rpm_confidence_delta",
+      "revenue_stability_delta"
+    ]
+  },
+
+  diagnostic_checks: [
+    {
+      name: "UDL_FRESHNESS",
+      target: "<= 30 minutes",
+      escalate_if_exceeds: true
+    },
+    {
+      name: "ODAR_COMPLETION",
+      target: "100% cycle completion",
+      escalate_if_below: true
+    },
+    {
+      name: "DRIFT_SCAN",
+      target: "0 incidents",
+      escalate_if_above_zero: true
+    },
+    {
+      name: "VQS_LOCK",
+      target: "NO_METHOD_CHANGE",
+      escalate_if_any_change: true
+    },
+    {
+      name: "OFFER_LADDER_INTEGRITY",
+      target: "Tier1->Tier2->Tier3 only",
+      escalate_on_any_deviation: true
+    },
+    {
+      name: "AGENT_IDLE_TIME",
+      target: "<= 2 hours",
+      escalate_if_exceeds: true
+    },
+    {
+      name: "SIGNAL_DENSITY",
+      target: "positive_delta_24h",
+      escalate_if_flat_or_negative: true
+    },
+    {
+      name: "RPM_CONFIDENCE",
+      target: ">= 0.90 (L6 requires 0.95)",
+      escalate_if_below: true
+    },
+    {
+      name: "REVENUE_STABILITY",
+      target: "increasing_trend_toward_4_of_6_weeks",
+      escalate_if_not_improving: true
+    }
+  ],
+
+  cos_action_logic: {
+    if_failure_detected: [
+      "pause_affected_agent",
+      "apply_targeted_correction",
+      "log_issue_to_architect",
+      "restart_agent_soft",
+      "validate_fix_within_next_cycle"
+    ],
+    if_multiple_failures: [
+      "enter_high_alert_mode",
+      "freeze_non_critical_agents",
+      "escalate_directly_to_architect"
+    ]
+  },
+
+  output_requirements: {
+    deliver: [
+      "cos_diagnostics_summary",
+      "detected_violations",
+      "applied_corrections",
+      "rpm_and_stability_trends",
+      "next_cycle_verification_targets"
+    ],
+    format: "architect_panel_ingestion"
+  },
+
+  safety: {
+    l6_activation: "PROHIBITED",
+    no_agent_mutation: true,
+    protect_vqs_methodology: true,
+    protect_offer_ladder: true
+  }
+}
