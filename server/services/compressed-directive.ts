@@ -148,49 +148,52 @@ class CompressedDirectiveService {
   }
 
   private generateMilestones(): ExecutionMilestone[] {
+    // Role Cascade v1.0 Applied:
+    // Librarian → Content Manager + CoS
+    // Audit Agent → Strategist | CCO → Content Manager | CFO → CRO | COO → CoS | CEO Agent → Strategist
     return [
       // Phase 0-24h: INSTALL + LINK DATA
       { id: 'm1', agent: 'CoS', task: 'Trigger activation of ACP v1.0', phase: '0-24h', status: 'completed' },
       { id: 'm2', agent: 'CoS', task: 'Assign ODAR cycles to all capability owners', phase: '0-24h', status: 'completed' },
       { id: 'm3', agent: 'CoS', task: 'Require first RPM+AOO+CIR status check-in', phase: '0-24h', status: 'in_progress' },
-      { id: 'm4', agent: 'Librarian', task: 'Build RPM Layer in Unified Data Layer', phase: '0-24h', status: 'in_progress' },
-      { id: 'm5', agent: 'Librarian', task: 'Start logging: offer variants, micro-offers, objections, signals', phase: '0-24h', status: 'in_progress' },
-      { id: 'm6', agent: 'Librarian', task: 'Validate schema integrity', phase: '0-24h', status: 'pending' },
+      { id: 'm4', agent: 'CoS', task: 'Build RPM Layer in Unified Data Layer (Librarian→CoS)', phase: '0-24h', status: 'in_progress' },
+      { id: 'm5', agent: 'Content Manager', task: 'Start logging: offer variants, micro-offers, objections, signals (Librarian→CM)', phase: '0-24h', status: 'in_progress' },
+      { id: 'm6', agent: 'CoS', task: 'Validate schema integrity (Librarian→CoS)', phase: '0-24h', status: 'pending' },
       { id: 'm7', agent: 'Strategist', task: 'Load risk-adjusted prediction logic (VQS-safe)', phase: '0-24h', status: 'in_progress' },
       { id: 'm8', agent: 'Strategist', task: 'Approve initial A/B test parameters', phase: '0-24h', status: 'pending' },
       { id: 'm9', agent: 'Strategist', task: 'Provide Offer Ladder constraints', phase: '0-24h', status: 'pending' },
       { id: 'm10', agent: 'CRO', task: 'Identify 3 micro-offers for A/B rotation', phase: '0-24h', status: 'pending' },
       { id: 'm11', agent: 'CRO', task: 'Load Tier 2 accelerator for testing', phase: '0-24h', status: 'pending' },
-      { id: 'm12', agent: 'CRO', task: 'Register baseline conversion map with Librarian', phase: '0-24h', status: 'pending' },
+      { id: 'm12', agent: 'CRO', task: 'Register baseline conversion map (CFO→CRO financial tracking)', phase: '0-24h', status: 'pending' },
       { id: 'm13', agent: 'CMO', task: 'Tag last 7 days of engagement for RPM ingestion', phase: '0-24h', status: 'pending' },
       { id: 'm14', agent: 'CMO', task: 'Set signal detection rules (lurkers→engagers)', phase: '0-24h', status: 'pending' },
-      { id: 'm15', agent: 'Content Manager', task: 'Prepare CIR template skeleton (monthly+teaser+dark-social)', phase: '0-24h', status: 'pending' },
+      { id: 'm15', agent: 'Content Manager', task: 'Prepare CIR template skeleton (monthly+teaser+dark-social) + CCO retention', phase: '0-24h', status: 'pending' },
 
       // Phase 24-48h: EXECUTE + TEST
       { id: 'm16', agent: 'CRO', task: 'Launch A/B test #1 (Tier 1 micro-offer)', phase: '24-48h', status: 'pending' },
       { id: 'm17', agent: 'CRO', task: 'Launch A/B test #2 (Risk-Reversal message variant)', phase: '24-48h', status: 'pending' },
-      { id: 'm18', agent: 'CRO', task: 'Begin 72-hour CTA window for Sprint', phase: '24-48h', status: 'pending' },
+      { id: 'm18', agent: 'CRO', task: 'Begin 72-hour CTA window for Sprint (CFO→CRO financial)', phase: '24-48h', status: 'pending' },
       { id: 'm19', agent: 'CMO', task: 'Publish Proof→Insight pair to stimulate engagement divergence', phase: '24-48h', status: 'pending' },
       { id: 'm20', agent: 'CMO', task: 'Log incoming signals in Unified Data Layer', phase: '24-48h', status: 'pending' },
-      { id: 'm21', agent: 'Librarian', task: 'Begin ingestion of live A/B results', phase: '24-48h', status: 'pending' },
-      { id: 'm22', agent: 'Librarian', task: 'Cluster objections for Strategist review', phase: '24-48h', status: 'pending' },
-      { id: 'm23', agent: 'Strategist', task: 'Run first RPM forecast', phase: '24-48h', status: 'pending' },
+      { id: 'm21', agent: 'Content Manager', task: 'Begin ingestion of live A/B results (Librarian→CM)', phase: '24-48h', status: 'pending' },
+      { id: 'm22', agent: 'Content Manager', task: 'Cluster objections for Strategist review (Librarian→CM)', phase: '24-48h', status: 'pending' },
+      { id: 'm23', agent: 'Strategist', task: 'Run first RPM forecast (CEO→Strategist oversight)', phase: '24-48h', status: 'pending' },
       { id: 'm24', agent: 'Strategist', task: 'Identify friction hotspots affecting CRO tests', phase: '24-48h', status: 'pending' },
-      { id: 'm25', agent: 'Strategist', task: 'Approve next-step experimental branches', phase: '24-48h', status: 'pending' },
+      { id: 'm25', agent: 'Strategist', task: 'Approve next-step experimental branches (Audit→Strategist)', phase: '24-48h', status: 'pending' },
       { id: 'm26', agent: 'Content Manager', task: 'Generate draft CIR: audit risk, workload benchmarks, objection summary', phase: '24-48h', status: 'pending' },
 
       // Phase 48-72h: OPTIMIZE + SYNTHESIZE
-      { id: 'm27', agent: 'CRO', task: 'Evaluate A/B results with Librarian', phase: '48-72h', status: 'pending' },
+      { id: 'm27', agent: 'CRO', task: 'Evaluate A/B results with Content Manager', phase: '48-72h', status: 'pending' },
       { id: 'm28', agent: 'CRO', task: 'Select provisional winner', phase: '48-72h', status: 'pending' },
-      { id: 'm29', agent: 'CRO', task: 'Prepare for iteration #2', phase: '48-72h', status: 'pending' },
+      { id: 'm29', agent: 'CRO', task: 'Prepare for iteration #2 (CFO→CRO forecast)', phase: '48-72h', status: 'pending' },
       { id: 'm30', agent: 'CRO', task: 'Feed updated data into Revenue Sprint pipeline', phase: '48-72h', status: 'pending' },
       { id: 'm31', agent: 'CMO', task: 'Run signal density boost post', phase: '48-72h', status: 'pending' },
       { id: 'm32', agent: 'CMO', task: 'Engage 5 high-intent operators for pattern testing', phase: '48-72h', status: 'pending' },
-      { id: 'm33', agent: 'Librarian', task: 'Produce unified 72h data block for RPM+CIR', phase: '48-72h', status: 'pending' },
-      { id: 'm34', agent: 'Strategist', task: 'Produce updated RPM forecast for CoS', phase: '48-72h', status: 'pending' },
+      { id: 'm33', agent: 'Content Manager', task: 'Produce unified 72h data block for RPM+CIR (Librarian→CM)', phase: '48-72h', status: 'pending' },
+      { id: 'm34', agent: 'Strategist', task: 'Produce updated RPM forecast for CoS (CEO→Strategist)', phase: '48-72h', status: 'pending' },
       { id: 'm35', agent: 'Strategist', task: 'Prioritize interventions for next 7 days', phase: '48-72h', status: 'pending' },
-      { id: 'm36', agent: 'Strategist', task: 'Flag any VQS violations', phase: '48-72h', status: 'pending' },
-      { id: 'm37', agent: 'Content Manager', task: 'Finalize CIR v1 draft', phase: '48-72h', status: 'pending' },
+      { id: 'm36', agent: 'Strategist', task: 'Flag any VQS violations (Audit→Strategist)', phase: '48-72h', status: 'pending' },
+      { id: 'm37', agent: 'Content Manager', task: 'Finalize CIR v1 draft (CCO retention data)', phase: '48-72h', status: 'pending' },
       { id: 'm38', agent: 'Content Manager', task: 'Produce LinkedIn teaser + dark-social asset', phase: '48-72h', status: 'pending' },
       { id: 'm39', agent: 'Content Manager', task: 'Coordinate with CMO for controlled release', phase: '48-72h', status: 'pending' },
       { id: 'm40', agent: 'CoS', task: 'Ensure all capabilities feed into CoS Dashboard', phase: '48-72h', status: 'pending' },

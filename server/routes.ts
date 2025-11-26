@@ -2684,6 +2684,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Advanced Capability Pack v1.0 routes (Revenue Predictive Model, Offer Optimization, Compliance Intelligence)
   app.use("/api/capabilities", (await import("./routes/advanced-capabilities")).advancedCapabilitiesRouter);
   
+  // Role Cascade Directive v1.0 routes
+  app.use("/api/role-cascade", (await import("./routes/role-cascade")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   

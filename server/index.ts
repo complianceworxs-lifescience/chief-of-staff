@@ -106,6 +106,14 @@ app.use((req, res, next) => {
     }).catch(err => {
       console.error("Failed to auto-activate Advanced Capability Pack:", err);
     });
+    
+    // Integrate Role Cascade Directive v1.0 on startup
+    import("./services/role-cascade").then(module => {
+      module.roleCascade.integrate();
+      log("Role Cascade v1.0 integrated - All roles remapped to active agents");
+    }).catch(err => {
+      console.error("Failed to integrate Role Cascade:", err);
+    });
 
     // Start Market Intelligence 2-hour collection scheduler
     const MI_COLLECTION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
