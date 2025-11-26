@@ -225,10 +225,17 @@ router.post('/cos-panel/update', (req: Request, res: Response) => {
 
 /**
  * POST /api/l5-suite/cos-panel/agent-status
- * Update specific agent status
+ * Update specific agent status (CoS or Architect only)
  */
 router.post('/cos-panel/agent-status', (req: Request, res: Response) => {
-  const { agent, status, currentTask, budgetUsed, healthScore } = req.body;
+  const { agent, authorization, status, currentTask, budgetUsed, healthScore } = req.body;
+
+  if (authorization !== 'CoS' && authorization !== 'Architect') {
+    return res.status(403).json({
+      error: 'AUTHORITY VIOLATION',
+      reason: 'Only CoS or Architect can update agent status'
+    });
+  }
 
   if (!agent) {
     return res.status(400).json({ error: 'agent is required' });
@@ -242,7 +249,7 @@ router.post('/cos-panel/agent-status', (req: Request, res: Response) => {
     lastActivity: new Date().toISOString()
   });
 
-  res.json({ success: true, agent, message: 'Agent status updated' });
+  res.json({ success: true, agent, updatedBy: authorization, message: 'Agent status updated' });
 });
 
 // ============================================================================
