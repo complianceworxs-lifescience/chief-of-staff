@@ -67,6 +67,36 @@ The application uses a full-stack architecture with a React-based SPA frontend (
 - **MailChimp**: Integrated for email campaign execution.
 - **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
 
+## ARCHITECT–CoS ESCALATION CONTRACT v1.0 (BINDING OPERATIONAL LAW)
+This contract supersedes all previous hierarchy documents and is executed at every cycle.
+
+**Authority Structure:**
+- **Architect**: Supreme Governance Authority (strategic oversight, L6 gatekeeper, VQS protection)
+- **CoS**: Supreme Operational Authority (day-to-day execution, agent coordination, conflict resolution)
+
+**Sections 1-7 Enforced:**
+1. **Authority Definitions**: Architect overrides all; CoS overrides Strategist/CMO/CRO/ContentManager
+2. **Escalation Triggers**: 10 auto-escalation triggers (revenue decline, VQS violations, L6 requests, budget exceeded)
+3. **Safety Locks**: 6 safety locks (VQS Framework, L6 Activation, Governance Rules, Agent Termination, Budget Override, External Communication)
+4. **Supervision Cycles**: Architect governance review (6h), CoS operational review (2h), CoS realtime monitoring (5min)
+5. **L5 Constraints**: 8 enforced constraints (revenue scope, VQS compliance, budget limits, autonomy, LinkedIn-only, audit-grade, conservative VQS, UDL)
+6. **L6 Function Blocks**: 8 blocked functions (business model redesign, pricing changes, new products, market expansion, methodology modification, category reframe, sandbox experiments, micro-cohort testing) - ALL require explicit Architect approval
+7. **Contract Enforcement Engine**: Escalation logging, violation tracking, authority-checked resolution
+
+**API Endpoints (/api/contract/*):**
+- GET /api/contract/status - Full contract status
+- GET /api/contract/authorities - Authority hierarchy
+- GET /api/contract/escalation-triggers - All escalation triggers
+- POST /api/contract/escalate - Trigger escalation
+- POST /api/contract/resolve-escalation - Resolve (authority-checked)
+- GET /api/contract/safety-locks - All safety locks
+- POST /api/contract/safety-locks/unlock - Architect unlock
+- GET /api/contract/l5-constraints - L5 constraint definitions
+- GET /api/contract/l6-blocks - L6 function blocks
+- POST /api/contract/l6-blocks/unlock - Architect L6 unlock
+- POST /api/contract/supervision/architect-review - Trigger Architect review
+- POST /api/contract/supervision/cos-review - Trigger CoS review
+
 ## LLM Agent Reasoning System
 The system now uses true LLM-powered reasoning for all 5 agents (CoS, Strategist, CMO, CRO, ContentManager):
 
