@@ -2655,6 +2655,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Multimillion-Dollar Directive routes
   app.use("/api/directive", (await import("./routes/directive")).default);
+  
+  // CFO Agent routes
+  const cfoMonitor = await import("./services/cfo-monitor.js");
+  
+  app.get("/api/cfo/metrics", (req, res) => {
+    res.json(cfoMonitor.getFinancialMetrics());
+  });
+  
+  app.post("/api/cfo/metrics", (req, res) => {
+    const updated = cfoMonitor.updateFinancialMetrics(req.body);
+    res.json(updated);
+  });
+  
+  app.get("/api/cfo/brief", (req, res) => {
+    res.json(cfoMonitor.generateCFOBrief());
+  });
+  
+  app.get("/api/cfo/forecast/:period", (req, res) => {
+    const { period } = req.params;
+    if (period === '30') {
+      res.json(cfoMonitor.generate30DayForecast());
+    } else if (period === '90') {
+      res.json(cfoMonitor.generate90DayForecast());
+    } else {
+      res.status(400).json({ error: 'Invalid period. Use 30 or 90.' });
+    }
+  });
+  
+  app.get("/api/cfo/escalations", (req, res) => {
+    const hours = parseInt(req.query.hours as string) || 24;
+    res.json(cfoMonitor.getCFOEscalations(hours));
+  });
 
   // ====================================
   // LLM DIRECTIVE ENGINE - External AI Integration
