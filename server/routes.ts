@@ -19,6 +19,7 @@ import architectCosContractRouter from "./routes/architect-cos-contract";
 import l5OperatingSuiteRouter from "./routes/l5-operating-suite";
 import l6AccelerationProtocolRouter from "./routes/l6-acceleration-protocol";
 import architectOversightMapRouter from "./routes/architect-oversight-map";
+import cosEnforcementDiagnosticsRouter from "./routes/cos-enforcement-diagnostics";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -72,6 +73,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount ARCHITECT OVERSIGHT MAP routes
   app.use("/api/architect-oversight", architectOversightMapRouter);
   console.log('🔭 7-DAY ARCHITECT OVERSIGHT MAP routes mounted at /api/architect-oversight');
+  
+  // Mount CoS ENFORCEMENT DIAGNOSTICS routes
+  app.use("/api/cos-diagnostics", cosEnforcementDiagnosticsRouter);
+  console.log('🩺 CoS ENFORCEMENT DIAGNOSTICS v1.0 routes mounted at /api/cos-diagnostics');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
