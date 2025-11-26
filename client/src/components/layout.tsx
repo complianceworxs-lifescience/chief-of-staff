@@ -26,7 +26,8 @@ export function Layout({ children }: LayoutProps) {
   const notificationCount = activeConflicts.length;
 
   const navigationItems = [
-    { path: "/", label: "Dashboard", icon: BarChart3 },
+    { path: "/", label: "Command Center", icon: Zap },
+    { path: "/dashboard", label: "Strategic Cockpit", icon: BarChart3 },
     { path: "/coo", label: "COO Agent", icon: Settings },
     { 
       path: "/goals", 

@@ -8,6 +8,7 @@ import { initGA } from "./lib/analytics";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
+import ExecutiveCommand from "@/pages/executive-command";
 import Goals from "@/pages/goals-fixed";
 import Initiatives from "@/pages/initiatives";
 import Directives from "@/pages/directives";
@@ -25,7 +26,9 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={ExecutiveCommand} />
+        <Route path="/command" component={ExecutiveCommand} />
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/goals" component={Goals} />
         <Route path="/initiatives" component={Initiatives} />
         <Route path="/directive-center" component={DirectiveCenter} />
