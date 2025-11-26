@@ -2690,6 +2690,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // CoS Daily Monitoring Checklist routes (4-Agent Optimized)
   app.use("/api/cos-checklist", (await import("./routes/cos-daily-checklist")).default);
   
+  // L5 Agent Health Monitor routes (2-Hour Autonomous Validation Cycle)
+  app.use("/api/health-monitor", (await import("./routes/l5-health-monitor")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   

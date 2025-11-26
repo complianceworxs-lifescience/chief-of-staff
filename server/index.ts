@@ -177,5 +177,13 @@ app.use((req, res, next) => {
     log("🔧 COO Automation monitoring started - Weekly verification scheduled (Sundays 06:35 ET)");
     
     log("Autonomous conflict monitoring started - No HITL required");
+    
+    // Start L5 Agent Health Monitor (2-Hour Autonomous Validation Cycle)
+    import("./services/l5-agent-health-monitor").then(module => {
+      module.l5AgentHealthMonitor.start();
+      log("🏥 L5 Agent Health Monitor started - 2-hour autonomous validation cycles");
+    }).catch(err => {
+      console.error("Failed to start L5 Agent Health Monitor:", err);
+    });
   });
 })();
