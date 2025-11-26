@@ -11,8 +11,12 @@ import {
 import { getGovernanceThresholds } from '../governance.js';
 import { listAgents } from '../state/store.js';
 import type { AgentState } from '../models/AgentState.js';
+import compressedDirectiveRouter from './compressed-directive.js';
 
 const router = Router();
+
+// Mount compressed directive routes
+router.use('/', compressedDirectiveRouter);
 
 // Get the full directive configuration
 router.get('/config', (req, res) => {
