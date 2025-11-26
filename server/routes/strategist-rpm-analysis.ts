@@ -2,6 +2,8 @@
  * STRATEGIST RPM ADVERSARIAL ANALYSIS API ROUTES
  * 
  * Endpoints for Architect-directed RPM confidence diagnosis.
+ * Delivers exactly 4 components: rootCause, confidenceDeltaExplanation, 
+ * singleRestorativeAction, projection24h
  */
 
 import { Router, Request, Response } from 'express';
@@ -12,6 +14,7 @@ const router = Router();
 /**
  * POST /api/strategist-analysis/execute
  * Execute adversarial analysis (Architect directive only)
+ * HALTS all non-critical Strategist tasks and enters diagnostic mode
  */
 router.post('/execute', (req: Request, res: Response) => {
   const { authorization, directive } = req.body;
@@ -25,41 +28,27 @@ router.post('/execute', (req: Request, res: Response) => {
   }
 
   try {
-    console.log('[API] Architect directive received: major_correction_request_to_strategist');
+    console.log('[API] Architect directive received: major_correction_request_to_strategist_rpm_collapse');
     
     const report = strategistRpmAnalysis.executeAdversarialAnalysis();
     
     res.json({
       success: true,
       message: 'STRATEGIST ADVERSARIAL ANALYSIS COMPLETE',
-      directive: directive || 'Diagnose RPM confidence collapse and provide intervention',
+      directive: directive || 'major_correction_request_to_strategist_rpm_collapse',
+      
+      // THE 4 REQUIRED COMPONENTS
       report: {
-        id: report.id,
-        status: report.status,
+        analysisId: report.analysisId,
         executedBy: report.executedBy,
-        completionTime: report.completionTime,
+        timestamp: report.timestamp,
         
-        diagnosis: {
-          rpmBefore: `${(report.rpmBefore * 100).toFixed(0)}%`,
-          rpmAfter: `${(report.rpmAfter * 100).toFixed(0)}%`,
-          rpmDrop: `${(report.rpmDrop * 100).toFixed(0)}%`,
-          udlSyncStatus: report.udlSyncStatus
-        },
+        rootCause: report.rootCause,
+        confidenceDeltaExplanation: report.confidenceDeltaExplanation,
+        singleRestorativeAction: report.singleRestorativeAction,
+        projection24h: report.projection24h,
         
-        rootCause: {
-          primary: report.rootCauseAnalysis.primaryCause,
-          confidence: `${report.rootCauseAnalysis.confidence}%`,
-          internalCorruptionShare: `${report.rootCauseAnalysis.internalCorruptionScore}%`,
-          externalFactorShare: `${report.rootCauseAnalysis.externalFactorScore}%`,
-          topContributors: report.rootCauseAnalysis.topContributors
-        },
-        
-        intervention: report.recommendedIntervention,
-        
-        restorationTimeline: {
-          deadline: report.restorationDeadline,
-          milestones: report.milestones
-        }
+        safety: report.safety
       }
     });
   } catch (error: any) {
@@ -72,14 +61,16 @@ router.post('/execute', (req: Request, res: Response) => {
 
 /**
  * GET /api/strategist-analysis/status
- * Get current analysis status
+ * Get current analysis status and Strategist mode
  */
 router.get('/status', (req: Request, res: Response) => {
   const status = strategistRpmAnalysis.getAnalysisStatus();
+  const state = strategistRpmAnalysis.getState();
   
   if (!status) {
     return res.json({
       active: false,
+      mode: state.mode,
       message: 'No adversarial analysis has been executed',
       hint: 'POST /api/strategist-analysis/execute with Architect authorization to initiate'
     });
@@ -87,29 +78,27 @@ router.get('/status', (req: Request, res: Response) => {
 
   res.json({
     active: true,
-    analysisId: status.id,
-    status: status.status,
-    executedBy: status.executedBy,
-    startTime: status.startTime,
-    completionTime: status.completionTime,
-    rpmDrop: `${(status.rpmDrop * 100).toFixed(0)}%`,
-    rootCause: status.rootCauseAnalysis.primaryCause,
-    interventionAction: status.recommendedIntervention.action.substring(0, 100) + '...'
+    mode: state.mode,
+    haltedTasks: state.haltedTasks,
+    analysisId: status.analysisId,
+    timestamp: status.timestamp,
+    rootCauseSource: status.rootCause.source,
+    projectedRpm: `${(status.projection24h.projectedRpm * 100).toFixed(0)}%`
   });
 });
 
 /**
- * GET /api/strategist-analysis/architect-summary
- * Get summary formatted for Architect consumption
+ * GET /api/strategist-analysis/architect-report
+ * Get the full Architect-formatted report (4 components)
  */
-router.get('/architect-summary', (req: Request, res: Response) => {
+router.get('/architect-report', (req: Request, res: Response) => {
   const summary = strategistRpmAnalysis.getArchitectSummary();
   res.json(summary);
 });
 
 /**
  * GET /api/strategist-analysis/root-cause
- * Get detailed root cause analysis
+ * Get root cause component only
  */
 router.get('/root-cause', (req: Request, res: Response) => {
   const status = strategistRpmAnalysis.getAnalysisStatus();
@@ -123,63 +112,109 @@ router.get('/root-cause', (req: Request, res: Response) => {
 
   res.json({
     active: true,
-    analysisId: status.id,
-    rootCauseAnalysis: status.rootCauseAnalysis,
-    internalIndicators: status.internalCorruptionIndicators.filter(i => i.detected),
-    externalIndicators: status.externalFactorIndicators.filter(i => i.detected)
+    analysisId: status.analysisId,
+    rootCause: status.rootCause
   });
 });
 
 /**
- * GET /api/strategist-analysis/intervention
- * Get recommended intervention details
+ * GET /api/strategist-analysis/confidence-delta
+ * Get confidence delta explanation component only
  */
-router.get('/intervention', (req: Request, res: Response) => {
+router.get('/confidence-delta', (req: Request, res: Response) => {
   const status = strategistRpmAnalysis.getAnalysisStatus();
   
   if (!status) {
     return res.json({
       active: false,
-      intervention: null
+      confidenceDelta: null
     });
   }
 
   res.json({
     active: true,
-    analysisId: status.id,
-    recommendedIntervention: status.recommendedIntervention,
-    alternatives: status.alternativeInterventions,
-    restorationDeadline: status.restorationDeadline,
-    milestones: status.milestones
+    analysisId: status.analysisId,
+    confidenceDeltaExplanation: status.confidenceDeltaExplanation
   });
 });
 
 /**
- * GET /api/strategist-analysis/milestones
- * Get restoration milestones
+ * GET /api/strategist-analysis/restorative-action
+ * Get single restorative action component only
  */
-router.get('/milestones', (req: Request, res: Response) => {
+router.get('/restorative-action', (req: Request, res: Response) => {
   const status = strategistRpmAnalysis.getAnalysisStatus();
   
   if (!status) {
     return res.json({
       active: false,
-      milestones: []
+      restorativeAction: null
+    });
+  }
+
+  res.json({
+    active: true,
+    analysisId: status.analysisId,
+    singleRestorativeAction: status.singleRestorativeAction
+  });
+});
+
+/**
+ * GET /api/strategist-analysis/projection
+ * Get 24h RPM projection component only
+ */
+router.get('/projection', (req: Request, res: Response) => {
+  const status = strategistRpmAnalysis.getAnalysisStatus();
+  
+  if (!status) {
+    return res.json({
+      active: false,
+      projection: null
     });
   }
 
   const now = new Date();
-  const milestonesWithStatus = status.milestones.map(m => ({
-    ...m,
-    status: new Date(m.time) < now ? 'due' : 'pending',
-    hoursRemaining: Math.max(0, (new Date(m.time).getTime() - now.getTime()) / (1000 * 60 * 60))
-  }));
+  const milestones = status.projection24h.milestones.map(m => {
+    const targetTime = new Date(new Date(status.timestamp).getTime() + m.hour * 60 * 60 * 1000);
+    return {
+      ...m,
+      targetTime: targetTime.toISOString(),
+      status: now >= targetTime ? 'due' : 'pending'
+    };
+  });
 
   res.json({
     active: true,
-    restorationDeadline: status.restorationDeadline,
-    hoursToDeadline: Math.max(0, (new Date(status.restorationDeadline).getTime() - now.getTime()) / (1000 * 60 * 60)),
-    milestones: milestonesWithStatus
+    analysisId: status.analysisId,
+    currentRpm: `${(status.projection24h.currentRpm * 100).toFixed(0)}%`,
+    projectedRpm: `${(status.projection24h.projectedRpm * 100).toFixed(0)}%`,
+    confidenceInProjection: `${status.projection24h.confidenceInProjection}%`,
+    milestones
+  });
+});
+
+/**
+ * POST /api/strategist-analysis/resume
+ * Resume normal Strategist operations after diagnostic complete
+ */
+router.post('/resume', (req: Request, res: Response) => {
+  const { authorization } = req.body;
+
+  if (authorization !== 'Architect' && authorization !== 'CoS') {
+    return res.status(403).json({
+      error: 'AUTHORITY VIOLATION',
+      reason: 'Only Architect or CoS can resume Strategist operations'
+    });
+  }
+
+  strategistRpmAnalysis.resumeNormalOperations();
+  const state = strategistRpmAnalysis.getState();
+
+  res.json({
+    success: true,
+    message: 'Strategist operations resumed',
+    mode: state.mode,
+    resumedBy: authorization
   });
 });
 
@@ -193,45 +228,11 @@ router.get('/history', (req: Request, res: Response) => {
   res.json({
     totalAnalyses: history.length,
     analyses: history.map(h => ({
-      id: h.id,
-      executedBy: h.executedBy,
-      startTime: h.startTime,
-      completionTime: h.completionTime,
-      status: h.status,
-      rpmDrop: `${(h.rpmDrop * 100).toFixed(0)}%`,
-      rootCause: h.rootCauseAnalysis.primaryCause,
-      interventionSuccess: h.recommendedIntervention.confidenceOfSuccess
+      analysisId: h.analysisId,
+      timestamp: h.timestamp,
+      rootCauseSource: h.rootCause.source,
+      projectedRpm: `${(h.projection24h.projectedRpm * 100).toFixed(0)}%`
     }))
-  });
-});
-
-/**
- * GET /api/strategist-analysis/all-indicators
- * Get all diagnostic indicators (detected and not detected)
- */
-router.get('/all-indicators', (req: Request, res: Response) => {
-  const status = strategistRpmAnalysis.getAnalysisStatus();
-  
-  if (!status) {
-    return res.json({
-      active: false,
-      indicators: null
-    });
-  }
-
-  res.json({
-    active: true,
-    analysisId: status.id,
-    internalCorruption: {
-      total: status.internalCorruptionIndicators.length,
-      detected: status.internalCorruptionIndicators.filter(i => i.detected).length,
-      indicators: status.internalCorruptionIndicators
-    },
-    externalFactors: {
-      total: status.externalFactorIndicators.length,
-      detected: status.externalFactorIndicators.filter(i => i.detected).length,
-      indicators: status.externalFactorIndicators
-    }
   });
 });
 
