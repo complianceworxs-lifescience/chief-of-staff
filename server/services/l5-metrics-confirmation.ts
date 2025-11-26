@@ -2,8 +2,6 @@
 // Tracks the three primary L5 metrics required for L6 readiness
 // Once confirmed, system can autonomously forecast and budget for L6 goals
 
-import { storage } from '../storage.js';
-
 export interface L5MetricStatus {
   metric: string;
   status: 'pending' | 'tracking' | 'confirmed' | 'at_risk';

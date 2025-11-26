@@ -11,6 +11,15 @@ Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (T
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
 ## Recent Changes (November 26, 2025)
+- **L5 METRICS CONFIRMATION SYSTEM DEPLOYED**: Primary L5 metrics tracking for L6 transition readiness
+  - Three Primary L5 Metrics now tracked:
+    1. **Revenue Predictability**: Stable MRR lift adhering to Weekly Revenue Sprint targets (Target: 80% achievement)
+    2. **ACV Expansion**: Revenue Offer Ladder increases Average Contract Value vs historical baseline (Target: 25%+ increase)
+    3. **Friction Reduction**: Decrease in Stakeholder Objection Spikes via Objection Intelligence Loop (Target: 30%+ reduction)
+  - L6 Readiness Assessment: System autonomously determines when L5 is confirmed and can forecast/budget for L6 goals
+  - L6 Goals (pending L5 confirmation): Proactive Regulatory Influence, Market-Shaping Intelligence, Predictive Compliance Positioning
+  - New API Endpoints: /api/operating-context/l5/confirmation, /l5/l6-readiness, /l5/metrics/:metric
+  - Dashboard Section 8 added: L5 Metrics Confirmation & L6 Readiness panel
 - **AGENT OPERATING CONTEXT v1.5 DEPLOYED**: L5 Revenue Optimization Intelligence upgrade complete
   - System upgraded from L4 (Strategic Autonomy) to L5 (Revenue Optimization Intelligence)
   - Four L5 Structural Fixes now ACTIVE:
