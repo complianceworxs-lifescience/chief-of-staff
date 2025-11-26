@@ -97,6 +97,21 @@ export default function ExecutiveCommand() {
     refetchInterval: 30000
   });
 
+  const { data: sprintProgress } = useQuery<{
+    status: string;
+    phase: string;
+    hoursElapsed: number;
+    hoursRemaining: number;
+    completedMilestones: number;
+    totalMilestones: number;
+    percentComplete: number;
+    byAgent: Record<string, { completed: number; total: number; inProgress: number; blocked: number }>;
+    byPhase: Record<string, { completed: number; total: number }>;
+  }>({
+    queryKey: ['/api/directive/72h-sprint/progress'],
+    refetchInterval: 30000
+  });
+
   const agentPerformance: AgentPerformance[] = [
     { agent: 'Strategist', status: 'Active', lastAction: 'Weekly theme set', nextAction: 'Scenario sim', blockers: 'None', confidence: 'High' },
     { agent: 'CoS', status: 'Active', lastAction: 'Resource reallocation', nextAction: 'Issue brief', blockers: 'Minor conflicts', confidence: 'Very High' },
@@ -947,16 +962,64 @@ export default function ExecutiveCommand() {
 
               {/* 72-Hour Integration Sprint Status */}
               <div className="mt-4 p-3 bg-indigo-900/20 rounded border border-indigo-700/50" data-testid="integration-sprint-status">
-                <h4 className="text-xs font-bold text-indigo-400 mb-2 flex items-center gap-2">
-                  <Clock className="h-3 w-3" />
-                  72-Hour Integration Sprint Status
-                </h4>
-                <div className="flex flex-wrap gap-3 text-xs">
-                  <Badge className="bg-emerald-600">Unified Data Layer: Connected</Badge>
-                  <Badge className="bg-emerald-600">VQS Validation: Active</Badge>
-                  <Badge className="bg-emerald-600">Weekly Sprint: Integrated</Badge>
-                  <Badge className="bg-blue-600">CoS Dashboard: Live</Badge>
-                  <Badge className="bg-yellow-600">Objection Loop: Syncing</Badge>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold text-indigo-400 flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    72-Hour Integration Sprint
+                  </h4>
+                  <Badge className={`text-xs ${sprintProgress?.phase === 'completed' ? 'bg-emerald-600' : 'bg-blue-600'}`}>
+                    Phase: {sprintProgress?.phase || '0-24h'}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  <div className="p-2 bg-slate-800 rounded text-center">
+                    <p className="text-slate-400 text-xs">Hours Elapsed</p>
+                    <p className="text-white font-bold">{sprintProgress?.hoursElapsed?.toFixed(1) || 0}h</p>
+                  </div>
+                  <div className="p-2 bg-slate-800 rounded text-center">
+                    <p className="text-slate-400 text-xs">Remaining</p>
+                    <p className="text-yellow-400 font-bold">{sprintProgress?.hoursRemaining?.toFixed(1) || 72}h</p>
+                  </div>
+                  <div className="p-2 bg-slate-800 rounded text-center">
+                    <p className="text-slate-400 text-xs">Milestones</p>
+                    <p className="text-emerald-400 font-bold">{sprintProgress?.completedMilestones || 0}/{sprintProgress?.totalMilestones || 43}</p>
+                  </div>
+                  <div className="p-2 bg-slate-800 rounded text-center">
+                    <p className="text-slate-400 text-xs">Progress</p>
+                    <p className="text-blue-400 font-bold">{sprintProgress?.percentComplete || 0}%</p>
+                  </div>
+                </div>
+
+                <div className="mb-2">
+                  <Progress value={sprintProgress?.percentComplete || 0} className="h-2" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {['0-24h', '24-48h', '48-72h'].map((phase) => (
+                    <div key={phase} className={`p-2 rounded text-center text-xs ${
+                      sprintProgress?.phase === phase ? 'bg-indigo-700 border border-indigo-400' : 'bg-slate-800'
+                    }`}>
+                      <p className="text-slate-400">{phase}</p>
+                      <p className={sprintProgress?.phase === phase ? 'text-indigo-300' : 'text-slate-500'}>
+                        {phase === '0-24h' ? 'INSTALL' : phase === '24-48h' ? 'EXECUTE' : 'OPTIMIZE'}
+                      </p>
+                      <p className="text-white font-bold">
+                        {sprintProgress?.byPhase?.[phase]?.completed || 0}/{sprintProgress?.byPhase?.[phase]?.total || 0}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {Object.entries(sprintProgress?.byAgent || {}).slice(0, 5).map(([agent, data]) => (
+                    <Badge 
+                      key={agent} 
+                      className={`${data.blocked > 0 ? 'bg-red-600' : data.inProgress > 0 ? 'bg-blue-600' : data.completed === data.total ? 'bg-emerald-600' : 'bg-slate-600'}`}
+                    >
+                      {agent}: {data.completed}/{data.total}
+                    </Badge>
+                  ))}
                 </div>
               </div>
             </CardContent>
