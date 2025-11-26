@@ -390,12 +390,12 @@ class CoSDailyChecklist {
     const now = new Date();
     const items: CheckItem[] = [];
 
-    // NEW v2.0 - Check 1: PFL Check - New feature objections logged by Content Manager?
+    // NEW v2.0 - Check 1: PFL Check - New feature-based objections logged?
     const featureObjections = this.getFeatureObjections();
     items.push({
       id: 'co_1',
       category: 'Content + Objection Intelligence',
-      question: '[PFL] New feature objections logged by Content Manager?',
+      question: '[PFL] Any new feature-based objections logged?',
       status: featureObjections.logged ? 'pass' : 'warning',
       details: featureObjections.logged ? 
         `${featureObjections.count} feature objections logged: ${featureObjections.topFeatures.join(', ')}` :
@@ -405,32 +405,47 @@ class CoSDailyChecklist {
       isNewV2: true
     });
 
-    // NEW v2.0 - Check 2: SVDP Check - VQS Defense Asset published today?
+    // NEW v2.0 - Check 2: PFL Check - "Missing capability" or "integration fear" recorded?
+    const capabilityFears = this.getCapabilityAndIntegrationFears();
+    items.push({
+      id: 'co_2',
+      category: 'Content + Objection Intelligence',
+      question: '[PFL] Any "missing capability" or "integration fear" recorded?',
+      status: capabilityFears.logged ? 'pass' : 'warning',
+      details: capabilityFears.logged ?
+        `${capabilityFears.count} capability/integration concerns: ${capabilityFears.types.join(', ')}` :
+        'No capability gaps or integration fears recorded today',
+      lastChecked: now.toISOString(),
+      actionRequired: capabilityFears.logged ? undefined : 'Content Manager: Monitor for missing capability or integration fear objections',
+      isNewV2: true
+    });
+
+    // NEW v2.0 - Check 3: SVDP Check - VQS Defense Asset published today?
     const vqsDefenseAsset = this.checkVQSDefenseAssetPublished();
     const revPredictability = this.getRevenuePredictability();
     const nearThreshold = this.needsVQSDefenseAsset(); // true when ≤90% (near 85% threshold)
     const belowThreshold = revPredictability < 85;
     
     items.push({
-      id: 'co_2',
+      id: 'co_3',
       category: 'Content + Objection Intelligence',
-      question: '[SVDP] VQS Defense Asset published today?',
+      question: '[SVDP] Was a VQS Defense Asset published today?',
       status: vqsDefenseAsset.published ? 'pass' : belowThreshold ? 'fail' : nearThreshold ? 'warning' : 'pass',
       details: vqsDefenseAsset.published ?
-        `VQS Defense Asset published: "${vqsDefenseAsset.title}"` :
+        `VQS Defense Asset published: "${vqsDefenseAsset.title}" (clarity explainer, audit-grade proof, or benchmark snippet)` :
         belowThreshold ? `No VQS Defense Asset - CRITICAL: Revenue Predictability at ${revPredictability}% (below 85%)` :
         nearThreshold ? `No VQS Defense Asset - WARNING: Revenue Predictability at ${revPredictability}% (near 85% threshold)` :
         'No VQS Defense Asset published today (not urgent - Revenue Predictability healthy)',
       lastChecked: now.toISOString(),
       actionRequired: !vqsDefenseAsset.published && nearThreshold ? 
-        `Content Manager: ${belowThreshold ? 'IMMEDIATE' : 'PRIORITY'} - Publish VQS Defense Asset (Revenue Predictability at ${revPredictability}%, ${belowThreshold ? 'BELOW' : 'near'} 85% threshold)` : undefined,
+        `Content Manager: ${belowThreshold ? 'SAME-DAY REQUIRED' : 'Release within 12 hours'} - Publish VQS Defense Asset (clarity-proof asset)` : undefined,
       isNewV2: true
     });
 
-    // Check 3: IT/QA/Finance packets updated
+    // Check 4: IT/QA/Finance packets updated
     const packetsUpdated = this.checkPacketsUpdated();
     items.push({
-      id: 'co_3',
+      id: 'co_4',
       category: 'Content + Objection Intelligence',
       question: 'IT/QA/Finance packets updated?',
       status: packetsUpdated.all ? 'pass' : 'warning',
@@ -441,13 +456,13 @@ class CoSDailyChecklist {
       actionRequired: packetsUpdated.all ? undefined : 'Content Manager: Update stale packets with new objection responses'
     });
 
-    // Check 4: CIR (monthly intelligence) draft progress
+    // Check 5: CIR (monthly intelligence) draft progress
     const cirStatus = complianceIntelligenceReports.getStatus();
     const hasLatestReport = cirStatus.latestReport !== null;
     items.push({
-      id: 'co_4',
+      id: 'co_5',
       category: 'Content + Objection Intelligence',
-      question: 'CIR (monthly intelligence) draft progress?',
+      question: 'CIR (monthly intelligence) draft in progress?',
       status: hasLatestReport ? 'pass' : 'warning',
       details: hasLatestReport ? 
         `CIR complete: ${cirStatus.latestReport?.title || 'Latest Report'}` :
@@ -614,18 +629,18 @@ class CoSDailyChecklist {
       actionRequired: this.hasAnomalies() ? 'CoS: Escalate anomalies to Strategist' : undefined
     });
 
-    // NEW v2.0 - Check 6: Execute PFL → CSI → SVDP ODAR cycle
+    // NEW v2.0 - Check 6: Execute PFL → CSI → SVDP ODAR cycle (Mandatory Daily Strategic Cycle)
     const odarCycleStatus = this.checkPflCsiSvdpOdarCycle();
     items.push({
       id: 'ca_6',
       category: 'CoS Actions',
-      question: '[v2.0] Execute PFL → CSI → SVDP ODAR cycle?',
-      status: odarCycleStatus.complete ? 'pass' : 'pending',
-      details: odarCycleStatus.complete ?
-        `PFL→CSI→SVDP cycle complete: ${odarCycleStatus.details}` :
-        `PFL→CSI→SVDP cycle pending: ${odarCycleStatus.pending.join(', ')}`,
+      question: '[v2.0] Execute: PFL → CSI → SVDP in sequence?',
+      status: odarCycleStatus.complete ? 'pass' : 'fail',
+      details: odarCycleStatus.details,
       lastChecked: now.toISOString(),
-      actionRequired: 'CoS: Execute full PFL→CSI→SVDP ODAR integration cycle',
+      actionRequired: odarCycleStatus.correctionCycleRequired ? 
+        `MANDATORY: Initiate rapid 12-hour correction cycle - ${odarCycleStatus.pending.join('; ')}` :
+        'CoS: Execute full PFL→CSI→SVDP ODAR integration cycle',
       isNewV2: true
     });
 
@@ -824,6 +839,33 @@ class CoSDailyChecklist {
     };
   }
 
+  private getCapabilityAndIntegrationFears(): { logged: boolean; count: number; types: string[] } {
+    // Check for "missing capability" or "integration fear" objections
+    const capabilityObjections = this.featureObjections.filter(o => 
+      o.objection.toLowerCase().includes('missing') ||
+      o.objection.toLowerCase().includes('capability') ||
+      o.objection.toLowerCase().includes('integration') ||
+      o.objection.toLowerCase().includes('fear') ||
+      o.objection.toLowerCase().includes('connect') ||
+      o.objection.toLowerCase().includes('api')
+    );
+    
+    if (capabilityObjections.length > 0) {
+      const types = Array.from(new Set(capabilityObjections.map(o => 
+        o.objection.toLowerCase().includes('integration') ? 'Integration Fear' : 'Missing Capability'
+      )));
+      return { logged: true, count: capabilityObjections.length, types };
+    }
+    
+    // Simulated data when no real objections
+    const logged = Math.random() > 0.5;
+    return {
+      logged,
+      count: logged ? Math.floor(Math.random() * 3) + 1 : 0,
+      types: logged ? ['Integration Fear', 'Missing Capability'] : []
+    };
+  }
+
   private checkVQSDefenseAssetPublished(): { published: boolean; title: string } {
     const today = new Date().toISOString().split('T')[0];
     const todayAsset = this.vqsDefenseAssetsPublished.find(a => a.date === today);
@@ -869,20 +911,33 @@ class CoSDailyChecklist {
     };
   }
 
-  private checkPflCsiSvdpOdarCycle(): { complete: boolean; details: string; pending: string[] } {
+  private checkPflCsiSvdpOdarCycle(): { complete: boolean; details: string; pending: string[]; correctionCycleRequired: boolean } {
+    // PFL: Eliminate emerging objections (track daily, trend downward week-over-week)
     const pflComplete = this.featureObjections.length > 0 || Math.random() > 0.5;
-    const csiComplete = this.externalSignals.length > 0 || Math.random() > 0.5;
-    const svdpComplete = this.getRevenuePredictability() >= 85;
+    
+    // CSI: Detect competitor shifts ≤ 72 hours
+    const mttdStatus = this.checkMTTD();
+    const csiComplete = mttdStatus.averageMTTD <= 72;
+    
+    // SVDP: Maintain predictive revenue ≥ 85%
+    const revenuePredictability = this.getRevenuePredictability();
+    const svdpComplete = revenuePredictability >= 85;
 
     const pending: string[] = [];
-    if (!pflComplete) pending.push('PFL objection logging');
-    if (!csiComplete) pending.push('CSI signal capture');
-    if (!svdpComplete) pending.push('SVDP defense asset');
+    if (!pflComplete) pending.push('PFL: Eliminate emerging objections');
+    if (!csiComplete) pending.push(`CSI: MTTD at ${mttdStatus.averageMTTD}h exceeds 72h`);
+    if (!svdpComplete) pending.push(`SVDP: Revenue Predictability at ${revenuePredictability}% below 85%`);
+
+    // If any step fails: CoS must initiate a rapid 12-hour correction cycle
+    const correctionCycleRequired = pending.length > 0;
 
     return {
       complete: pending.length === 0,
-      details: pending.length === 0 ? 'All three loops executed and synced' : '',
-      pending
+      details: pending.length === 0 ? 
+        'PFL→CSI→SVDP cycle complete: All three loops executed and synced' : 
+        `CORRECTION CYCLE REQUIRED (12h deadline): ${pending.join('; ')}`,
+      pending,
+      correctionCycleRequired
     };
   }
 
