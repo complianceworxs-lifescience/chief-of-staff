@@ -2687,6 +2687,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Role Cascade Directive v1.0 routes
   app.use("/api/role-cascade", (await import("./routes/role-cascade")).default);
   
+  // CoS Daily Monitoring Checklist routes (4-Agent Optimized)
+  app.use("/api/cos-checklist", (await import("./routes/cos-daily-checklist")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
