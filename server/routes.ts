@@ -20,6 +20,7 @@ import l5OperatingSuiteRouter from "./routes/l5-operating-suite";
 import l6AccelerationProtocolRouter from "./routes/l6-acceleration-protocol";
 import architectOversightMapRouter from "./routes/architect-oversight-map";
 import cosEnforcementDiagnosticsRouter from "./routes/cos-enforcement-diagnostics";
+import strategistRpmAnalysisRouter from "./routes/strategist-rpm-analysis";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -77,6 +78,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount CoS ENFORCEMENT DIAGNOSTICS routes
   app.use("/api/cos-diagnostics", cosEnforcementDiagnosticsRouter);
   console.log('🩺 CoS ENFORCEMENT DIAGNOSTICS v1.0 routes mounted at /api/cos-diagnostics');
+  
+  // Mount STRATEGIST RPM ADVERSARIAL ANALYSIS routes
+  app.use("/api/strategist-analysis", strategistRpmAnalysisRouter);
+  console.log('🔬 STRATEGIST RPM ANALYSIS routes mounted at /api/strategist-analysis');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
