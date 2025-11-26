@@ -75,11 +75,41 @@ export interface OfferOptimization {
   abTestRecommendation: string;
 }
 
+/**
+ * OPENAI_QUOTA_HANDLING_ADDENDUM v1.1
+ * 
+ * Error Classification: RATE_LIMIT/429 → TRANSIENT (not FATAL)
+ * Playbook: soft restart + retry with backoff (max 2 attempts)
+ * Budget Guardrail: $25/day per agent, AUTOREM_MAX_ATTEMPTS=2
+ * Recovery Probe: Max 1 per 60 minutes to check quota restoration
+ */
+export type OpenAIStatus = 'HEALTHY' | 'DEGRADED';
+
+export interface QuotaHealthReport {
+  status: OpenAIStatus;
+  lastCheck: string;
+  consecutiveFailures: number;
+  lastSuccessfulCall: string | null;
+  degradedSince: string | null;
+  nextProbeAllowed: string;
+  reason: string;
+}
+
 class LLMAgentReasoningService {
   private decisionLog: ReasoningDecision[] = [];
   
   private readonly COST_PER_1K_TOKENS = 0.01;
   private readonly DAILY_BUDGET_PER_AGENT = 25;
+  private readonly AUTOREM_MAX_ATTEMPTS = 2;
+  private readonly RETRY_BACKOFF_MS = 1500;
+  private readonly RECOVERY_PROBE_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
+  
+  // OPENAI_QUOTA_HANDLING_ADDENDUM v1.1 - Status tracking
+  private openaiStatus: OpenAIStatus = 'HEALTHY';
+  private lastQuotaProbe: Date | null = null;
+  private consecutiveQuotaFailures = 0;
+  private lastSuccessfulCall: Date | null = null;
+  private degradedSince: Date | null = null;
   
   private agentBudgets: Record<AgentRole, { used: number; lastReset: string }> = {
     CoS: { used: 0, lastReset: new Date().toISOString().split('T')[0] },
@@ -94,6 +124,171 @@ class LLMAgentReasoningService {
     used: 0,
     lastReset: new Date().toISOString().split('T')[0]
   };
+  
+  /**
+   * OPENAI_QUOTA_HANDLING_ADDENDUM v1.1 - Section 5: Recovery Probe
+   * At most 1 health probe per 60 minutes to test if quota/billing restored
+   */
+  private canProbeRecovery(): boolean {
+    if (this.openaiStatus === 'HEALTHY') return false;
+    if (!this.lastQuotaProbe) return true;
+    
+    const elapsed = Date.now() - this.lastQuotaProbe.getTime();
+    return elapsed >= this.RECOVERY_PROBE_INTERVAL_MS;
+  }
+  
+  private async probeQuotaRecovery(): Promise<boolean> {
+    if (!this.canProbeRecovery()) {
+      return false;
+    }
+    
+    this.lastQuotaProbe = new Date();
+    console.log('🔍 OpenAI Recovery Probe: Testing quota restoration...');
+    
+    try {
+      // Minimal probe call to check quota status
+      const response = await openai.chat.completions.create({
+        model: "gpt-5",
+        messages: [{ role: "user", content: "health check" }],
+        max_tokens: 5
+      });
+      
+      if (response.choices?.[0]) {
+        // Quota restored!
+        this.openaiStatus = 'HEALTHY';
+        this.consecutiveQuotaFailures = 0;
+        this.degradedSince = null;
+        this.lastSuccessfulCall = new Date();
+        console.log('✅ OpenAI Recovery Probe: Quota RESTORED - switching to HEALTHY mode');
+        return true;
+      }
+    } catch (error: any) {
+      const isQuotaError = error.message?.includes('429') || 
+                          error.message?.includes('quota') ||
+                          error.message?.includes('billing');
+      if (isQuotaError) {
+        console.log('⚠️ OpenAI Recovery Probe: Still quota-limited, remaining in DEGRADED mode');
+      } else {
+        console.log(`⚠️ OpenAI Recovery Probe: Error - ${error.message}`);
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * OPENAI_QUOTA_HANDLING_ADDENDUM v1.1 - Section 2: Retry with backoff
+   */
+  private async executeWithRetry<T>(
+    operation: () => Promise<T>,
+    agent: AgentRole,
+    operationName: string
+  ): Promise<{ success: boolean; result?: T; error?: string }> {
+    // Check if we should try recovery probe first
+    if (this.openaiStatus === 'DEGRADED' && this.canProbeRecovery()) {
+      await this.probeQuotaRecovery();
+    }
+    
+    // If still degraded, skip LLM call
+    if (this.openaiStatus === 'DEGRADED') {
+      return { 
+        success: false, 
+        error: 'OpenAI in DEGRADED mode - using fallback' 
+      };
+    }
+    
+    let lastError: string = '';
+    
+    for (let attempt = 1; attempt <= this.AUTOREM_MAX_ATTEMPTS; attempt++) {
+      try {
+        const result = await operation();
+        
+        // Success! Reset failure tracking
+        this.consecutiveQuotaFailures = 0;
+        this.lastSuccessfulCall = new Date();
+        
+        return { success: true, result };
+        
+      } catch (error: any) {
+        lastError = error.message || 'Unknown error';
+        const isQuotaError = lastError.includes('429') || 
+                            lastError.includes('quota') ||
+                            lastError.includes('billing') ||
+                            lastError.includes('insufficient');
+        
+        console.log(`⚠️ ${agent} ${operationName} attempt ${attempt}/${this.AUTOREM_MAX_ATTEMPTS} failed: ${lastError}`);
+        
+        if (isQuotaError) {
+          this.consecutiveQuotaFailures++;
+          
+          if (attempt < this.AUTOREM_MAX_ATTEMPTS) {
+            // Retry with backoff per AUTOREM playbook
+            console.log(`🔄 Retrying in ${this.RETRY_BACKOFF_MS}ms (backoff)...`);
+            await new Promise(resolve => setTimeout(resolve, this.RETRY_BACKOFF_MS));
+          }
+        } else {
+          // Non-quota error, don't retry
+          break;
+        }
+      }
+    }
+    
+    // All retries failed - switch to DEGRADED mode
+    if (this.consecutiveQuotaFailures >= this.AUTOREM_MAX_ATTEMPTS) {
+      this.openaiStatus = 'DEGRADED';
+      if (!this.degradedSince) {
+        this.degradedSince = new Date();
+      }
+      console.log('🔴 OpenAI quota/budget exhausted – degraded mode active');
+      
+      // Log structured escalation for Strategist
+      this.logQuotaEscalation(agent, lastError);
+    }
+    
+    return { success: false, error: lastError };
+  }
+  
+  /**
+   * OPENAI_QUOTA_HANDLING_ADDENDUM v1.1 - Section 4: Structured escalation
+   */
+  private logQuotaEscalation(agent: AgentRole, error: string): void {
+    const escalation = {
+      timestamp: new Date().toISOString(),
+      type: 'QUOTA_EXHAUSTION_ESCALATION',
+      sourceAgent: agent,
+      targetAgent: 'Strategist',
+      status: 'DEGRADED',
+      error,
+      consecutiveFailures: this.consecutiveQuotaFailures,
+      degradedSince: this.degradedSince?.toISOString(),
+      nextProbeAt: new Date(Date.now() + this.RECOVERY_PROBE_INTERVAL_MS).toISOString(),
+      recommendation: 'Switch to rule-based fallback until quota restored',
+      action: 'Scheduled recovery probe in 60 minutes'
+    };
+    
+    console.log('📤 Escalation to Strategist:', JSON.stringify(escalation, null, 2));
+  }
+  
+  /**
+   * Get current OpenAI quota health status
+   */
+  getQuotaHealthReport(): QuotaHealthReport {
+    const nextProbe = this.lastQuotaProbe 
+      ? new Date(this.lastQuotaProbe.getTime() + this.RECOVERY_PROBE_INTERVAL_MS)
+      : new Date();
+    
+    return {
+      status: this.openaiStatus,
+      lastCheck: new Date().toISOString(),
+      consecutiveFailures: this.consecutiveQuotaFailures,
+      lastSuccessfulCall: this.lastSuccessfulCall?.toISOString() || null,
+      degradedSince: this.degradedSince?.toISOString() || null,
+      nextProbeAllowed: nextProbe.toISOString(),
+      reason: this.openaiStatus === 'DEGRADED' 
+        ? `Quota exhausted after ${this.consecutiveQuotaFailures} failures`
+        : 'Operating normally'
+    };
+  }
 
   private readonly GOVERNANCE_CONTEXT = `
 You are an AI agent for ComplianceWorxs, a Life Sciences compliance company.
@@ -218,46 +413,55 @@ Respond with JSON in this exact format:
 }
 `;
 
-    try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-5",
-        messages: [
-          { role: "system", content: "You are the Chief of Staff AI agent for ComplianceWorxs. Make autonomous orchestration decisions." },
-          { role: "user", content: prompt }
-        ],
-        response_format: { type: "json_object" },
-        max_completion_tokens: 2048
-      });
+    // OPENAI_QUOTA_HANDLING_ADDENDUM v1.1 - Use retry with backoff
+    const retryResult = await this.executeWithRetry(
+      async () => {
+        const response = await openai.chat.completions.create({
+          model: "gpt-5",
+          messages: [
+            { role: "system", content: "You are the Chief of Staff AI agent for ComplianceWorxs. Make autonomous orchestration decisions." },
+            { role: "user", content: prompt }
+          ],
+          response_format: { type: "json_object" },
+          max_completion_tokens: 2048
+        });
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
-      const tokensUsed = response.usage?.total_tokens || 0;
-      this.recordAgentTokenUsage('CoS', tokensUsed);
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        const tokensUsed = response.usage?.total_tokens || 0;
+        this.recordAgentTokenUsage('CoS', tokensUsed);
 
-      const decision: ReasoningDecision = {
-        id: `cos_decision_${Date.now()}`,
-        agent: 'CoS',
-        timestamp: new Date().toISOString(),
-        prompt: 'Orchestration decision request',
-        reasoning: result.reasoning || '',
-        decision: result.decision || '',
-        confidence: result.confidence || 0.8,
-        actions: result.actions || [],
-        rationale: result.rationale || '',
-        tokensUsed,
-        modelUsed: 'gpt-5'
-      };
+        const decision: ReasoningDecision = {
+          id: `cos_decision_${Date.now()}`,
+          agent: 'CoS',
+          timestamp: new Date().toISOString(),
+          prompt: 'Orchestration decision request',
+          reasoning: result.reasoning || '',
+          decision: result.decision || '',
+          confidence: result.confidence || 0.8,
+          actions: result.actions || [],
+          rationale: result.rationale || '',
+          tokensUsed,
+          modelUsed: 'gpt-5'
+        };
 
-      this.logDecision(decision);
-      console.log(`🤖 CoS LLM Decision: ${decision.decision}`);
-      console.log(`   Confidence: ${(decision.confidence * 100).toFixed(0)}%`);
-      console.log(`   Actions: ${decision.actions.join(', ')}`);
+        this.logDecision(decision);
+        console.log(`🤖 CoS LLM Decision: ${decision.decision}`);
+        console.log(`   Confidence: ${(decision.confidence * 100).toFixed(0)}%`);
+        console.log(`   Actions: ${decision.actions.join(', ')}`);
 
-      return decision;
-    } catch (error: any) {
-      console.error('CoS LLM reasoning error:', error.message);
-      console.log('⚠️ Using fallback decision due to LLM error');
-      return this.generateFallbackDecision('CoS', 'orchestration');
+        return decision;
+      },
+      'CoS',
+      'orchestration'
+    );
+
+    if (retryResult.success && retryResult.result) {
+      return retryResult.result;
     }
+
+    // All retries failed - return fallback
+    console.log('⚠️ OpenAI quota/budget exhausted – using rule-based fallback for CoS');
+    return this.generateFallbackDecision('CoS', 'orchestration');
   }
 
   generateStrategistFallback(): StrategicRecommendation {

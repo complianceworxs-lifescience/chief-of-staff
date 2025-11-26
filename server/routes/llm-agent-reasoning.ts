@@ -34,6 +34,10 @@ router.get('/agent-budgets', (req, res) => {
   });
 });
 
+router.get('/quota-health', (req, res) => {
+  res.json(llmAgentReasoning.getQuotaHealthReport());
+});
+
 router.get('/decision-log', (req, res) => {
   const limit = parseInt(req.query.limit as string) || 50;
   res.json(llmAgentReasoning.getDecisionLog(limit));
