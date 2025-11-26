@@ -407,17 +407,23 @@ class CoSDailyChecklist {
 
     // NEW v2.0 - Check 2: SVDP Check - VQS Defense Asset published today?
     const vqsDefenseAsset = this.checkVQSDefenseAssetPublished();
+    const revPredictability = this.getRevenuePredictability();
+    const nearThreshold = this.needsVQSDefenseAsset(); // true when ≤90% (near 85% threshold)
+    const belowThreshold = revPredictability < 85;
+    
     items.push({
       id: 'co_2',
       category: 'Content + Objection Intelligence',
       question: '[SVDP] VQS Defense Asset published today?',
-      status: vqsDefenseAsset.published ? 'pass' : this.needsVQSDefenseAsset() ? 'fail' : 'warning',
+      status: vqsDefenseAsset.published ? 'pass' : belowThreshold ? 'fail' : nearThreshold ? 'warning' : 'pass',
       details: vqsDefenseAsset.published ?
         `VQS Defense Asset published: "${vqsDefenseAsset.title}"` :
-        'No VQS Defense Asset published today',
+        belowThreshold ? `No VQS Defense Asset - CRITICAL: Revenue Predictability at ${revPredictability}% (below 85%)` :
+        nearThreshold ? `No VQS Defense Asset - WARNING: Revenue Predictability at ${revPredictability}% (near 85% threshold)` :
+        'No VQS Defense Asset published today (not urgent - Revenue Predictability healthy)',
       lastChecked: now.toISOString(),
-      actionRequired: !vqsDefenseAsset.published && this.needsVQSDefenseAsset() ? 
-        'Content Manager: PRIORITY - Publish VQS Defense Asset (Revenue Predictability near threshold)' : undefined,
+      actionRequired: !vqsDefenseAsset.published && nearThreshold ? 
+        `Content Manager: ${belowThreshold ? 'IMMEDIATE' : 'PRIORITY'} - Publish VQS Defense Asset (Revenue Predictability at ${revPredictability}%, ${belowThreshold ? 'BELOW' : 'near'} 85% threshold)` : undefined,
       isNewV2: true
     });
 
@@ -692,15 +698,29 @@ class CoSDailyChecklist {
     });
 
     // Add Integration Mandate enforcement actions
-    if (mandate.revenuePredictability.status === 'fail') {
+    // SVDP: Prioritize VQS Defense Asset when Revenue Predictability DROPS NEAR 85% threshold
+    if (mandate.revenuePredictability.value < 85) {
+      // CRITICAL: Below threshold
       actions.push({
-        id: `mandate_svdp_${Date.now()}`,
-        action: 'CRITICAL: Revenue Predictability below 85% - Content Manager must prioritize VQS Defense Asset publication',
+        id: `mandate_svdp_critical_${Date.now()}`,
+        action: 'CRITICAL: Revenue Predictability below 85% - Content Manager must IMMEDIATELY publish VQS Defense Asset',
         priority: 'critical',
         assignedTo: 'Content Manager',
         status: 'pending',
-        triggeredBy: '[Integration Mandate] SVDP Enforcement',
+        triggeredBy: '[Integration Mandate] SVDP Enforcement - BELOW THRESHOLD',
         dueBy: new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+        category: 'SVDP'
+      });
+    } else if (mandate.revenuePredictability.value <= 90) {
+      // WARNING: Approaching threshold (85-90% = near threshold zone)
+      actions.push({
+        id: `mandate_svdp_warning_${Date.now()}`,
+        action: `WARNING: Revenue Predictability at ${mandate.revenuePredictability.value}% - NEAR 85% threshold. CoS must prioritize VQS Defense Asset publication by Content Manager`,
+        priority: 'high',
+        assignedTo: 'Content Manager',
+        status: 'pending',
+        triggeredBy: '[Integration Mandate] SVDP Enforcement - NEAR THRESHOLD',
+        dueBy: new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString(),
         category: 'SVDP'
       });
     }
@@ -818,7 +838,10 @@ class CoSDailyChecklist {
   }
 
   private needsVQSDefenseAsset(): boolean {
-    return this.getRevenuePredictability() < 85;
+    const revenuePredictability = this.getRevenuePredictability();
+    // Trigger when Revenue Predictability DROPS NEAR the 85% threshold (85-90% = warning zone)
+    // Priority escalates as it approaches 85%
+    return revenuePredictability <= 90; // Near threshold = 85-90%
   }
 
   private getRevenuePredictability(): number {
