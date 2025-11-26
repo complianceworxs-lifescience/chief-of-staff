@@ -6,7 +6,7 @@ import {
   Activity, AlertTriangle, CheckCircle, Clock, 
   DollarSign, Shield, Target, TrendingUp, Users,
   Zap, Brain, BarChart3, Eye, AlertCircle,
-  ArrowRight, RefreshCw, Lock
+  ArrowRight, RefreshCw, Lock, Rocket, Gauge
 } from "lucide-react";
 
 type AgentStatus = 'Active' | 'Idle' | 'Error';
@@ -55,6 +55,26 @@ export default function ExecutiveCommand() {
 
   const { data: scoreboard } = useQuery({
     queryKey: ['/api/cockpit/scoreboard'],
+    refetchInterval: 30000
+  });
+
+  const { data: l5Confirmation } = useQuery<{
+    overallStatus: string;
+    l6ReadinessScore: number;
+    confirmationDate: string | null;
+    metrics: {
+      revenuePredictability: { status: string; currentValue: number; targetValue: number; percentageChange: number; trend: string };
+      acvExpansion: { status: string; currentValue: number; baselineValue: number; percentageChange: number; trend: string };
+      frictionReduction: { status: string; currentValue: number; baselineValue: number; percentageChange: number; trend: string };
+    };
+    l6Readiness: {
+      ready: boolean;
+      blockers: string[];
+      projectedL6StartDate: string | null;
+      estimatedBudgetRequired: number;
+    };
+  }>({
+    queryKey: ['/api/operating-context/l5/confirmation'],
     refetchInterval: 30000
   });
 
@@ -565,6 +585,152 @@ export default function ExecutiveCommand() {
                     <span className="text-slate-300">{rule}</span>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* SECTION 8 - L5 METRICS CONFIRMATION & L6 READINESS */}
+        <div className="col-span-12">
+          <Card className="bg-gradient-to-r from-slate-900 via-purple-900/30 to-slate-900 border-purple-700" data-testid="l5-metrics-confirmation-section">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white flex items-center gap-2 text-sm uppercase tracking-wide">
+                <Gauge className="h-4 w-4 text-purple-400" />
+                Section 8 — L5 Metrics Confirmation & L6 Readiness
+                <Badge className={`ml-2 ${l5Confirmation?.overallStatus === 'confirmed' ? 'bg-emerald-600' : l5Confirmation?.overallStatus === 'in_progress' ? 'bg-blue-600' : 'bg-yellow-600'}`}>
+                  {l5Confirmation?.overallStatus?.toUpperCase() || 'TRACKING'}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                {/* Revenue Predictability */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-slate-700" data-testid="metric-revenue-predictability">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-emerald-400 text-sm flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Revenue Predictability
+                    </h4>
+                    <Badge className={`text-xs ${l5Confirmation?.metrics?.revenuePredictability?.status === 'confirmed' ? 'bg-emerald-600' : l5Confirmation?.metrics?.revenuePredictability?.status === 'tracking' ? 'bg-blue-600' : 'bg-yellow-600'}`}>
+                      {l5Confirmation?.metrics?.revenuePredictability?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Sprint Target Achievement</span>
+                      <span className="text-white font-bold">{l5Confirmation?.metrics?.revenuePredictability?.currentValue?.toFixed(1) || 0}%</span>
+                    </div>
+                    <Progress value={l5Confirmation?.metrics?.revenuePredictability?.currentValue || 0} className="h-2" />
+                    <div className="flex justify-between text-slate-500">
+                      <span>Target: {l5Confirmation?.metrics?.revenuePredictability?.targetValue || 80}%</span>
+                      <span className={l5Confirmation?.metrics?.revenuePredictability?.trend === 'improving' ? 'text-emerald-400' : 'text-slate-400'}>
+                        {l5Confirmation?.metrics?.revenuePredictability?.trend === 'improving' ? '↑ Improving' : l5Confirmation?.metrics?.revenuePredictability?.trend === 'stable' ? '→ Stable' : '↓ Declining'}
+                      </span>
+                    </div>
+                    <p className="text-slate-500 mt-2">MRR Lift: +{l5Confirmation?.metrics?.revenuePredictability?.percentageChange?.toFixed(1) || 0}%</p>
+                  </div>
+                </div>
+
+                {/* ACV Expansion */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-slate-700" data-testid="metric-acv-expansion">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-blue-400 text-sm flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      ACV Expansion
+                    </h4>
+                    <Badge className={`text-xs ${l5Confirmation?.metrics?.acvExpansion?.status === 'confirmed' ? 'bg-emerald-600' : l5Confirmation?.metrics?.acvExpansion?.status === 'tracking' ? 'bg-blue-600' : 'bg-yellow-600'}`}>
+                      {l5Confirmation?.metrics?.acvExpansion?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Current ACV</span>
+                      <span className="text-white font-bold">${l5Confirmation?.metrics?.acvExpansion?.currentValue?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Baseline</span>
+                      <span className="text-slate-300">${l5Confirmation?.metrics?.acvExpansion?.baselineValue?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Expansion</span>
+                      <span className={`font-bold ${(l5Confirmation?.metrics?.acvExpansion?.percentageChange || 0) >= 25 ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                        +{l5Confirmation?.metrics?.acvExpansion?.percentageChange?.toFixed(1) || 0}%
+                      </span>
+                    </div>
+                    <p className="text-slate-500 mt-2">via Revenue Offer Ladder</p>
+                  </div>
+                </div>
+
+                {/* Friction Reduction */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-slate-700" data-testid="metric-friction-reduction">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-orange-400 text-sm flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Friction Reduction
+                    </h4>
+                    <Badge className={`text-xs ${l5Confirmation?.metrics?.frictionReduction?.status === 'confirmed' ? 'bg-emerald-600' : l5Confirmation?.metrics?.frictionReduction?.status === 'tracking' ? 'bg-blue-600' : 'bg-yellow-600'}`}>
+                      {l5Confirmation?.metrics?.frictionReduction?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Objection Rate</span>
+                      <span className="text-white font-bold">{l5Confirmation?.metrics?.frictionReduction?.currentValue || 0}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Baseline</span>
+                      <span className="text-slate-300">{l5Confirmation?.metrics?.frictionReduction?.baselineValue || 0}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Reduction</span>
+                      <span className="text-emerald-400 font-bold">{Math.abs(l5Confirmation?.metrics?.frictionReduction?.percentageChange || 0).toFixed(1)}%</span>
+                    </div>
+                    <p className="text-slate-500 mt-2">via Objection Intelligence Loop</p>
+                  </div>
+                </div>
+
+                {/* L6 Readiness */}
+                <div className={`p-4 rounded-lg border ${l5Confirmation?.l6Readiness?.ready ? 'bg-gradient-to-b from-emerald-900/50 to-slate-800 border-emerald-600' : 'bg-slate-800 border-slate-700'}`} data-testid="l6-readiness">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-purple-400 text-sm flex items-center gap-2">
+                      <Rocket className="h-4 w-4" />
+                      L6 Readiness
+                    </h4>
+                    <Badge className={l5Confirmation?.l6Readiness?.ready ? 'bg-emerald-600' : 'bg-slate-600'}>
+                      {l5Confirmation?.l6ReadinessScore || 0}%
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <Progress value={l5Confirmation?.l6ReadinessScore || 0} className="h-2" />
+                    {l5Confirmation?.l6Readiness?.ready ? (
+                      <div className="mt-3 p-2 bg-emerald-900/30 rounded border border-emerald-700">
+                        <p className="text-emerald-300 font-bold">L5 CONFIRMED</p>
+                        <p className="text-slate-300 mt-1">System can autonomously forecast and budget for L6</p>
+                        <p className="text-slate-400 mt-1">Est. Budget: ${l5Confirmation?.l6Readiness?.estimatedBudgetRequired?.toLocaleString()}</p>
+                      </div>
+                    ) : (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-slate-400 font-medium">Blockers:</p>
+                        {l5Confirmation?.l6Readiness?.blockers?.slice(0, 2).map((blocker: string, idx: number) => (
+                          <p key={idx} className="text-yellow-400 text-xs">• {blocker}</p>
+                        ))}
+                        {l5Confirmation?.l6Readiness?.projectedL6StartDate && (
+                          <p className="text-slate-500 mt-2">Projected L6: {new Date(l5Confirmation.l6Readiness.projectedL6StartDate).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* L6 Goals Preview */}
+              <div className="mt-4 p-3 bg-purple-900/20 rounded border border-purple-700/50" data-testid="l6-goals-preview">
+                <h4 className="text-xs font-bold text-purple-400 mb-2">L6 Goals (Pending Confirmation)</h4>
+                <div className="flex gap-4 text-xs">
+                  <span className="text-slate-300">• Proactive Regulatory Influence</span>
+                  <span className="text-slate-300">• Market-Shaping Intelligence</span>
+                  <span className="text-slate-300">• Predictive Compliance Positioning</span>
+                </div>
               </div>
             </CardContent>
           </Card>
