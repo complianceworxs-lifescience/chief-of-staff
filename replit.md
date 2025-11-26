@@ -34,6 +34,7 @@ Prioritizes a clear, comprehensive dashboard and interactive command center usin
 - **L6 TRANSITION READINESS FRAMEWORK**: Defines critical thresholds (Revenue Stability, RPM Stability, Objection Stability, Blueprint Performance, System Coherence) for L6 activation, emphasizing regulatory, reputation-sensitive, and audit-grade risk profiles. L6 activation is controlled by Methodology Lock, Micro-Cohort Cap, CoS Gatekeeper Approval, and Rollback Protocol.
 - **LLM Agent Reasoning System**: Integrates OpenAI GPT-5 for all 5 agents (CoS, Strategist, CMO, CRO, ContentManager) with structured JSON outputs, per-agent token budgeting, cost-based accounting, graceful fallback, and decision logging with full lineage tracking.
 - **Autonomous Agent Scheduler**: Configurable ODAR cycle intervals per agent with full Observe-Decide-Act-Reflect (ODAR) cycle using LLM reasoning, including automatic conflict detection and resolution via CoS.
+- **L6 ACCELERATION PROTOCOL (7-DAY SPRINT)**: ARCHITECT OVERRIDE DIRECTIVE (BINDING). Activates accelerated L6 readiness sprint with 3 interventions: (1) CoS UDL sync every 30min targeting RPM ≥95%, (2) CMO 3x Benchmark Posts multiplier targeting revenue stability ≥4 weeks, (3) CRO 24h micro-offer backlog sprint. Constraints: L6 simulation allowed, L6 activation prohibited, VQS protected, no agent mutation. Daily Architect reports required.
 
 **Agent Architecture & Roles:**
 - **Chief of Staff Agent**: Prime orchestrator, meta-orchestrator, and control tower for strategic alignment and conflict resolution.
