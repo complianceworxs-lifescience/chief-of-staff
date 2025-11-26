@@ -2696,6 +2696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // L6 Transition Package routes (Sandbox Mode, CoS Governance, Micro-Cohort Testing, Methodology Lock)
   app.use("/api/l6", (await import("./routes/l6-transition")).default);
   
+  // LLM Agent Reasoning routes (Real AI-powered decision-making with OpenAI GPT-5)
+  app.use("/api/llm-agents", (await import("./routes/llm-agent-reasoning")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
