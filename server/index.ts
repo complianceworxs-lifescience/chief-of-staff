@@ -91,6 +91,21 @@ app.use((req, res, next) => {
       module.chiefOfStaff.startNightlyScheduler();
       log("Chief of Staff nightly scheduler started - Dashboard cleanup at 02:15 UTC");
     });
+    
+    // Auto-activate Advanced Capability Pack v1.0 on startup
+    Promise.all([
+      import("./services/revenue-predictive-model"),
+      import("./services/offer-optimization-engine"),
+      import("./services/compliance-intelligence-reports")
+    ]).then(([rpm, ooe, cir]) => {
+      rpm.revenuePredictiveModel.activate();
+      ooe.offerOptimizationEngine.activate();
+      cir.complianceIntelligenceReports.activate();
+      ooe.offerOptimizationEngine.generateWeeklyReport();
+      log("Advanced Capability Pack v1.0 auto-activated - Revenue Model, Offer Engine, Intelligence Reports");
+    }).catch(err => {
+      console.error("Failed to auto-activate Advanced Capability Pack:", err);
+    });
 
     // Start Market Intelligence 2-hour collection scheduler
     const MI_COLLECTION_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours in milliseconds

@@ -78,6 +78,25 @@ export default function ExecutiveCommand() {
     refetchInterval: 30000
   });
 
+  const { data: capabilitiesDashboard } = useQuery<{
+    title: string;
+    generatedAt: string;
+    capabilities: {
+      title: string;
+      status: 'active' | 'inactive';
+      latestForecast?: { predictedDelta: number; confidence: number; topBottleneck: string | null; topIntervention: string | null };
+      signalHealth?: { name: string; status: 'good' | 'warning' | 'critical' }[];
+      summary?: { activeTests: number; winningVariants: number; projectedLift: number; topPerformer: string | null };
+      engagementHealth?: { metric: string; value: number; trend: 'up' | 'down' | 'stable' }[];
+      revenue?: { mrr: number; subscribers: number; growth: number };
+      content?: { reportsGenerated: number; assetsCreated: number; latestReportTitle: string | null };
+      engagement?: { platform: string; value: number; growth: number }[];
+    }[];
+  }>({
+    queryKey: ['/api/capabilities/cos-dashboard'],
+    refetchInterval: 30000
+  });
+
   const agentPerformance: AgentPerformance[] = [
     { agent: 'Strategist', status: 'Active', lastAction: 'Weekly theme set', nextAction: 'Scenario sim', blockers: 'None', confidence: 'High' },
     { agent: 'CoS', status: 'Active', lastAction: 'Resource reallocation', nextAction: 'Issue brief', blockers: 'Minor conflicts', confidence: 'Very High' },
@@ -790,6 +809,154 @@ export default function ExecutiveCommand() {
                     <p>Precise, high-leverage CoS adjustments queued</p>
                     <Badge className="mt-2 bg-cyan-600 text-xs">Auto-executing</Badge>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* SECTION 9 - ADVANCED CAPABILITY PACK v1.0 */}
+        <div className="col-span-12">
+          <Card className="bg-gradient-to-b from-indigo-900/50 to-slate-900 border-indigo-600" data-testid="capability-pack-section">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-white flex items-center gap-2 text-sm uppercase tracking-wide">
+                <Rocket className="h-4 w-4 text-indigo-400" />
+                Section 9 — Advanced Capability Pack v1.0
+                <Badge className={`ml-2 text-xs ${capabilitiesDashboard?.capabilities?.every(c => c.status === 'active') ? 'bg-emerald-600' : 'bg-yellow-600'}`}>
+                  {capabilitiesDashboard?.capabilities?.every(c => c.status === 'active') ? 'ACTIVATED' : 'ACTIVATING...'}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Revenue Predictive Model */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-blue-600" data-testid="capability-revenue-model">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-blue-400 text-sm flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Revenue Predictive Model
+                    </h4>
+                    <Badge className={capabilitiesDashboard?.capabilities?.[0]?.status === 'active' ? 'bg-emerald-600' : 'bg-slate-600'}>
+                      {capabilitiesDashboard?.capabilities?.[0]?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-3 text-xs">
+                    <div className="p-2 bg-blue-900/30 rounded">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">7-Day Forecast</span>
+                        <span className="text-emerald-400 font-bold text-lg">
+                          +${capabilitiesDashboard?.capabilities?.[0]?.latestForecast?.predictedDelta?.toLocaleString() || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-slate-500">Confidence</span>
+                        <span className="text-blue-300">{capabilitiesDashboard?.capabilities?.[0]?.latestForecast?.confidence || 0}%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-slate-400 font-medium">Top Bottleneck:</p>
+                      <p className="text-yellow-400">{capabilitiesDashboard?.capabilities?.[0]?.latestForecast?.topBottleneck || 'None detected'}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {capabilitiesDashboard?.capabilities?.[0]?.signalHealth?.map((signal, idx) => (
+                        <Badge 
+                          key={idx} 
+                          className={`text-xs ${signal.status === 'good' ? 'bg-emerald-600' : signal.status === 'warning' ? 'bg-yellow-600' : 'bg-red-600'}`}
+                        >
+                          {signal.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Offer Optimization Engine */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-purple-600" data-testid="capability-offer-engine">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-purple-400 text-sm flex items-center gap-2">
+                      <Target className="h-4 w-4" />
+                      Offer Optimization Engine
+                    </h4>
+                    <Badge className={capabilitiesDashboard?.capabilities?.[1]?.status === 'active' ? 'bg-emerald-600' : 'bg-slate-600'}>
+                      {capabilitiesDashboard?.capabilities?.[1]?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-purple-900/30 rounded text-center">
+                        <p className="text-slate-400">Active Tests</p>
+                        <p className="text-purple-300 font-bold text-lg">{capabilitiesDashboard?.capabilities?.[1]?.summary?.activeTests || 0}</p>
+                      </div>
+                      <div className="p-2 bg-emerald-900/30 rounded text-center">
+                        <p className="text-slate-400">Winners</p>
+                        <p className="text-emerald-300 font-bold text-lg">{capabilitiesDashboard?.capabilities?.[1]?.summary?.winningVariants || 0}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-slate-400 font-medium">Top Performer:</p>
+                      <p className="text-emerald-400">{capabilitiesDashboard?.capabilities?.[1]?.summary?.topPerformer || 'Analyzing...'}</p>
+                    </div>
+                    <div className="p-2 bg-slate-700 rounded">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Projected Lift</span>
+                        <span className="text-emerald-400 font-bold">+${capabilitiesDashboard?.capabilities?.[1]?.summary?.projectedLift?.toFixed(0) || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compliance Intelligence Reports */}
+                <div className="p-4 bg-slate-800 rounded-lg border border-orange-600" data-testid="capability-intel-reports">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-orange-400 text-sm flex items-center gap-2">
+                      <Brain className="h-4 w-4" />
+                      Compliance Intelligence
+                    </h4>
+                    <Badge className={capabilitiesDashboard?.capabilities?.[2]?.status === 'active' ? 'bg-emerald-600' : 'bg-slate-600'}>
+                      {capabilitiesDashboard?.capabilities?.[2]?.status?.toUpperCase() || 'PENDING'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-3 text-xs">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-orange-900/30 rounded text-center">
+                        <p className="text-slate-400">MRR</p>
+                        <p className="text-orange-300 font-bold text-lg">${capabilitiesDashboard?.capabilities?.[2]?.revenue?.mrr?.toLocaleString() || 0}</p>
+                      </div>
+                      <div className="p-2 bg-emerald-900/30 rounded text-center">
+                        <p className="text-slate-400">Subscribers</p>
+                        <p className="text-emerald-300 font-bold text-lg">{capabilitiesDashboard?.capabilities?.[2]?.revenue?.subscribers || 0}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-slate-400 font-medium">Latest Report:</p>
+                      <p className="text-blue-300 truncate">{capabilitiesDashboard?.capabilities?.[2]?.content?.latestReportTitle || 'Generating...'}</p>
+                    </div>
+                    <div className="p-2 bg-slate-700 rounded">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Reports Generated</span>
+                        <span className="text-white font-bold">{capabilitiesDashboard?.capabilities?.[2]?.content?.reportsGenerated || 0}</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-slate-400">Content Assets</span>
+                        <span className="text-white font-bold">{capabilitiesDashboard?.capabilities?.[2]?.content?.assetsCreated || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 72-Hour Integration Sprint Status */}
+              <div className="mt-4 p-3 bg-indigo-900/20 rounded border border-indigo-700/50" data-testid="integration-sprint-status">
+                <h4 className="text-xs font-bold text-indigo-400 mb-2 flex items-center gap-2">
+                  <Clock className="h-3 w-3" />
+                  72-Hour Integration Sprint Status
+                </h4>
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <Badge className="bg-emerald-600">Unified Data Layer: Connected</Badge>
+                  <Badge className="bg-emerald-600">VQS Validation: Active</Badge>
+                  <Badge className="bg-emerald-600">Weekly Sprint: Integrated</Badge>
+                  <Badge className="bg-blue-600">CoS Dashboard: Live</Badge>
+                  <Badge className="bg-yellow-600">Objection Loop: Syncing</Badge>
                 </div>
               </div>
             </CardContent>

@@ -2681,6 +2681,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Agent Operating Context vFINAL routes (CoS Prime Orchestrator)
   app.use("/api/operating-context", (await import("./routes/operating-context")).default);
   
+  // Advanced Capability Pack v1.0 routes (Revenue Predictive Model, Offer Optimization, Compliance Intelligence)
+  app.use("/api/capabilities", (await import("./routes/advanced-capabilities")).advancedCapabilitiesRouter);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
