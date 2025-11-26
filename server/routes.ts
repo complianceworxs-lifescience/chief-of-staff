@@ -16,6 +16,7 @@ import { marketIntelligenceAgent } from "./services/market-intelligence";
 import { generativeStrategist } from "./services/generative-strategist";
 import { agentsRouter } from "./routes/agents";
 import architectCosContractRouter from "./routes/architect-cos-contract";
+import l5OperatingSuiteRouter from "./routes/l5-operating-suite";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -57,6 +58,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount ARCHITECT–CoS ESCALATION CONTRACT v1.0 routes
   app.use("/api/contract", architectCosContractRouter);
   console.log('📜 ARCHITECT–CoS ESCALATION CONTRACT v1.0 routes mounted at /api/contract');
+  
+  // Mount L5 OPERATING SUITE v1.0 routes
+  app.use("/api/l5-suite", l5OperatingSuiteRouter);
+  console.log('🚀 L5 OPERATING SUITE v1.0 routes mounted at /api/l5-suite');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
