@@ -68,7 +68,17 @@ export class MailChimpService {
       throw new Error(`MailChimp API error (${response.status}): ${error}`);
     }
 
-    return response.json();
+    // Handle empty responses (like send campaign which returns 204)
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      return { success: true, status: response.status };
+    }
+    
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { success: true, status: response.status, body: text };
+    }
   }
 
   async addOrUpdateMember(member: MailChimpMember) {
