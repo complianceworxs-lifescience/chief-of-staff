@@ -2656,6 +2656,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Multimillion-Dollar Directive routes
   app.use("/api/directive", (await import("./routes/directive")).default);
   
+  // Agent Operating Context vFINAL routes (CoS Prime Orchestrator)
+  app.use("/api/operating-context", (await import("./routes/operating-context")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
