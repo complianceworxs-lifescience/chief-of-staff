@@ -65,3 +65,36 @@ The application uses a full-stack architecture with a React-based SPA frontend (
 - **Tailwind CSS**: Utility-first CSS framework.
 - **ESBuild**: Used for bundling backend code in production.
 - **MailChimp**: Integrated for email campaign execution.
+- **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
+
+## LLM Agent Reasoning System
+The system now uses true LLM-powered reasoning for all 5 agents (CoS, Strategist, CMO, CRO, ContentManager):
+
+**Core Implementation (server/services/llm-agent-reasoning.ts):**
+- OpenAI GPT-5 integration with structured JSON outputs
+- Per-agent token budgeting: $25/day per agent ($125/day total)
+- Cost-based accounting: ~$0.0003/1K input tokens, ~$0.0012/1K output tokens
+- Graceful fallback when LLM unavailable or budget exceeded (confidence: 0.5)
+- Decision logging with full lineage tracking
+
+**Autonomous Agent Scheduler (server/services/autonomous-llm-agents.ts):**
+- Configurable ODAR cycle intervals per agent (CoS: 4h, Strategist: 6h, CMO/CRO: 4h, ContentManager: 6h)
+- Full ODAR (Observe-Decide-Act-Reflect) cycle with LLM reasoning
+- Automatic conflict detection and resolution via CoS
+
+**API Endpoints (server/routes/llm-agent-reasoning.ts):**
+- POST /api/llm-agents/reason - General LLM reasoning
+- POST /api/llm-agents/cos/orchestrate - CoS orchestration decisions
+- POST /api/llm-agents/strategist/decide - Strategist reasoning
+- POST /api/llm-agents/cmo/analyze - CMO engagement decisions
+- POST /api/llm-agents/cro/decide - CRO revenue optimization
+- POST /api/llm-agents/content-manager/decide - Content Manager decisions
+- POST /api/llm-agents/conflict/analyze - Conflict resolution
+- POST /api/llm-agents/odar/:agent - ODAR cycle for specific agent
+- GET /api/llm-agents/agent-budgets - Per-agent budget status
+- GET /api/llm-agents/token-usage - Token usage statistics
+- GET /api/llm-agents/decision-log - Decision log history
+- POST /api/llm-agents/autonomous/start - Start autonomous scheduling
+- POST /api/llm-agents/autonomous/stop - Stop autonomous scheduling
+- GET /api/llm-agents/autonomous/status - Autonomous scheduler status
+- GET /api/llm-agents/health - LLM agent health status
