@@ -10,6 +10,7 @@ import {
   COS_L6_SYSTEM_PROMPT,
   applyRevenueFilter 
 } from '../services/cos-revenue-prime';
+import { sendPipelineFlushReport } from '../services/gmail-sender';
 
 const router = Router();
 
@@ -442,6 +443,47 @@ router.post('/pipeline-flush/from-database', async (req: Request, res: Response)
     res.status(500).json({
       error: 'FLUSH_FAILED',
       message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// ============================================================================
+// EMAIL REPORT
+// ============================================================================
+
+/**
+ * POST /api/revenue-prime/send-report
+ * Send Pipeline Flush Report via email
+ */
+router.post('/send-report', async (req: Request, res: Response) => {
+  const { to, flushReport } = req.body;
+  
+  if (!to || !flushReport) {
+    return res.status(400).json({
+      error: 'MISSING_PARAMS',
+      message: 'to (email address) and flushReport are required'
+    });
+  }
+  
+  try {
+    const result = await sendPipelineFlushReport(to, flushReport);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Pipeline Flush Report sent to ${to}`,
+        messageId: result.messageId
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
