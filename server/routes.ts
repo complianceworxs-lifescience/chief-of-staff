@@ -29,6 +29,7 @@ import architectDecisionGatekeeperRouter from "./routes/architect-decision-gatek
 import criticalInfrastructureConfigRouter from "./routes/critical-infrastructure-config";
 import architectStrategistCommProtocolRouter from "./routes/architect-strategist-comm-protocol";
 import l5UpgradeBundleV2Router from "./routes/l5-upgrade-bundle-v2";
+import cosRevenuePrimeRouter from "./routes/cos-revenue-prime";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -123,6 +124,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L5 UPGRADE BUNDLE V2 routes
   app.use("/api/l5-bundle", l5UpgradeBundleV2Router);
   console.log('📦 L5_UPGRADE_BUNDLE_V2 routes mounted at /api/l5-bundle');
+  
+  // Mount COS REVENUE PRIME L6 routes
+  app.use("/api/revenue-prime", cosRevenuePrimeRouter);
+  console.log('💰 COS REVENUE PRIME L6 routes mounted at /api/revenue-prime');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
