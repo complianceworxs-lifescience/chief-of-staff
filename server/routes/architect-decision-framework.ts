@@ -229,4 +229,40 @@ router.get('/criterion/:criterion', (req: Request, res: Response) => {
   });
 });
 
+/**
+ * GET /api/architect-framework/status
+ * Get current framework status
+ */
+router.get('/status', (req: Request, res: Response) => {
+  const verdict = architectDecisionFramework.getCurrentVerdict();
+  const history = architectDecisionFramework.getVerdictHistory();
+
+  if (!verdict) {
+    return res.json({
+      active: false,
+      message: 'No verdict has been rendered',
+      hint: 'POST /api/architect-framework/apply with Architect authorization',
+      totalVerdicts: history.length
+    });
+  }
+
+  res.json({
+    active: true,
+    framework: 'ARCHITECT_DECISION_FRAMEWORK_v1.0',
+    currentVerdict: {
+      verdictId: verdict.verdictId,
+      verdict: verdict.verdict,
+      timestamp: verdict.timestamp,
+      failureClass: verdict.failureClassification.class,
+      allCriteriaPassed: Object.values(verdict.evaluation).every(c => c.passed)
+    },
+    totalVerdicts: history.length,
+    safety: {
+      l6Activation: 'PROHIBITED',
+      vqsProtection: 'ENFORCED',
+      methodologyLock: 'ENFORCED'
+    }
+  });
+});
+
 export default router;
