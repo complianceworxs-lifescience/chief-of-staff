@@ -1,0 +1,26 @@
+{
+  "module": "DECISION_GATEKEEPER",
+  "version": "1.0",
+  "status": "ACTIVE",
+  "created": "2025-11-27T09:00:00.000Z",
+  "lastUpdated": "2025-11-27T09:00:00.000Z",
+  "decisions": [],
+  "filters": {
+    "hardFilters": ["VQS_PROTECTION", "REVENUE_INTEGRITY", "AUDIT_DEFENSIBILITY"],
+    "gateConstraints": ["ALLOWED_CHANGES", "FORBIDDEN_CHANGES"],
+    "softFilters": ["OFFER_LADDER_INTEGRITY", "L5_STABILITY", "24H_RESTORABILITY"]
+  },
+  "safetyLocks": {
+    "l6Activation": "PROHIBITED",
+    "vqsMethodologyLock": "ENFORCED",
+    "offerLadderStructureLock": "ENFORCED",
+    "positioningLock": "ENFORCED"
+  },
+  "statistics": {
+    "totalDecisions": 0,
+    "approved": 0,
+    "modified": 0,
+    "rejected": 0,
+    "escalated": 0
+  }
+}

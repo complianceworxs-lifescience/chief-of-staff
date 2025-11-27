@@ -26,6 +26,8 @@ import l6ReadinessDiagnosticRouter from "./routes/l6-readiness-diagnostic";
 import l6SandboxSimulationRouter from "./routes/l6-sandbox-simulation";
 import l6DualReportPackageRouter from "./routes/l6-dual-report-package";
 import architectDecisionGatekeeperRouter from "./routes/architect-decision-gatekeeper";
+import criticalInfrastructureConfigRouter from "./routes/critical-infrastructure-config";
+import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -107,6 +109,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount ARCHITECT DECISION GATEKEEPER routes
   app.use("/api/gatekeeper", architectDecisionGatekeeperRouter);
   console.log('🚧 ARCHITECT DECISION GATEKEEPER v1.0 routes mounted at /api/gatekeeper');
+  
+  // Mount CRITICAL INFRASTRUCTURE CONFIG routes
+  app.use("/api/infrastructure", criticalInfrastructureConfigRouter);
+  console.log('🔧 CRITICAL INFRASTRUCTURE CONFIG v1.0 routes mounted at /api/infrastructure');
+  
+  // Initialize Critical Infrastructure Config
+  criticalInfrastructureConfig.initialize().catch(err => {
+    console.error('❌ Failed to initialize Critical Infrastructure Config:', err);
+  });
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {

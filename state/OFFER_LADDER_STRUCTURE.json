@@ -1,0 +1,43 @@
+{
+  "module": "OFFER_LADDER_STRUCTURE",
+  "version": "1.0",
+  "status": "ENFORCED",
+  "created": "2025-11-27T09:00:00.000Z",
+  "lastUpdated": "2025-11-27T09:00:00.000Z",
+  "tiers": [
+    {
+      "tier": 1,
+      "name": "Entry",
+      "description": "Low-commitment entry offers",
+      "priceRange": "$0-$500",
+      "conversionTarget": "Awareness → Interest",
+      "status": "ACTIVE"
+    },
+    {
+      "tier": 2,
+      "name": "Core",
+      "description": "Primary value delivery",
+      "priceRange": "$500-$5,000",
+      "conversionTarget": "Interest → Consideration",
+      "status": "ACTIVE"
+    },
+    {
+      "tier": 3,
+      "name": "Premium",
+      "description": "Full enterprise engagement",
+      "priceRange": "$5,000+",
+      "conversionTarget": "Consideration → Decision",
+      "status": "ACTIVE"
+    }
+  ],
+  "rules": {
+    "sequenceEnforced": true,
+    "skipTierAllowed": false,
+    "downgradeTrigger": "explicit_request_only"
+  },
+  "locks": {
+    "structure": true,
+    "sequence": true,
+    "pricing": true
+  }
+}

@@ -1,0 +1,135 @@
+SYSTEM_MODULE {
+  name: "CRITICAL_INFRASTRUCTURE_CONFIG_v1.0",
+  scope: "global",
+  purpose: "Enforce the critical runtime, state, and connectivity guarantees for all ComplianceWorxs agents.",
+
+  agents: [
+    "CoS",          // Orchestrator + partial Librarian
+    "Strategist",   // Gemini (external, via API)
+    "CRO",          // Revenue agent (+CFO role)
+    "CMO",          // Demand agent
+    "ContentMgr"    // Content + CCO (+partial Librarian)
+  ],
+
+  // 1. PERSISTENT RUNTIME (ALWAYS-ON)
+  runtime_persistence: {
+    required: true,
+    mode: "always_on",
+    enforce_for_agents: ["CoS", "CRO", "CMO", "ContentMgr"],
+    notes: "Agents must not be shut down between cycles; ODAR requires continuous runtime."
+  },
+
+  // 2. SECRETS MANAGEMENT (ENV VARS ONLY)
+  secrets_management: {
+    required: true,
+    storage: "env_vars_only",
+    keys: [
+      "OPENAI_API_KEY",
+      "GEMINI_API_KEY",
+      "MAILCHIMP_API_KEY",
+      "COMPLIANCEWORXS_INTERNAL_TOKEN"
+    ],
+    policy: [
+      "No hard-coded secrets in source files.",
+      "Secrets must be rotated without code changes.",
+      "Agents read secrets from environment only."
+    ]
+  },
+
+  // 3. SCHEDULED LOOPS (2-HOUR VALIDATION CYCLES)
+  scheduled_loops: {
+    required: true,
+    interval_minutes: 120,
+    tasks: [
+      {
+        name: "ODAR_VALIDATION_CYCLE",
+        owner: "CoS",
+        description: "Validate ODAR completion, agent idle time, and drift indicators."
+      },
+      {
+        name: "UDL_SYNC_CHECK",
+        owner: "CoS",
+        description: "Ensure Unified Data Layer freshness and integrity."
+      },
+      {
+        name: "RPM_RECALC_CHECK",
+        owner: "Strategist",
+        description: "Recompute RPM confidence and log deviations."
+      },
+      {
+        name: "DRIFT_MONITOR",
+        owner: "CoS",
+        description: "Detect positioning drift, VQS violations, and Offer Ladder anomalies."
+      },
+      {
+        name: "AUTO_SUMMARY_PREP",
+        owner: "CoS",
+        description: "Aggregate metrics for Architect daily Auto-Summary."
+      }
+    ]
+  },
+
+  // 4. FILESYSTEM PERSISTENCE (STATE PRESERVATION)
+  persistent_state: {
+    required: true,
+    paths: [
+      "state/VQS_LOCK.json",
+      "state/POSITIONING_MATRIX_v1.5.json",
+      "state/OFFER_LADDER_STRUCTURE.json",
+      "state/OBJECTION_INTEL_ARCHIVE.json",
+      "state/RPM_WEIGHTS_HISTORY.json",
+      "state/ARCHITECT_COS_CONTRACT_v1.0.json",
+      "state/DECISION_GATEKEEPER_v1.0.json"
+    ],
+    policy: [
+      "These files must persist across restarts.",
+      "No agent may delete or overwrite these without explicit Architect-level logic.",
+      "Backups must be possible from these files alone."
+    ]
+  },
+
+  // 5. LOGGING + ERROR HANDLING (RUNTIME STABILITY)
+  logging: {
+    required: true,
+    level: "INFO+ERROR",
+    sinks: ["console", "file:logs/system.log"],
+    must_log: [
+      "API failures (OpenAI, Gemini, Mailchimp).",
+      "Quota/429 events + fallback decisions.",
+      "Failed ODAR cycles.",
+      "UDL sync failures.",
+      "RPM confidence drops > 5%.",
+      "Any VQS/Offer Ladder/Positioning rule violations."
+    ],
+    error_handling: {
+      classify_errors: ["TRANSIENT", "PERMANENT"],
+      transient: {
+        retry_with_backoff: true,
+        backoff_ms: 1500,
+        max_attempts: 2,
+        fallback_mode: "rule_based_operation"
+      },
+      permanent: {
+        escalate_to: "CoS",
+        log_level: "ERROR"
+      }
+    }
+  },
+
+  // 6. NETWORKING + API REQUESTS (EXTERNAL EXECUTION)
+  networking: {
+    required: true,
+    outbound_targets: [
+      "https://api.openai.com",
+      "https://generativelanguage.googleapis.com",  // Gemini
+      "https://usX.api.mailchimp.com",            // Region-specific
+      "internal/UDL_ENDPOINTS",                   // Your UDL / storage layer
+      "future/linked_in_signals"                  // Placeholder for future integration
+    ],
+    policy: [
+      "All agent-to-agent and agent-to-service calls must use these configured clients.",
+      "No direct raw HTTP in business logic; use shared clients/wrappers.",
+      "Network failures must trigger TRANSIENT error handling, not crashes."
+    ]
+  }
+}
