@@ -23,6 +23,7 @@ import cosEnforcementDiagnosticsRouter from "./routes/cos-enforcement-diagnostic
 import strategistRpmAnalysisRouter from "./routes/strategist-rpm-analysis";
 import architectDecisionFrameworkRouter from "./routes/architect-decision-framework";
 import l6ReadinessDiagnosticRouter from "./routes/l6-readiness-diagnostic";
+import l6SandboxSimulationRouter from "./routes/l6-sandbox-simulation";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -92,6 +93,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L6 READINESS DIAGNOSTIC routes
   app.use("/api/l6-readiness", l6ReadinessDiagnosticRouter);
   console.log('🔬 L6 READINESS DIAGNOSTIC v1.0 routes mounted at /api/l6-readiness');
+  
+  // Mount L6 SANDBOX SIMULATION routes
+  app.use("/api/l6-sandbox", l6SandboxSimulationRouter);
+  console.log('🧪 L6 SANDBOX SIMULATION v1.0 routes mounted at /api/l6-sandbox');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {

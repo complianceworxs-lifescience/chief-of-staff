@@ -1,0 +1,92 @@
+ARCHITECT_MODULE {
+  name: "ARCHITECT_DECISION_GATEKEEPER_v1.0",
+  scope: "architect_only",
+  purpose: "Evaluate Strategist corrective actions for RPM/L6-related changes under L5+ governance.",
+
+  input_expected: {
+    source: "Strategist",
+    payload: {
+      root_cause_class: "UDL | REVENUE_STABILITY | RPM_CONFIDENCE | OBJECTION_DRIFT | OFFER_LADDER_PREDICTABILITY",
+      proposed_action: "string",
+      projected_impact: {
+        rpm_confidence_delta: "float",
+        revenue_delta: "float",
+        risk_notes: "string"
+      }
+    }
+  },
+
+  classification_rules: [
+    "UDL -> data integrity / freshness / consistency issue",
+    "REVENUE_STABILITY -> pipeline / sprint / ladder execution issue",
+    "RPM_CONFIDENCE -> predictive model stability issue",
+    "OBJECTION_DRIFT -> stakeholder packet / objections issue",
+    "OFFER_LADDER_PREDICTABILITY -> Tier1->Tier2->Tier3 flow issue"
+  ],
+
+  hard_filters: [
+    "VQS_PROTECTION: action MUST NOT alter VQS, methodology, or claimed ranges.",
+    "REVENUE_INTEGRITY: action MUST NOT materially increase revenue volatility or destroy predictability.",
+    "AUDIT_DEFENSIBILITY: action MUST remain conservative, reproducible, and regulator-defensible."
+  ],
+
+  soft_filters: [
+    "OFFER_LADDER_INTEGRITY: MUST preserve Tier1->Tier2->Tier3 sequence (no bypass, no reorder).",
+    "L5_STABILITY: MUST NOT introduce L6-like experimental breadth or structural mutation.",
+    "24H_RESTORABILITY: action SHOULD plausibly restore RPM_CONFIDENCE >= 0.90 within 24h."
+  ],
+
+  gate_by_root_cause: {
+    UDL: {
+      allowed_changes: "data pipelines, freshness, weighting, de-duplication",
+      forbidden_changes: "pricing, offers, positioning, VQS"
+    },
+    REVENUE_STABILITY: {
+      allowed_changes: "agent behavior, cadence, sprint discipline, backlog clearing",
+      forbidden_changes: "new tiers, new products, pricing model changes"
+    },
+    RPM_CONFIDENCE: {
+      allowed_changes: "feature weighting, data normalization, exclusion of bad signals",
+      forbidden_changes: "VQS changes, ladder changes, positioning changes"
+    },
+    OBJECTION_DRIFT: {
+      allowed_changes: "packet content, objection handling language, sequence of packet delivery",
+      forbidden_changes: "core product promise, pricing, VQS"
+    },
+    OFFER_LADDER_PREDICTABILITY: {
+      allowed_changes: "enforcement of existing sequence, friction removal within tiers",
+      forbidden_changes: "new tiers, removed tiers, direct Tier3 offers bypassing Tier1/2"
+    }
+  },
+
+  decision_logic: {
+    step_order: [
+      "1) validate hard_filters",
+      "2) apply gate_by_root_cause constraints",
+      "3) evaluate soft_filters",
+      "4) select verdict"
+    ],
+    verdicts: [
+      "APPROVE: all hard_filters pass, gate constraints respected, soft_filters acceptable.",
+      "MODIFY: hard_filters pass, but one or more gate/soft_filters violated -> narrow action.",
+      "REJECT: any hard_filter violated, or action structurally unsafe."
+    ]
+  },
+
+  output_format: {
+    to: "Strategist, CoS (summary), Architect log",
+    schema: {
+      decision: "APPROVE | MODIFY | REJECT",
+      reason: "primary rule/gate triggered",
+      instructions_to_strategist: "execute | resubmit_narrower | rerun_diagnostics",
+      notes_for_cos: "how to enforce or what to block"
+    }
+  },
+
+  safety: {
+    l6_activation: "PROHIBITED",
+    vqs_methodology_lock: "ENFORCED",
+    offer_ladder_structure_lock: "ENFORCED",
+    positioning_lock: "ENFORCED"
+  }
+}
