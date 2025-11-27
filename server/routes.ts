@@ -30,6 +30,7 @@ import criticalInfrastructureConfigRouter from "./routes/critical-infrastructure
 import architectStrategistCommProtocolRouter from "./routes/architect-strategist-comm-protocol";
 import l5UpgradeBundleV2Router from "./routes/l5-upgrade-bundle-v2";
 import cosRevenuePrimeRouter from "./routes/cos-revenue-prime";
+import vqsRevenueAccelerationRouter from "./routes/vqs-revenue-acceleration";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -128,6 +129,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount COS REVENUE PRIME L6 routes
   app.use("/api/revenue-prime", cosRevenuePrimeRouter);
   console.log('💰 COS REVENUE PRIME L6 routes mounted at /api/revenue-prime');
+  
+  app.use("/api/vqs-acceleration", vqsRevenueAccelerationRouter);
+  console.log('📈 VQS REVENUE ACCELERATION L5-SAFE routes mounted at /api/vqs-acceleration');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
