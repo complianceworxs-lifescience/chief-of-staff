@@ -24,6 +24,7 @@ import strategistRpmAnalysisRouter from "./routes/strategist-rpm-analysis";
 import architectDecisionFrameworkRouter from "./routes/architect-decision-framework";
 import l6ReadinessDiagnosticRouter from "./routes/l6-readiness-diagnostic";
 import l6SandboxSimulationRouter from "./routes/l6-sandbox-simulation";
+import l6DualReportPackageRouter from "./routes/l6-dual-report-package";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -97,6 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L6 SANDBOX SIMULATION routes
   app.use("/api/l6-sandbox", l6SandboxSimulationRouter);
   console.log('🧪 L6 SANDBOX SIMULATION v1.0 routes mounted at /api/l6-sandbox');
+  
+  // Mount L6 DUAL REPORT PACKAGE routes
+  app.use("/api/l6-dual-package", l6DualReportPackageRouter);
+  console.log('📦 L6 DUAL REPORT PACKAGE v1.0 routes mounted at /api/l6-dual-package');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
