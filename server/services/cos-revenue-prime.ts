@@ -849,6 +849,266 @@ class CoSRevenuePrimeService {
   }
   
   /**
+   * PIPELINE FLUSH - Total operational re-alignment
+   * Purges task queue of all legacy "Balanced L5" activities that do not meet Revenue Prime criteria
+   */
+  executePipelineFlush(tasks: Array<{
+    id: string;
+    description: string;
+    type: string;
+    source?: string;
+    estimatedValue?: number;
+  }>): {
+    success: boolean;
+    flushId: string;
+    executedAt: string;
+    report: {
+      totalTasksProcessed: number;
+      p1DirectRevenue: {
+        count: number;
+        tasks: Array<{ id: string; description: string; estimatedValue: number; action: string }>;
+        estimatedTotalValue: number;
+      };
+      p2Nurture: {
+        count: number;
+        tasks: Array<{ id: string; description: string; action: string }>;
+        status: string;
+      };
+      p3SupportAdmin: {
+        count: number;
+        killed: Array<{ id: string; description: string; reason: string }>;
+        automated: Array<{ id: string; description: string; assignedTo: string }>;
+        totalTerminated: number;
+      };
+      resourceReallocation: {
+        p1Allocation: string;
+        message: string;
+      };
+    };
+    auditTrail: AuditEntry[];
+  } {
+    if (!this.isActivated) {
+      return {
+        success: false,
+        flushId: '',
+        executedAt: new Date().toISOString(),
+        report: {
+          totalTasksProcessed: 0,
+          p1DirectRevenue: { count: 0, tasks: [], estimatedTotalValue: 0 },
+          p2Nurture: { count: 0, tasks: [], status: 'NOT_EXECUTED' },
+          p3SupportAdmin: { count: 0, killed: [], automated: [], totalTerminated: 0 },
+          resourceReallocation: { p1Allocation: '0%', message: 'Revenue Prime not active' }
+        },
+        auditTrail: []
+      };
+    }
+    
+    const flushId = `FLUSH_${Date.now()}`;
+    const executedAt = new Date().toISOString();
+    const flushAuditTrail: AuditEntry[] = [];
+    
+    console.log('\n╔══════════════════════════════════════════════════════════════════════╗');
+    console.log('║  🚨 PIPELINE FLUSH INITIATED - REVENUE PRIME                         ║');
+    console.log('╠══════════════════════════════════════════════════════════════════════╣');
+    console.log(`║  Flush ID: ${flushId}                                    ║`);
+    console.log(`║  Tasks to Process: ${tasks.length}                                           ║`);
+    console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+    
+    // Initialize result containers
+    const p1Tasks: Array<{ id: string; description: string; estimatedValue: number; action: string }> = [];
+    const p2Tasks: Array<{ id: string; description: string; action: string }> = [];
+    const p3Killed: Array<{ id: string; description: string; reason: string }> = [];
+    const p3Automated: Array<{ id: string; description: string; assignedTo: string }> = [];
+    
+    // Process each task through Revenue Filter
+    for (const task of tasks) {
+      const evaluation = this.evaluateTask(task.id, task.description, task.source);
+      const filter = evaluation.revenueFilter;
+      
+      if (filter.priority === 1) {
+        // P1: Direct Revenue - CRITICAL priority, 100% resources
+        const estimatedValue = task.estimatedValue || this.estimateTaskValue(task.description);
+        p1Tasks.push({
+          id: task.id,
+          description: task.description,
+          estimatedValue,
+          action: 'EXECUTE_IMMEDIATELY - CRITICAL PRIORITY'
+        });
+        
+        flushAuditTrail.push({
+          timestamp: new Date().toISOString(),
+          action: 'P1_TASK_PRIORITIZED',
+          agent: 'CoS',
+          details: `Task ${task.id} marked CRITICAL. Est. value: $${estimatedValue.toLocaleString()}`,
+          revenueImpact: estimatedValue
+        });
+        
+      } else if (filter.priority === 2) {
+        // P2: Nurture - PAUSE and hold
+        p2Tasks.push({
+          id: task.id,
+          description: task.description,
+          action: 'PAUSED - Holding Queue'
+        });
+        
+        flushAuditTrail.push({
+          timestamp: new Date().toISOString(),
+          action: 'P2_TASK_PAUSED',
+          agent: 'CoS',
+          details: `Task ${task.id} paused and placed in holding queue`,
+          revenueImpact: 0
+        });
+        
+      } else {
+        // P3: Support/Admin - KILL or AUTOMATE
+        const canAutomate = this.canAutomate(task.description);
+        
+        if (canAutomate) {
+          p3Automated.push({
+            id: task.id,
+            description: task.description,
+            assignedTo: 'automation_script_queue'
+          });
+          
+          flushAuditTrail.push({
+            timestamp: new Date().toISOString(),
+            action: 'P3_TASK_AUTOMATED',
+            agent: 'CoS',
+            details: `Task ${task.id} assigned to automation`,
+            revenueImpact: 0
+          });
+        } else {
+          p3Killed.push({
+            id: task.id,
+            description: task.description,
+            reason: 'Non-revenue generating, cannot automate - TERMINATED'
+          });
+          
+          flushAuditTrail.push({
+            timestamp: new Date().toISOString(),
+            action: 'P3_TASK_KILLED',
+            agent: 'CoS',
+            details: `Task ${task.id} TERMINATED - no revenue impact`,
+            revenueImpact: 0
+          });
+        }
+      }
+    }
+    
+    // Calculate totals
+    const p1TotalValue = p1Tasks.reduce((sum, t) => sum + t.estimatedValue, 0);
+    
+    // Reallocate resources to P1
+    this.resourceAllocation.set('P1_DIRECT_REVENUE', 100);
+    this.resourceAllocation.set('P2_NURTURE', 0);
+    this.resourceAllocation.set('P3_SUPPORT', 0);
+    
+    // Log the flush execution
+    this.logAudit({
+      timestamp: executedAt,
+      action: 'PIPELINE_FLUSH_EXECUTED',
+      agent: 'CoS',
+      details: `Flush ${flushId}: ${tasks.length} tasks processed. P1: ${p1Tasks.length}, P2: ${p2Tasks.length}, P3 Killed: ${p3Killed.length}, P3 Automated: ${p3Automated.length}. Est. P1 Value: $${p1TotalValue.toLocaleString()}`,
+      revenueImpact: p1TotalValue
+    });
+    
+    // Add all flush audit entries to main log
+    flushAuditTrail.forEach(entry => this.logAudit(entry));
+    
+    console.log('\n╔══════════════════════════════════════════════════════════════════════╗');
+    console.log('║  ✅ PIPELINE FLUSH COMPLETE                                          ║');
+    console.log('╠══════════════════════════════════════════════════════════════════════╣');
+    console.log(`║  P1 (Critical):  ${p1Tasks.length} tasks | Est. Value: $${p1TotalValue.toLocaleString().padEnd(12)}    ║`);
+    console.log(`║  P2 (Paused):    ${p2Tasks.length} tasks | Status: HOLDING QUEUE              ║`);
+    console.log(`║  P3 (Killed):    ${p3Killed.length} tasks | TERMINATED                         ║`);
+    console.log(`║  P3 (Automated): ${p3Automated.length} tasks | Assigned to scripts               ║`);
+    console.log('╠══════════════════════════════════════════════════════════════════════╣');
+    console.log('║  Resource Allocation: 100% → P1 DIRECT REVENUE                       ║');
+    console.log('╚══════════════════════════════════════════════════════════════════════╝\n');
+    
+    return {
+      success: true,
+      flushId,
+      executedAt,
+      report: {
+        totalTasksProcessed: tasks.length,
+        p1DirectRevenue: {
+          count: p1Tasks.length,
+          tasks: p1Tasks,
+          estimatedTotalValue: p1TotalValue
+        },
+        p2Nurture: {
+          count: p2Tasks.length,
+          tasks: p2Tasks,
+          status: 'PAUSED - Holding Queue'
+        },
+        p3SupportAdmin: {
+          count: p3Killed.length + p3Automated.length,
+          killed: p3Killed,
+          automated: p3Automated,
+          totalTerminated: p3Killed.length
+        },
+        resourceReallocation: {
+          p1Allocation: '100%',
+          message: 'All compute resources allocated to P1 DIRECT REVENUE tasks'
+        }
+      },
+      auditTrail: flushAuditTrail
+    };
+  }
+  
+  /**
+   * Estimate task value based on description
+   */
+  private estimateTaskValue(description: string): number {
+    const desc = description.toLowerCase();
+    
+    // Enterprise/large deals
+    if (desc.includes('enterprise') || desc.includes('annual contract')) {
+      return 50000;
+    }
+    if (desc.includes('pharmaceutical') || desc.includes('biotech')) {
+      return 35000;
+    }
+    if (desc.includes('audit') && desc.includes('paid')) {
+      return 15000;
+    }
+    if (desc.includes('strategy session') || desc.includes('consultation')) {
+      return 5000;
+    }
+    if (desc.includes('membership') || desc.includes('upgrade')) {
+      return 2500;
+    }
+    if (desc.includes('template') || desc.includes('blueprint')) {
+      return 1500;
+    }
+    if (desc.includes('deal') || desc.includes('close') || desc.includes('contract')) {
+      return 25000;
+    }
+    if (desc.includes('proposal') || desc.includes('quote')) {
+      return 20000;
+    }
+    
+    // Default for other P1 tasks
+    return 5000;
+  }
+  
+  /**
+   * Determine if a task can be automated
+   */
+  private canAutomate(description: string): boolean {
+    const desc = description.toLowerCase();
+    
+    const automatablePatterns = [
+      'documentation', 'notes', 'organize', 'cleanup', 'format',
+      'report', 'summary', 'update', 'sync', 'backup', 'archive',
+      'notification', 'reminder', 'schedule', 'calendar'
+    ];
+    
+    return automatablePatterns.some(pattern => desc.includes(pattern));
+  }
+  
+  /**
    * Generate Revenue Prime dashboard data
    */
   getDashboard(): {

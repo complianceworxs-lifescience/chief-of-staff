@@ -322,6 +322,131 @@ router.post('/command/reallocate', (req: Request, res: Response) => {
 });
 
 // ============================================================================
+// PIPELINE FLUSH
+// ============================================================================
+
+/**
+ * POST /api/revenue-prime/pipeline-flush
+ * Execute Total Pipeline Flush - purge all legacy L5 activities
+ * Requires Revenue Prime to be activated
+ */
+router.post('/pipeline-flush', (req: Request, res: Response) => {
+  const { tasks } = req.body;
+  
+  if (!tasks || !Array.isArray(tasks)) {
+    return res.status(400).json({
+      error: 'MISSING_TASKS',
+      message: 'tasks array is required with objects containing: id, description, type, source?, estimatedValue?'
+    });
+  }
+  
+  const result = cosRevenuePrime.executePipelineFlush(tasks);
+  
+  if (!result.success) {
+    return res.status(403).json({
+      error: 'REVENUE_PRIME_NOT_ACTIVE',
+      message: 'Revenue Prime must be activated to execute Pipeline Flush'
+    });
+  }
+  
+  res.json(result);
+});
+
+/**
+ * POST /api/revenue-prime/pipeline-flush/from-database
+ * Execute Pipeline Flush using tasks from database
+ */
+router.post('/pipeline-flush/from-database', async (req: Request, res: Response) => {
+  try {
+    // Import database and fetch active tasks
+    const { db } = await import('../db');
+    const { agentTasks, conflicts, initiatives } = await import('@shared/schema');
+    const { eq, or, and, isNull, not } = await import('drizzle-orm');
+    
+    // Gather tasks from multiple sources
+    const tasks: Array<{
+      id: string;
+      description: string;
+      type: string;
+      source?: string;
+      estimatedValue?: number;
+    }> = [];
+    
+    // 1. Get active agent tasks
+    try {
+      const agentTasksData = await db.select().from(agentTasks).limit(100);
+      for (const task of agentTasksData) {
+        tasks.push({
+          id: `task_${task.id}`,
+          description: task.description || task.title || 'Agent task',
+          type: 'agent_task',
+          source: task.agentName || 'Unknown'
+        });
+      }
+    } catch (e) {
+      // Table may not exist
+    }
+    
+    // 2. Get unresolved conflicts
+    try {
+      const conflictsData = await db.select().from(conflicts)
+        .where(not(eq(conflicts.status, 'resolved')))
+        .limit(50);
+      for (const conflict of conflictsData) {
+        tasks.push({
+          id: `conflict_${conflict.id}`,
+          description: conflict.description,
+          type: 'conflict',
+          source: 'ConflictResolver'
+        });
+      }
+    } catch (e) {
+      // Table may not exist
+    }
+    
+    // 3. Get active initiatives
+    try {
+      const initiativesData = await db.select().from(initiatives)
+        .where(not(eq(initiatives.status, 'completed')))
+        .limit(50);
+      for (const initiative of initiativesData) {
+        tasks.push({
+          id: `initiative_${initiative.id}`,
+          description: initiative.description,
+          type: 'initiative',
+          source: 'Strategic'
+        });
+      }
+    } catch (e) {
+      // Table may not exist
+    }
+    
+    if (tasks.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No tasks found in database to flush',
+        report: {
+          totalTasksProcessed: 0,
+          p1DirectRevenue: { count: 0, tasks: [], estimatedTotalValue: 0 },
+          p2Nurture: { count: 0, tasks: [], status: 'NO_TASKS' },
+          p3SupportAdmin: { count: 0, killed: [], automated: [], totalTerminated: 0 },
+          resourceReallocation: { p1Allocation: '100%', message: 'Ready for P1 tasks' }
+        }
+      });
+    }
+    
+    const result = cosRevenuePrime.executePipelineFlush(tasks);
+    res.json(result);
+    
+  } catch (error) {
+    res.status(500).json({
+      error: 'FLUSH_FAILED',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// ============================================================================
 // AUDIT TRAIL
 // ============================================================================
 
