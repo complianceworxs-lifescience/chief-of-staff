@@ -31,6 +31,7 @@ import architectStrategistCommProtocolRouter from "./routes/architect-strategist
 import l5UpgradeBundleV2Router from "./routes/l5-upgrade-bundle-v2";
 import cosRevenuePrimeRouter from "./routes/cos-revenue-prime";
 import vqsRevenueAccelerationRouter from "./routes/vqs-revenue-acceleration";
+import executionOrderAlphaRouter from "./routes/execution-order-alpha";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -132,6 +133,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use("/api/vqs-acceleration", vqsRevenueAccelerationRouter);
   console.log('📈 VQS REVENUE ACCELERATION L5-SAFE routes mounted at /api/vqs-acceleration');
+  
+  app.use("/api/execution-order", executionOrderAlphaRouter);
+  console.log('🎯 EXECUTION ORDER: ALPHA routes mounted at /api/execution-order');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
