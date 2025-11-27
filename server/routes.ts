@@ -25,6 +25,7 @@ import architectDecisionFrameworkRouter from "./routes/architect-decision-framew
 import l6ReadinessDiagnosticRouter from "./routes/l6-readiness-diagnostic";
 import l6SandboxSimulationRouter from "./routes/l6-sandbox-simulation";
 import l6DualReportPackageRouter from "./routes/l6-dual-report-package";
+import architectDecisionGatekeeperRouter from "./routes/architect-decision-gatekeeper";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
 import { emailIngest } from "./services/email-ingest";
@@ -102,6 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L6 DUAL REPORT PACKAGE routes
   app.use("/api/l6-dual-package", l6DualReportPackageRouter);
   console.log('📦 L6 DUAL REPORT PACKAGE v1.0 routes mounted at /api/l6-dual-package');
+  
+  // Mount ARCHITECT DECISION GATEKEEPER routes
+  app.use("/api/gatekeeper", architectDecisionGatekeeperRouter);
+  console.log('🚧 ARCHITECT DECISION GATEKEEPER v1.0 routes mounted at /api/gatekeeper');
 
   // ComplianceWorxs Intent System webhook endpoint
   app.post("/events", async (req, res) => {
