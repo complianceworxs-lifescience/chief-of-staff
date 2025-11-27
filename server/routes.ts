@@ -27,6 +27,7 @@ import l6SandboxSimulationRouter from "./routes/l6-sandbox-simulation";
 import l6DualReportPackageRouter from "./routes/l6-dual-report-package";
 import architectDecisionGatekeeperRouter from "./routes/architect-decision-gatekeeper";
 import criticalInfrastructureConfigRouter from "./routes/critical-infrastructure-config";
+import architectStrategistCommProtocolRouter from "./routes/architect-strategist-comm-protocol";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -113,6 +114,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount CRITICAL INFRASTRUCTURE CONFIG routes
   app.use("/api/infrastructure", criticalInfrastructureConfigRouter);
   console.log('🔧 CRITICAL INFRASTRUCTURE CONFIG v1.0 routes mounted at /api/infrastructure');
+  
+  // Mount ARCHITECT STRATEGIST COMM PROTOCOL routes
+  app.use("/api/protocol", architectStrategistCommProtocolRouter);
+  console.log('📡 ARCHITECT_STRATEGIST_COMM_PROTOCOL v1.0 routes mounted at /api/protocol');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
