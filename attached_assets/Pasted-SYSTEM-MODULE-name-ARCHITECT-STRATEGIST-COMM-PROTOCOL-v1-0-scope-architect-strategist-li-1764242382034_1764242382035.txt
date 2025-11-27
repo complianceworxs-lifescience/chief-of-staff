@@ -1,0 +1,119 @@
+SYSTEM_MODULE {
+  name: "ARCHITECT_STRATEGIST_COMM_PROTOCOL_v1.0",
+  scope: "architect_strategist_link",
+  purpose: "Define the message, routing, and safety rules for communication between Architect (ChatGPT) and Strategist (Gemini) via Replit.",
+
+  roles: {
+    architect: "ChatGPT (Architect Engine)",
+    strategist: "Gemini (Strategist Agent)",
+    transport: "Replit runtime",
+    enforcer: "CoS Agent"
+  },
+
+  channels: {
+    architect_to_strategist: "Replit → Gemini API",
+    strategist_to_architect: "Replit → Architect session/log payloads"
+  },
+
+  architect_to_strategist_message: {
+    name: "ARCHITECT_DIRECTIVE_PACKET",
+    fields: {
+      directive_id: "string",
+      context_version: "string // e.g., L5_SUITE_v1.0",
+      intent: "DIAGNOSTIC | RECOVERY | FORECAST | STRATEGIC_ANALYSIS",
+      payload: "JSON/YAML block with ODAR, VQS, Offer Ladder, RPM, objections",
+      constraints: {
+        vqs_locked: "true",
+        no_positioning_change: "true",
+        no_offer_ladder_mutation: "true",
+        l6_behavior_allowed: "false"
+      },
+      token_budget: "int // soft cap for Gemini",
+      deadline_minutes: "int // expected turnaround window"
+    }
+  },
+
+  strategist_to_architect_message: {
+    name: "STRATEGIST_DIAGNOSTIC_BRIEF",
+    fields: {
+      brief_id: "string",
+      source_directive_id: "string",
+      root_cause_class: "UDL | REVENUE_STABILITY | RPM_CONFIDENCE | OBJECTION_DRIFT | OFFER_LADDER_PREDICTABILITY",
+      single_recommended_action: "string",
+      projected_impact: {
+        rpm_confidence_delta: "float",
+        revenue_delta: "float",
+        risk_notes: "string"
+      },
+      confidence_score: "float // 0–1",
+      l6_pressure_signal: "LOW | MEDIUM | HIGH"
+    },
+    delivery: {
+      to_architect: "raw payload for DECISION_GATEKEEPER_v1.0",
+      to_cos_summary: "short operational summary (no governance logic)"
+    }
+  },
+
+  routing_rules: {
+    from_architect: [
+      "Architect outputs ARCHITECT_DIRECTIVE_PACKET in structured text.",
+      "Replit parses and converts to Gemini API request.",
+      "Replit attaches secrets from env vars (GEMINI_API_KEY).",
+      "Replit logs outbound payload to logs/system.log."
+    ],
+    from_strategist: [
+      "Gemini returns STRATEGIST_DIAGNOSTIC_BRIEF payload.",
+      "Replit logs raw response.",
+      "Replit forwards full brief to Architect (for Gatekeeper).",
+      "Replit forwards condensed summary to CoS for enforcement after Architect decision."
+    ]
+  },
+
+  governance_constraints: {
+    vqs_protection: "ENFORCED // Strategist cannot change VQS or methodology.",
+    positioning_lock: "ENFORCED // No messaging/positioning rewrites.",
+    offer_ladder_lock: "ENFORCED // No tier structure changes.",
+    l6_lock: "ENFORCED // Strategist may NOT propose structural L6 mutations; only single-action L5 fixes."
+  },
+
+  decision_flow: {
+    step_1: "Strategist sends STRATEGIST_DIAGNOSTIC_BRIEF.",
+    step_2: "Replit routes brief to ARCHITECT_DECISION_GATEKEEPER_v1.0.",
+    step_3: "Gatekeeper returns decision: APPROVE | MODIFY | REJECT.",
+    step_4: "Replit sends enforcement instructions to CoS.",
+    step_5: "CoS executes or requests a narrower action from Strategist as required."
+  },
+
+  error_handling: {
+    transient_errors: [
+      "API timeouts",
+      "RATE_LIMIT / 429",
+      "Temporary network issues"
+    ],
+    transient_policy: {
+      retry_with_backoff: true,
+      backoff_ms: 1500,
+      max_attempts: 2,
+      fallback_mode: "rule_based_operation"
+    },
+    permanent_errors: [
+      "Invalid payload schema",
+      "Missing root_cause_class",
+      "Empty single_recommended_action"
+    ],
+    permanent_policy: {
+      escalate_to: "CoS + Architect log",
+      required_action: "request_resubmission_from_strategist"
+    }
+  },
+
+  logging: {
+    required: true,
+    must_log: [
+      "All ARCHITECT_DIRECTIVE_PACKET payloads.",
+      "All STRATEGIST_DIAGNOSTIC_BRIEF payloads.",
+      "All decision outcomes from DECISION_GATEKEEPER_v1.0.",
+      "Any governance violations (attempted VQS/Offer Ladder/Positioning change)."
+    ]
+  }
+}

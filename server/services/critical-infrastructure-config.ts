@@ -147,6 +147,36 @@ const OUTBOUND_TARGETS = [
 
 const VALIDATION_INTERVAL_MS = 120 * 60 * 1000; // 2 hours
 
+const RUNTIME_STATE_FILE = 'state/INFRA_RUNTIME_STATE.json';
+
+// Schema definitions for each state file (required fields and constraints)
+const STATE_FILE_SCHEMAS: Record<string, { requiredFields: string[]; requiredLocks?: string[] }> = {
+  'state/VQS_LOCK.json': {
+    requiredFields: ['module', 'version', 'status', 'enforcement'],
+    requiredLocks: ['methodology', 'claimedRanges', 'positioning']
+  },
+  'state/POSITIONING_MATRIX_v1.5.json': {
+    requiredFields: ['module', 'version', 'status', 'positioning', 'segments', 'locks'],
+    requiredLocks: ['positioning', 'segments', 'valueProp']
+  },
+  'state/OFFER_LADDER_STRUCTURE.json': {
+    requiredFields: ['module', 'version', 'status', 'tiers', 'rules', 'locks'],
+    requiredLocks: ['structure', 'sequence', 'pricing']
+  },
+  'state/OBJECTION_INTEL_ARCHIVE.json': {
+    requiredFields: ['module', 'version', 'status', 'objections', 'analytics']
+  },
+  'state/RPM_WEIGHTS_HISTORY.json': {
+    requiredFields: ['module', 'version', 'status', 'currentWeights', 'metrics']
+  },
+  'state/ARCHITECT_COS_CONTRACT_v1.0.json': {
+    requiredFields: ['module', 'version', 'status', 'contract', 'escalationTriggers', 'safetyLocks']
+  },
+  'state/DECISION_GATEKEEPER_v1.0.json': {
+    requiredFields: ['module', 'version', 'status', 'filters', 'safetyLocks']
+  }
+};
+
 // ============================================================================
 // CRITICAL INFRASTRUCTURE CONFIG SERVICE
 // ============================================================================
@@ -154,6 +184,7 @@ const VALIDATION_INTERVAL_MS = 120 * 60 * 1000; // 2 hours
 class CriticalInfrastructureConfig {
   private initialized = false;
   private startTime: Date;
+  private persistedStartTime: Date | null = null;
   private agents: Map<string, AgentStatus> = new Map();
   private secrets: Map<string, SecretStatus> = new Map();
   private tasks: Map<string, ScheduledTask> = new Map();
@@ -161,6 +192,7 @@ class CriticalInfrastructureConfig {
   private logs: LogEntry[] = [];
   private validationCycleId: NodeJS.Timeout | null = null;
   private errorRetryState: Map<string, ErrorClassification> = new Map();
+  private totalValidationCycles = 0;
 
   constructor() {
     this.startTime = new Date();
@@ -181,16 +213,19 @@ class CriticalInfrastructureConfig {
     console.log('║       CRITICAL_INFRASTRUCTURE_CONFIG_v1.0 INITIALIZING               ║');
     console.log('╚══════════════════════════════════════════════════════════════════════╝');
 
-    // Initialize agents
+    // Load persisted runtime state (agents, tasks, errors)
+    await this.loadRuntimeState();
+
+    // Initialize agents (or restore from persisted state)
     this.initializeAgents();
 
     // Validate secrets
     this.validateSecrets();
 
-    // Initialize scheduled tasks
+    // Initialize scheduled tasks (or restore from persisted state)
     this.initializeScheduledTasks();
 
-    // Validate state files
+    // Validate state files with schema enforcement
     await this.validateStateFiles();
 
     // Start validation cycles
@@ -198,24 +233,148 @@ class CriticalInfrastructureConfig {
 
     this.initialized = true;
 
+    const validStateFiles = Array.from(this.stateFiles.values()).filter(s => s.exists && s.valid).length;
+    const configuredSecrets = Array.from(this.secrets.values()).filter(s => s.configured).length;
+
     console.log('✅ CRITICAL INFRASTRUCTURE CONFIG v1.0 OPERATIONAL');
     console.log(`   Agents: ${this.agents.size} configured`);
-    console.log(`   Secrets: ${Array.from(this.secrets.values()).filter(s => s.configured).length}/${REQUIRED_SECRETS.length} configured`);
-    console.log(`   State Files: ${Array.from(this.stateFiles.values()).filter(s => s.exists).length}/${STATE_FILES.length} present`);
-    console.log(`   Scheduled Tasks: ${this.tasks.size} configured (2-hour cycle)`);
+    console.log(`   Secrets: ${configuredSecrets}/${REQUIRED_SECRETS.length} configured`);
+    console.log(`   State Files: ${validStateFiles}/${STATE_FILES.length} valid (schema-enforced)`);
+    console.log(`   Scheduled Tasks: ${this.tasks.size} configured (120-min interval)`);
+    console.log(`   Runtime Persistence: ${this.persistedStartTime ? 'RESTORED' : 'NEW SESSION'}`);
+    console.log(`   Total Validation Cycles: ${this.totalValidationCycles}`);
     console.log('');
 
     this.log('INFO', 'INIT', 'Critical Infrastructure Config v1.0 initialized successfully');
+    
+    // Persist initial state
+    await this.persistRuntimeState();
+  }
+
+  // --------------------------------------------------------------------------
+  // RUNTIME STATE PERSISTENCE
+  // --------------------------------------------------------------------------
+
+  private async loadRuntimeState(): Promise<void> {
+    try {
+      const fullPath = path.resolve(process.cwd(), RUNTIME_STATE_FILE);
+      if (!fs.existsSync(fullPath)) {
+        console.log('   📝 No persisted runtime state found - starting fresh');
+        return;
+      }
+
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      const state = JSON.parse(content);
+
+      // Restore persisted start time (for continuous uptime tracking)
+      if (state.startTime) {
+        this.persistedStartTime = new Date(state.startTime);
+      }
+
+      // Restore agents
+      if (state.agents && Array.isArray(state.agents)) {
+        for (const agent of state.agents) {
+          this.agents.set(agent.name, {
+            name: agent.name,
+            status: agent.status || 'active',
+            lastActivity: agent.lastActivity ? new Date(agent.lastActivity) : new Date(),
+            odarCyclesCompleted: agent.odarCyclesCompleted || 0
+          });
+        }
+      }
+
+      // Restore tasks
+      if (state.tasks && Array.isArray(state.tasks)) {
+        for (const task of state.tasks) {
+          this.tasks.set(task.name, {
+            name: task.name,
+            owner: task.owner,
+            description: task.description,
+            lastRun: task.lastRun ? new Date(task.lastRun) : null,
+            nextRun: task.nextRun ? new Date(task.nextRun) : null,
+            status: task.status || 'pending',
+            consecutiveFailures: task.consecutiveFailures || 0
+          });
+        }
+      }
+
+      // Restore error retry state
+      if (state.errorRetryState && typeof state.errorRetryState === 'object') {
+        for (const [key, value] of Object.entries(state.errorRetryState)) {
+          this.errorRetryState.set(key, value as ErrorClassification);
+        }
+      }
+
+      // Restore validation cycle count
+      this.totalValidationCycles = state.totalValidationCycles || 0;
+
+      console.log('   ✅ Runtime state restored from persistence');
+      console.log(`      Previous start time: ${this.persistedStartTime?.toISOString()}`);
+      console.log(`      Agents restored: ${this.agents.size}`);
+      console.log(`      Tasks restored: ${this.tasks.size}`);
+      console.log(`      Validation cycles: ${this.totalValidationCycles}`);
+
+      this.log('INFO', 'PERSISTENCE', 'Runtime state restored from file', {
+        agents: this.agents.size,
+        tasks: this.tasks.size,
+        validationCycles: this.totalValidationCycles
+      });
+
+    } catch (error) {
+      console.log('   ⚠️ Failed to load persisted runtime state - starting fresh');
+      this.log('WARN', 'PERSISTENCE', 'Failed to load runtime state', {
+        error: error instanceof Error ? error.message : 'Unknown'
+      });
+    }
+  }
+
+  private async persistRuntimeState(): Promise<void> {
+    try {
+      const state = {
+        module: 'INFRA_RUNTIME_STATE',
+        version: '1.0',
+        startTime: this.persistedStartTime?.toISOString() || this.startTime.toISOString(),
+        lastPersisted: new Date().toISOString(),
+        totalValidationCycles: this.totalValidationCycles,
+        agents: Array.from(this.agents.values()).map(a => ({
+          name: a.name,
+          status: a.status,
+          lastActivity: a.lastActivity.toISOString(),
+          odarCyclesCompleted: a.odarCyclesCompleted
+        })),
+        tasks: Array.from(this.tasks.values()).map(t => ({
+          name: t.name,
+          owner: t.owner,
+          description: t.description,
+          lastRun: t.lastRun?.toISOString() || null,
+          nextRun: t.nextRun?.toISOString() || null,
+          status: t.status,
+          consecutiveFailures: t.consecutiveFailures
+        })),
+        errorRetryState: Object.fromEntries(this.errorRetryState)
+      };
+
+      const fullPath = path.resolve(process.cwd(), RUNTIME_STATE_FILE);
+      fs.writeFileSync(fullPath, JSON.stringify(state, null, 2));
+
+    } catch (error) {
+      this.log('ERROR', 'PERSISTENCE', 'Failed to persist runtime state', {
+        error: error instanceof Error ? error.message : 'Unknown'
+      });
+    }
   }
 
   private initializeAgents(): void {
+    // Only initialize agents that weren't restored from persistence
     for (const agent of AGENTS) {
-      this.agents.set(agent, {
-        name: agent,
-        status: 'active',
-        lastActivity: new Date(),
-        odarCyclesCompleted: 0
-      });
+      if (!this.agents.has(agent)) {
+        this.agents.set(agent, {
+          name: agent,
+          status: 'active',
+          lastActivity: new Date(),
+          odarCyclesCompleted: 0
+        });
+      }
     }
     console.log(`   ✅ Runtime Persistence: ${AGENTS.length} agents configured (always-on mode)`);
   }
@@ -238,14 +397,17 @@ class CriticalInfrastructureConfig {
 
   private initializeScheduledTasks(): void {
     const now = new Date();
+    // Only initialize tasks that weren't restored from persistence
     for (const taskDef of SCHEDULED_TASKS) {
-      this.tasks.set(taskDef.name, {
-        ...taskDef,
-        lastRun: null,
-        nextRun: new Date(now.getTime() + VALIDATION_INTERVAL_MS),
-        status: 'pending',
-        consecutiveFailures: 0
-      });
+      if (!this.tasks.has(taskDef.name)) {
+        this.tasks.set(taskDef.name, {
+          ...taskDef,
+          lastRun: null,
+          nextRun: new Date(now.getTime() + VALIDATION_INTERVAL_MS),
+          status: 'pending',
+          consecutiveFailures: 0
+        });
+      }
     }
     console.log(`   ✅ Scheduled Loops: ${SCHEDULED_TASKS.length} tasks configured (120-min interval)`);
   }
@@ -257,16 +419,50 @@ class CriticalInfrastructureConfig {
         const exists = fs.existsSync(fullPath);
         let stats = null;
         let valid = false;
+        let schemaErrors: string[] = [];
 
         if (exists) {
           stats = fs.statSync(fullPath);
-          // Validate JSON structure
+          // Validate JSON structure AND schema
           try {
             const content = fs.readFileSync(fullPath, 'utf-8');
-            JSON.parse(content);
-            valid = true;
-          } catch {
+            const data = JSON.parse(content);
+            
+            // Check if file is empty or minimal
+            if (Object.keys(data).length === 0) {
+              schemaErrors.push('File contains empty JSON object');
+            } else {
+              // Schema validation
+              const schema = STATE_FILE_SCHEMAS[filePath];
+              if (schema) {
+                // Check required fields
+                for (const field of schema.requiredFields) {
+                  if (!(field in data)) {
+                    schemaErrors.push(`Missing required field: ${field}`);
+                  }
+                }
+                
+                // Check required locks (if applicable)
+                if (schema.requiredLocks) {
+                  const locksField = data.locks || data.enforcement;
+                  if (!locksField) {
+                    schemaErrors.push('Missing locks/enforcement object');
+                  } else {
+                    for (const lock of schema.requiredLocks) {
+                      if (!(lock in locksField)) {
+                        schemaErrors.push(`Missing required lock: ${lock}`);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
+            valid = schemaErrors.length === 0;
+            
+          } catch (parseError) {
             valid = false;
+            schemaErrors.push('Invalid JSON syntax');
           }
         }
 
@@ -280,8 +476,12 @@ class CriticalInfrastructureConfig {
 
         if (!exists) {
           this.log('ERROR', 'STATE', `State file missing: ${filePath}`);
+          this.classifyAndHandleError(`state_${filePath}`, new Error('File missing'));
         } else if (!valid) {
-          this.log('ERROR', 'STATE', `State file invalid JSON: ${filePath}`);
+          this.log('ERROR', 'STATE', `State file schema validation failed: ${filePath}`, {
+            errors: schemaErrors
+          });
+          this.classifyAndHandleError(`state_${filePath}`, new Error(schemaErrors.join('; ')));
         }
       } catch (error) {
         this.stateFiles.set(filePath, {
@@ -292,10 +492,11 @@ class CriticalInfrastructureConfig {
           valid: false
         });
         this.log('ERROR', 'STATE', `Error validating state file: ${filePath}`);
+        this.classifyAndHandleError(`state_${filePath}`, error);
       }
     }
     const presentCount = Array.from(this.stateFiles.values()).filter(s => s.exists && s.valid).length;
-    console.log(`   ✅ Persistent State: ${presentCount}/${STATE_FILES.length} state files valid`);
+    console.log(`   ✅ Persistent State: ${presentCount}/${STATE_FILES.length} state files valid (schema-enforced)`);
   }
 
   // --------------------------------------------------------------------------
@@ -388,7 +589,11 @@ class CriticalInfrastructureConfig {
     // Validate secrets
     this.validateSecrets();
 
-    console.log(`[INFRA] ✅ Validation cycle complete: ${tasksPassed}/${tasksPassed + tasksFailed} tasks passed`);
+    // Increment cycle count and persist state
+    this.totalValidationCycles++;
+    await this.persistRuntimeState();
+
+    console.log(`[INFRA] ✅ Validation cycle ${this.totalValidationCycles} complete: ${tasksPassed}/${tasksPassed + tasksFailed} tasks passed`);
 
     return {
       cycleId,
@@ -631,7 +836,9 @@ class CriticalInfrastructureConfig {
 
   getStatus(): InfrastructureStatus {
     const now = new Date();
-    const uptime = Math.floor((now.getTime() - this.startTime.getTime()) / 1000);
+    // Use persisted start time for continuous uptime tracking across restarts
+    const effectiveStartTime = this.persistedStartTime || this.startTime;
+    const uptime = Math.floor((now.getTime() - effectiveStartTime.getTime()) / 1000);
     
     const issues: string[] = [];
     const recommendations: string[] = [];
