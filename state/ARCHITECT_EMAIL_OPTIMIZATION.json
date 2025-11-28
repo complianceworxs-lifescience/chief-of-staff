@@ -1,0 +1,114 @@
+{
+  "directive": "ARCHITECT_DELIVERABILITY_OPTIMIZATION",
+  "timestamp": "2025-11-28T00:50:00.000Z",
+  "status": "APPROVED",
+  
+  "part1_email_optimization": {
+    "original_subject": "Why I'm advising clients to stop \"Traditional CSV\"",
+    "optimized_subject": "Quick note on validation evidence drift",
+    "rationale": "First 24 chars free of spam triggers",
+    
+    "preview_text": "Teams ditching screenshots are closing audits faster – here's how",
+    
+    "forbidden_words_replaced": {
+      "massive": "significant",
+      "free": "complimentary" 
+    },
+    
+    "link_placement": {
+      "primary": "After checklist tease, bare hyperlink on its own line",
+      "secondary": "Near close, repeated once",
+      "avoid": "No tracking parameters in first 2 sentences"
+    },
+    
+    "formatting": {
+      "line_wrap": "~68 characters soft-wrap",
+      "layout": "Single-column",
+      "font_size": "14px default",
+      "line_height": "1.4",
+      "images": "None",
+      "click_tracking": "Disable on first link"
+    },
+    
+    "mailchimp_notes": {
+      "merge_tag": "*|FNAME|*",
+      "test_against": ["Gmail", "iOS"],
+      "mobile_variant": "Shortened paragraphs, second CTA phrase"
+    }
+  },
+  
+  "part2_linkedin_groups": {
+    "identified_groups": [
+      {
+        "rank": 1,
+        "name": "ISPE GAMP Community",
+        "engagement": "Daily comments",
+        "policy": "Allows framed case studies",
+        "recommended_post": "POST #1 (V-Model)",
+        "timing": "Tuesday AM"
+      },
+      {
+        "rank": 2,
+        "name": "Life Sciences Quality & Compliance Network",
+        "engagement": "Active threads",
+        "policy": "Requires zero-sales language",
+        "recommended_post": "POST #1 (V-Model)",
+        "timing": "Tuesday AM",
+        "alt_phrasing_required": true
+      },
+      {
+        "rank": 3,
+        "name": "Pharmaceutical & Biotech Professionals Network",
+        "engagement": "Moderate engagement",
+        "policy": "Standard",
+        "recommended_post": "POST #2 (Headache)",
+        "timing": "Thursday late AM"
+      },
+      {
+        "rank": 4,
+        "name": "Computer System Validation Forum",
+        "engagement": "Highly niche",
+        "policy": "Strict on promos",
+        "recommended_post": "POST #3 (GAMP 5)",
+        "timing": "Wednesday PM",
+        "alt_phrasing_required": true
+      },
+      {
+        "rank": 5,
+        "name": "PDA – Parenteral Drug Association Group",
+        "engagement": "Weekly expert Q&As",
+        "policy": "Softer tone needed",
+        "recommended_post": "POST #3 (GAMP 5)",
+        "timing": "Wednesday PM"
+      },
+      {
+        "rank": 6,
+        "name": "Regulatory Affairs Professionals Group",
+        "engagement": "Mixed quality",
+        "policy": "Standard",
+        "recommended_post": "POST #2 (Headache)",
+        "timing": "Thursday late AM"
+      },
+      {
+        "rank": 7,
+        "name": "CSV / CSA & Validation Professionals Worldwide",
+        "engagement": "Steady engagement",
+        "policy": "Accepts resource offers if framed as peer support",
+        "recommended_post": "POST #2 (Headache)",
+        "timing": "Thursday late AM"
+      }
+    ],
+    
+    "deployment_schedule": {
+      "tuesday_am": ["ISPE GAMP Community", "Life Sciences Quality & Compliance Network"],
+      "wednesday_pm": ["Computer System Validation Forum", "PDA Group"],
+      "thursday_late_am": ["Regulatory Affairs", "Pharma/Biotech", "CSV Worldwide"]
+    },
+    
+    "engagement_rules": {
+      "response_time": "First 5 comments within 30 minutes",
+      "max_posts_per_day": 2,
+      "alt_phrasing": "happy to trade notes (instead of share checklist)"
+    }
+  }
+}
