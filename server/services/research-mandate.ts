@@ -10,7 +10,10 @@ function getGeminiClient() {
   }
   return new GoogleGenAI({ 
     apiKey: GEMINI_API_KEY,
-    ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {})
+    httpOptions: {
+      apiVersion: "",
+      baseUrl: GEMINI_BASE_URL,
+    }
   });
 }
 
@@ -291,14 +294,7 @@ OUTPUT FORMAT (JSON):
   "reasoning": "string"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = await callGemini(prompt);
     this.state.synthesizedInsights.icpProfile = result;
     return result;
   }
@@ -353,14 +349,7 @@ OUTPUT FORMAT (JSON):
   "reasoning": "string"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = await callGemini(prompt);
     this.state.synthesizedInsights.costOfInaction = result;
     return result;
   }
@@ -410,14 +399,7 @@ OUTPUT FORMAT (JSON):
   "reasoning": "string"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = await callGemini(prompt);
     this.state.synthesizedInsights.competitiveAlternatives = result;
     return result;
   }
@@ -478,14 +460,7 @@ OUTPUT FORMAT (JSON):
   "reasoning": "string"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = await callGemini(prompt);
     this.state.synthesizedInsights.clarityToolHook = result;
     return result;
   }
@@ -548,20 +523,19 @@ OUTPUT FORMAT (JSON):
   "reasoning": "string"
 }`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' },
-      temperature: 0.3
-    });
-
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = await callGemini(prompt);
     this.state.synthesizedInsights.tierIIIPriceJustification = result;
     return result;
   }
 
   async executeAllQuestions(): Promise<ResearchMandateState> {
     await this.loadState();
+    
+    // Reset all question statuses to prevent stale state from prior failures
+    for (const question of this.state.questions) {
+      question.status = 'pending';
+      question.confidence = 0;
+    }
     
     this.state.overallStatus = 'in_progress';
     this.state.lastExecution = new Date().toISOString();
@@ -616,13 +590,13 @@ Generate a concise executive summary that answers:
 
 Format as actionable insights for the founder. Be specific with numbers and recommendations.`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.5
+    const ai = getGeminiClient();
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: prompt }] }]
     });
 
-    return response.choices[0].message.content || 'Report generation failed';
+    return response.text || 'Report generation failed';
   }
 }
 
