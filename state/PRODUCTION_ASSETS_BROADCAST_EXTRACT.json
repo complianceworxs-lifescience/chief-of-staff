@@ -1,27 +1,32 @@
 {
-  "generated": "2025-11-28T01:30:00.000Z",
+  "generated": "2025-11-28T02:00:00.000Z",
   "status": "PRODUCTION_READY",
   "campaign": "BROADCAST_EXTRACT",
-  "version": "2.0_PRIORITY_TARGETS",
+  "version": "3.0_ARCHITECT_FINAL",
 
   "asset_1_email_mailchimp_ready": {
-    "subject": "Quick note on validation evidence drift",
-    "preview_text": "Teams ditching screenshots are closing audits faster – here's how",
+    "subject_lines": {
+      "primary": "Are we still validating like it's 2015?",
+      "alt_1": "The CSV shift I'm seeing everywhere right now…",
+      "alt_2": "Auditors are changing—and most teams aren't ready."
+    },
+    "preview_text_options": {
+      "primary": "5 evidence gaps auditors are flagging in Q4.",
+      "alt_1": "Traditional CSV isn't holding up in modern audits.",
+      "alt_2": "This checklist shows what auditors are focusing on next."
+    },
     "from_name": "[Your Name]",
     "format": "PLAIN_TEXT",
     
-    "body_mailchimp": "Hi *|FNAME|*,\n\nI'm seeing a significant shift in Q4.\n\nMy top clients are quietly abandoning \"Traditional CSV\"\n(manual screenshots, massive Word docs, retroactive\ntraceability).\n\nThe math just doesn't work anymore:\n\n• You cannot validate AI/ML at human speed.\n• \"Reviewing documentation\" is eating 60% of the budget.\n• Auditors are starting to flag static snapshots as\n  \"insufficient evidence.\"\n\nIf we are still validating like it's 2015, we are\nessentially documenting the past while competitors are\nvalidating the future.\n\nI compiled the \"Audit Readiness Checklist\" that I use to\nhelp teams transition off manual CSV. It highlights the\n5 evidence gaps auditors are hunting for right now.\n\n[DOWNLOAD THE CHECKLIST]\nhttps://your-link-here.com/audit-checklist\n\nQuestion for you: Are you still taking screenshots\nmanually, or have you moved to automated evidence\ncapture yet?\n\nIf you'd like the checklist, just reply \"send it\" and\nI'll get it right over.\n\nhttps://your-link-here.com/audit-checklist\n\nBest,\n[Your Name]",
+    "body_mailchimp": "Hi *|FNAME|*,\n\nI'm seeing a major shift across the validation teams I work with in pharma and medtech.\n\nMany are quietly moving away from \"Traditional CSV\" — the manual screenshots, static Word docs, and retroactive traceability matrices.\n\nHere's why the shift is happening:\n\n• You cannot validate modern systems (AI/ML, dynamic cloud apps) at human speed.\n• Documentation review is now consuming 60% of the total validation budget.\n• Auditors have started challenging static evidence as \"insufficient\" for dynamic systems.\n• Even well-run CSV teams are missing key evidence artifacts that regulators now expect.\n\nIf we continue validating the way we did in 2015, we're essentially documenting the past while technology moves ahead of us.\n\nTo help teams adapt, I put together an \"Audit Readiness Checklist\" based on the 5 evidence gaps auditors have been flagging most in Q4.\n\nYou can download it directly here (no form needed):\n[INSERT DOWNLOAD LINK]\n\nBefore I send you anything else this week, let me ask:\n\n**Are you still capturing evidence manually, or are you exploring automated approaches?**\n\nJust hit reply and I'll share a few examples of what I'm seeing across the industry.\n\nBest,\n[Your Name]\nComplianceWorxs",
 
-    "formatting_notes": {
-      "line_length": "~68 characters",
-      "layout": "Single-column",
-      "font": "14px system default",
-      "line_height": "1.4",
+    "deliverability_notes": {
       "images": "NONE",
-      "first_link_tracking": "DISABLED"
-    },
-
-    "mobile_variant_notes": "Shorten paragraphs to 2-3 lines max. Add second CTA: 'Reply YES for the checklist.'"
+      "buttons": "NONE",
+      "links": "ONE MAX",
+      "paragraphs": "SHORT",
+      "merge_tag": "Mailchimp-safe (*|FNAME|*)"
+    }
   },
 
   "asset_2_cta_variants": {
@@ -135,12 +140,14 @@
     }
   },
 
-  "deployment_schedule_UPDATED": {
+  "deployment_schedule": {
     "step_1": {
       "action": "Send Spear Email",
       "target": "900+ email list",
       "timing": "FIRST (before any LinkedIn activity)",
-      "platform": "Mailchimp"
+      "platform": "Mailchimp",
+      "subject": "Are we still validating like it's 2015?",
+      "preview": "5 evidence gaps auditors are flagging in Q4."
     },
     "step_2_priority_groups": {
       "tuesday": {
