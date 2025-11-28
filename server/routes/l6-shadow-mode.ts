@@ -191,6 +191,110 @@ router.post('/signals/filter', async (req, res) => {
 });
 
 // ============================================================================
+// LEAD QUALIFICATION AI (Phase 1 - Architect Approved)
+// ============================================================================
+
+router.post('/leads/qualify', async (req, res) => {
+  try {
+    const leadData = req.body;
+    const result = await l6ShadowMode.leadQualificationAI.qualifyLead(leadData);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Lead qualification failed' });
+  }
+});
+
+router.post('/leads/qualify-batch', async (req, res) => {
+  try {
+    const { leads } = req.body;
+    const result = await l6ShadowMode.leadQualificationAI.qualifyBatch(leads || []);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Batch lead qualification failed' });
+  }
+});
+
+// ============================================================================
+// OPTIMAL TIMING ENGINE (Phase 1 - Architect Approved)
+// ============================================================================
+
+router.post('/timing/predict', async (req, res) => {
+  try {
+    const contactData = req.body;
+    const result = await l6ShadowMode.optimalTiming.predictOptimalTiming(contactData);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Timing prediction failed' });
+  }
+});
+
+router.post('/timing/campaign', async (req, res) => {
+  try {
+    const params = req.body;
+    const result = await l6ShadowMode.optimalTiming.predictCampaignTiming(params);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Campaign timing prediction failed' });
+  }
+});
+
+// ============================================================================
+// OBJECTION PREDICTOR (Phase 1 - Architect Approved)
+// ============================================================================
+
+router.post('/objections/predict', async (req, res) => {
+  try {
+    const leadData = req.body;
+    const result = await l6ShadowMode.objections.predictObjections(leadData);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Objection prediction failed' });
+  }
+});
+
+router.post('/objections/call-briefing', async (req, res) => {
+  try {
+    const { leads } = req.body;
+    const result = await l6ShadowMode.objections.generateCallBriefing(leads || []);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Call briefing generation failed' });
+  }
+});
+
+// ============================================================================
+// INBOUND RESPONSE ROUTER (Phase 1 - Architect Approved)
+// ============================================================================
+
+router.post('/inbound/route', async (req, res) => {
+  try {
+    const response = req.body;
+    const result = await l6ShadowMode.inboundRouter.routeResponse(response);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Response routing failed' });
+  }
+});
+
+router.post('/inbound/route-batch', async (req, res) => {
+  try {
+    const { responses } = req.body;
+    const result = await l6ShadowMode.inboundRouter.routeBatch(responses || []);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Batch response routing failed' });
+  }
+});
+
+// ============================================================================
 // ADVISORY QUEUE MANAGEMENT
 // ============================================================================
 

@@ -96,6 +96,46 @@
       "description": "Filters noise from actionable signals",
       "l5_constraint": "Prioritization only",
       "l5_execution": "L5 determines actions based on filtered signal queue"
+    },
+    
+    "lead_qualification_ai": {
+      "status": "ACTIVE",
+      "type": "Predictive Layer",
+      "description": "Auto-qualifies leads using firmographic + behavioral signals (ICP match)",
+      "l5_constraint": "Scoring only. Cannot reject or route leads automatically",
+      "l5_execution": "Sales team focuses on highest-probability leads based on tier scores (A/B/C/D)",
+      "phase": "PHASE_1_MONDAY",
+      "architect_rating": { "revenue_impact": 9, "complexity": 5, "l5_risk": 2 }
+    },
+    
+    "optimal_timing_engine": {
+      "status": "ACTIVE",
+      "type": "Predictive Layer",
+      "description": "Predicts best day/time to reach each contact based on behavioral patterns",
+      "l5_constraint": "Advisory only. Cannot schedule or send outreach",
+      "l5_execution": "+20-40% open/response rates by hitting optimal windows",
+      "phase": "PHASE_1_MONDAY",
+      "architect_rating": { "revenue_impact": 9, "complexity": 4, "l5_risk": 2 }
+    },
+    
+    "objection_predictor": {
+      "status": "ACTIVE",
+      "type": "Sales Intelligence",
+      "description": "Predicts likely objections before sales calls based on persona + behavior",
+      "l5_constraint": "Briefing only. Cannot modify scripts or send prep emails",
+      "l5_execution": "Higher close rates by preparing counter-arguments in advance",
+      "phase": "PHASE_1_MONDAY",
+      "architect_rating": { "revenue_impact": 8, "complexity": 5, "l5_risk": 3 }
+    },
+    
+    "inbound_response_router": {
+      "status": "ACTIVE",
+      "type": "Prioritization Engine",
+      "description": "Prioritizes replies across email/LinkedIn once response volume grows",
+      "l5_constraint": "Routing recommendations only. Cannot send responses",
+      "l5_execution": "Prevents hot leads from getting buried in noise. Routes to URGENT/HIGH/MEDIUM/LOW queues",
+      "phase": "PHASE_1_MONDAY",
+      "architect_rating": { "revenue_impact": 8, "complexity": 4, "l5_risk": 2 }
     }
   },
 
