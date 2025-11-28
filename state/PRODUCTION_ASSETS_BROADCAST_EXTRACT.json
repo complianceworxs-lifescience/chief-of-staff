@@ -1,7 +1,8 @@
 {
-  "generated": "2025-11-28T01:00:00.000Z",
+  "generated": "2025-11-28T01:30:00.000Z",
   "status": "PRODUCTION_READY",
   "campaign": "BROADCAST_EXTRACT",
+  "version": "2.0_PRIORITY_TARGETS",
 
   "asset_1_email_mailchimp_ready": {
     "subject": "Quick note on validation evidence drift",
@@ -38,78 +39,78 @@
     }
   },
 
-  "asset_3_linkedin_groups": [
-    {
-      "rank": 1,
-      "name": "ISPE GAMP Community of Practice",
-      "members": "~45,000",
-      "engagement_score": 9,
-      "best_time": "Tuesday 9-11 AM EST",
-      "policy": "Lenient - allows framed case studies",
-      "use_post": "POST #1 (V-Model breaking under AI)",
-      "notes": "Primary target. High engagement, daily comments."
-    },
-    {
-      "rank": 2,
-      "name": "Life Sciences Quality & Compliance Network",
-      "members": "~38,000",
-      "engagement_score": 8,
-      "best_time": "Tuesday 10 AM EST",
-      "policy": "Standard - zero-sales language required",
-      "use_post": "POST #1 (V-Model) - use alt phrasing",
-      "notes": "Active threads. Use 'trade notes' instead of 'share checklist'."
-    },
-    {
-      "rank": 3,
-      "name": "Pharmaceutical & Biotech Professionals Network",
-      "members": "~120,000",
-      "engagement_score": 6,
-      "best_time": "Thursday 10-11 AM EST",
-      "policy": "Standard",
-      "use_post": "POST #2 (Biggest validation headache)",
-      "notes": "Large reach but moderate engagement. Morning posts perform best."
-    },
-    {
-      "rank": 4,
-      "name": "Computer System Validation Forum",
-      "members": "~12,000",
-      "engagement_score": 8,
-      "best_time": "Wednesday 2-4 PM EST",
-      "policy": "Strict - no promotional content",
-      "use_post": "POST #3 (GAMP 5 implementation) - use alt phrasing",
-      "notes": "Highly niche, deeply technical. Afternoon cadence works. Must frame as peer research."
-    },
-    {
-      "rank": 5,
-      "name": "PDA - Parenteral Drug Association",
-      "members": "~25,000",
-      "engagement_score": 7,
-      "best_time": "Wednesday 3 PM EST",
-      "policy": "Standard - softer tone preferred",
-      "use_post": "POST #3 (GAMP 5 implementation)",
-      "notes": "Weekly expert Q&As. Frame as seeking input, not selling."
-    },
-    {
-      "rank": 6,
-      "name": "Regulatory Affairs Professionals Society",
-      "members": "~85,000",
-      "engagement_score": 5,
-      "best_time": "Thursday 11 AM EST",
-      "policy": "Standard",
-      "use_post": "POST #2 (Biggest validation headache)",
-      "notes": "Mixed quality engagement. Question-led posts perform best."
-    },
-    {
-      "rank": 7,
-      "name": "CSV / CSA & Validation Professionals Worldwide",
-      "members": "~8,000",
-      "engagement_score": 7,
-      "best_time": "Thursday 10 AM EST",
-      "policy": "Lenient - accepts resource offers framed as peer support",
-      "use_post": "POST #2 (Biggest validation headache)",
-      "notes": "Steady engagement. Can directly offer to share resources."
-    }
-  ],
+  "asset_3_linkedin_groups_PRIORITY": {
+    "execution_tier": "IMMEDIATE",
+    "total_reach": "186,509 professionals",
+    "rationale": "Highest concentration of QA/RA professionals for Trojan Horse content",
+    
+    "priority_targets": [
+      {
+        "rank": 1,
+        "name": "Quality & Regulatory Network",
+        "members": 116016,
+        "audience": "QA, RA, and Compliance professionals across highly regulated industries",
+        "engagement_score": 9,
+        "best_time": "Tuesday 9-11 AM EST",
+        "policy": "Knowledge sharing focused - ideal for thought leadership",
+        "use_post": "POST #1 (V-Model breaking under AI)",
+        "notes": "LARGEST TARGET. Prioritizes regulatory benchmarking. Perfect for Audit Readiness Checklist.",
+        "execution_day": "TUESDAY"
+      },
+      {
+        "rank": 2,
+        "name": "Regulatory Affairs Professionals Society (RAPS)",
+        "members": 48907,
+        "audience": "Leading worldwide organization for health product regulatory standards and strategy",
+        "engagement_score": 8,
+        "best_time": "Wednesday 2-4 PM EST",
+        "policy": "Professional standards - frame as peer insight sharing",
+        "use_post": "POST #3 (GAMP 5 2nd Edition implementation)",
+        "notes": "High-value RA professionals. Regulatory strategy focus. Use 'trade notes' framing.",
+        "execution_day": "WEDNESDAY"
+      },
+      {
+        "rank": 3,
+        "name": "The Pharmaceutical Quality Assurance Group (QA/QC)",
+        "members": 21586,
+        "audience": "Pharmaceutical QA processes and systematic effectiveness",
+        "engagement_score": 8,
+        "best_time": "Thursday 10 AM EST",
+        "policy": "Knowledge sharing - QA process discussions welcome",
+        "use_post": "POST #2 (Biggest validation headache)",
+        "notes": "Dedicated QA forum. Direct audience for validation pain points.",
+        "execution_day": "THURSDAY"
+      }
+    ]
+  },
+
+  "asset_3_linkedin_groups_SECONDARY": {
+    "execution_tier": "WEEK 2",
+    "note": "Deploy after priority targets if initial response is strong",
+    
+    "secondary_targets": [
+      {
+        "name": "Professionals in Pharmaceutical and Biotech Industry",
+        "members": 206657,
+        "notes": "Largest pharma group on LinkedIn. Broad audience, high volume."
+      },
+      {
+        "name": "Clinical Research Professionals",
+        "members": 95159,
+        "notes": "Clinical operations focus. Good for evidence capture narrative."
+      },
+      {
+        "name": "Managers of Pharmaceutical & Healthcare",
+        "members": 112093,
+        "notes": "Decision-makers. Frame around team efficiency gains."
+      },
+      {
+        "name": "Pharma Connections Worldwide",
+        "members": 78704,
+        "notes": "Global regulatory discussions. Good for international reach."
+      }
+    ]
+  },
 
   "asset_4_comment_trigger_responses": {
     "standard": {
@@ -134,23 +135,37 @@
     }
   },
 
-  "deployment_schedule": {
+  "deployment_schedule_UPDATED": {
     "step_1": {
       "action": "Send Spear Email",
       "target": "900+ email list",
       "timing": "FIRST (before any LinkedIn activity)",
       "platform": "Mailchimp"
     },
-    "step_2": {
-      "action": "Post to LinkedIn Groups",
-      "tuesday_am": ["ISPE GAMP Community", "Life Sciences Q&C Network"],
-      "wednesday_pm": ["CSV Validation Forum", "PDA Group"],
-      "thursday_am": ["Regulatory Affairs", "Pharma/Biotech", "CSV Worldwide"]
+    "step_2_priority_groups": {
+      "tuesday": {
+        "group": "Quality & Regulatory Network",
+        "members": 116016,
+        "time": "9-11 AM EST",
+        "post": "POST #1"
+      },
+      "wednesday": {
+        "group": "RAPS (Regulatory Affairs Professionals Society)",
+        "members": 48907,
+        "time": "2-4 PM EST",
+        "post": "POST #3"
+      },
+      "thursday": {
+        "group": "Pharmaceutical Quality Assurance Group (QA/QC)",
+        "members": 21586,
+        "time": "10 AM EST",
+        "post": "POST #2"
+      }
     },
     "step_3": {
       "action": "Post Provocation to main feed",
       "target": "13K connections",
-      "timing": "After first group posts are live"
+      "timing": "After first group posts are live (Tuesday afternoon)"
     }
   }
 }
