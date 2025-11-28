@@ -615,4 +615,90 @@ router.get('/info', (req: Request, res: Response) => {
   });
 });
 
+// ============================================================================
+// L7 STATE UPDATER ENDPOINTS
+// ============================================================================
+
+import { l7StateUpdater } from '../services/l7-state-updater';
+
+router.get('/state-updater/status', (req: Request, res: Response) => {
+  try {
+    const state = l7StateUpdater.getState();
+    res.json({
+      success: true,
+      service: 'L7_State_Updater',
+      description: 'Autonomous 2-hour monitoring for L7 Evolution Protocol',
+      state: {
+        last_run: state.last_run,
+        last_daily_update: state.last_daily_update,
+        last_digest_generation: state.last_digest_generation,
+        digest_week_number: state.digest_week_number,
+        overdue_actions_logged: state.overdue_action_log.length,
+        daily_metrics_captured: state.daily_metrics.length,
+        intervention_events: state.intervention_events.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get state updater status',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.post('/state-updater/run', async (req: Request, res: Response) => {
+  try {
+    const result = await l7StateUpdater.runUpdateCycle();
+    res.json({
+      success: true,
+      service: 'L7_State_Updater',
+      action: 'MANUAL_UPDATE_CYCLE',
+      result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to run update cycle',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/state-updater/overdue-actions', (req: Request, res: Response) => {
+  try {
+    const summary = l7StateUpdater.getOverdueActionSummary();
+    res.json({
+      success: true,
+      service: 'L7_State_Updater',
+      monitoring: 'OVERDUE_ACTIONS',
+      summary
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get overdue actions',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/state-updater/interventions', (req: Request, res: Response) => {
+  try {
+    const history = l7StateUpdater.getInterventionHistory();
+    res.json({
+      success: true,
+      service: 'L7_State_Updater',
+      monitoring: 'INTERVENTION_HISTORY',
+      history
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get intervention history',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;

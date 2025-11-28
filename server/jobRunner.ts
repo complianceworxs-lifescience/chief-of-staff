@@ -1,7 +1,8 @@
 import { sweepOverdueActions } from './actions.js';
 import { strategyExecutor } from './services/strategic-executor.js';
+import { l7StateUpdater } from './services/l7-state-updater.js';
 
-const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "14400") * 1000; // 4 hours optimized for 3-4 daily checks
+const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "7200") * 1000; // 2 hours for L7 state updates
 const DRY_RUN = (process.env.DRY_RUN || "false").toLowerCase() === "true"; // REAL EXECUTION - no simulation
 
 function log(message: string, data?: any) {
@@ -30,6 +31,28 @@ export async function tick() {
     }
   } catch (error) {
     log("strategic_executor_error", { error: error instanceof Error ? error.message : String(error) });
+  }
+
+  // L7 State Updater: Update proof conditions, track interventions, generate digests
+  try {
+    const l7Update = await l7StateUpdater.runUpdateCycle();
+    if (l7Update.updates.length > 0) {
+      log("l7_state_updater", {
+        updates: l7Update.updates.length,
+        overdue_count: l7Update.overdue_count,
+        intervention_detected: l7Update.intervention_detected,
+        digest_generated: l7Update.digest_generated
+      });
+    }
+    
+    if (l7Update.intervention_detected) {
+      log("l7_intervention_alert", {
+        message: "L7 Evolution Protocol detected intervention required",
+        overdue_actions: l7Update.overdue_count
+      });
+    }
+  } catch (error) {
+    log("l7_state_updater_error", { error: error instanceof Error ? error.message : String(error) });
   }
 }
 
