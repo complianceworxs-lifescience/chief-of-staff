@@ -534,8 +534,9 @@ class CoherenceEngine {
     }
 
     // Check for emoji overuse (more than 3 emojis in short content)
-    const emojiCount = (content.match(/[\u{1F600}-\\u{1F64F}]|[\u{1F300}-\\u{1F5FF}]|[\\u{1F680}-\u{1F6FF}]|[\u{2600}-\\u{26FF}]/gu) || []).length;
-    if (emojiCount > 3 && content.length < 500) {
+    // Simple check for excessive special characters that might indicate emoji use
+    const specialCharCount = (content.match(/[^\w\s.,!?;:'"()-]/g) || []).length;
+    if (specialCharCount > 10 && content.length < 500) {
       antiPatternScore += 10;
     }
 

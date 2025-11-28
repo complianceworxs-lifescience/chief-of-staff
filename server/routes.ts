@@ -2805,6 +2805,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Three-Tier Action Classification, Governor Policy Engine, Auditor, Kill Switch
   app.use("/api/architect", (await import("./routes/architect-gateway")).default);
   
+  // L6 Executive Council routes (Consensus Protocol - 3x PASS = AUTO-EXECUTE)
+  // Governance Engine, Revenue Engine, Coherence Engine + Chairman Alerts
+  app.use("/api/council", (await import("./routes/l6-executive-council")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
