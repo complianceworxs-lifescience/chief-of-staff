@@ -2817,6 +2817,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Four Engines: EAE, ASR, SCL, SGS + Sandbox + Proof Conditions
   app.use("/api/l7", (await import("./routes/l7-evolution")).default);
   
+  // L7 Constitutional Constraints routes (IMMUTABLE)
+  // Five Pillars: Prestige Protocol, Liability Iron Dome, Burn Rate Breaker, Domain Fence, Additional Constraints
+  app.use("/api/l7/constitution", (await import("./routes/l7-constitution")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   

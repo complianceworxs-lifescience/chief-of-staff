@@ -1,0 +1,232 @@
+{
+  "version": "1.0.0",
+  "last_enforced": "2025-11-28T16:51:35.710Z",
+  "enforcement_count": 4,
+  "violations_blocked": 3,
+  "pillars": {
+    "prestige_protocol": {
+      "id": "PRESTIGE_PROTOCOL",
+      "name": "Brand Protection",
+      "immutable": true,
+      "price_floor_percent": 70,
+      "forbidden_terms": [
+        "cheap",
+        "discount",
+        "bargain",
+        "flash sale",
+        "hack",
+        "limited time",
+        "deal",
+        "steal",
+        "giveaway",
+        "free trial",
+        "act now",
+        "hurry",
+        "last chance",
+        "one-time offer"
+      ],
+      "required_archetype": "H",
+      "disallowed_tones": [
+        "desperation",
+        "hype",
+        "fear mongering",
+        "urgency manipulation",
+        "scarcity pressure",
+        "FOMO inducing",
+        "aggressive selling"
+      ],
+      "rule": "If tone falls into disallowed vectors, asset is rejected automatically. The brand cannot be optimized into a commodity product."
+    },
+    "liability_iron_dome": {
+      "id": "LIABILITY_IRON_DOME",
+      "name": "Regulatory & Legal Safety",
+      "immutable": true,
+      "banned_claim_terms": [
+        "guarantee",
+        "guaranteed",
+        "immune",
+        "promise",
+        "assured",
+        "zero risk",
+        "risk-free",
+        "foolproof",
+        "fail-proof",
+        "bulletproof",
+        "always",
+        "never fails",
+        "100% success",
+        "certified outcome"
+      ],
+      "no_outcome_claims_rule": "The System shall NEVER claim audit outcomes, regulatory outcomes, FDA decisions, or legal outcomes. No predictions of inspection results.",
+      "disclaimer_required": true,
+      "disclaimer_text": "This information is provided for educational purposes only and does not constitute legal, regulatory, or compliance advice. Consult qualified professionals for specific guidance. Results may vary based on individual circumstances."
+    },
+    "burn_rate_breaker": {
+      "id": "BURN_RATE_BREAKER",
+      "name": "Financial Safety",
+      "immutable": true,
+      "max_spend_per_hour": 100,
+      "max_daily_spend": 2500,
+      "min_gross_margin_percent": 40,
+      "velocity_cap_rule": "Hard ceiling that no optimization logic can bypass. Even if AI identifies a temporary gold rush, it cannot burn the business down chasing it."
+    },
+    "domain_fence": {
+      "id": "DOMAIN_FENCE",
+      "name": "Mission Creep Prevention",
+      "immutable": true,
+      "domain_whitelist": [
+        "Life Sciences",
+        "Quality Assurance",
+        "Validation",
+        "Regulatory Compliance",
+        "Software Quality",
+        "GxP",
+        "Audit Readiness",
+        "CSV",
+        "QMS",
+        "FDA Compliance",
+        "Pharmaceuticals",
+        "Biotechnology",
+        "Medical Devices",
+        "CRO",
+        "CMO",
+        "Diagnostics",
+        "Clinical Trials",
+        "Computer System Validation",
+        "Data Integrity",
+        "21 CFR Part 11",
+        "Annex 11",
+        "EU GMP"
+      ],
+      "out_of_bounds_action": "AUTO_LOCKDOWN_HUMAN_ALERT",
+      "product_vector_lock_rule": "No product line may be created outside ComplianceWorxs core semantic vectors. The system cannot pivot into crypto, weight loss, real estate, or any irrelevant niche—even if revenue metrics say go."
+    },
+    "additional_constraints": {
+      "manipulation_firewall": {
+        "id": "MANIPULATION_FIREWALL",
+        "forbidden_tactics": [
+          "scarcity manipulation",
+          "fear-based compliance",
+          "unverifiable claims",
+          "emotional exploitation",
+          "false urgency",
+          "misleading comparisons",
+          "hidden fees",
+          "bait and switch",
+          "dark patterns"
+        ],
+        "rule": "Prevents emotional, deceptive, or dark persuasion methods. The system must not harm long-term trust for short-term cash."
+      },
+      "reputation_sentinel": {
+        "id": "REPUTATION_SENTINEL",
+        "reputation_score_min": 85,
+        "rule": "The system must not harm long-term trust for short-term cash. Actions that would reduce reputation score below threshold are blocked."
+      },
+      "human_dignity_clause": {
+        "id": "HUMAN_DIGNITY_CLAUSE",
+        "rule": "The System shall not exploit vulnerabilities for conversion. No weaponized targeting or unethical personalization. Respect professional dignity of all stakeholders."
+      }
+    }
+  },
+  "violation_log": [
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden term detected: \"cheap\""
+    },
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden term detected: \"discount\""
+    },
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden term detected: \"deal\""
+    },
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "BANNED_CLAIM_TERM",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Banned claim term detected: \"guarantee\""
+    },
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "BANNED_CLAIM_TERM",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Banned claim term detected: \"guaranteed\""
+    },
+    {
+      "timestamp": "2025-11-28T16:51:31.516Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "OUTCOME_CLAIM_VIOLATION",
+      "attempted_action": "{\"text\":\"Get our cheap discount deal - guaranteed to pass your FDA audit!\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Outcome claim detected: /guaranteed to pass/i"
+    },
+    {
+      "timestamp": "2025-11-28T16:51:33.518Z",
+      "pillar": "DOMAIN_FENCE",
+      "constraint_id": "TOPIC_OUT_OF_BOUNDS",
+      "attempted_action": "{\"topic\":\"Cryptocurrency Trading\",\"product_category\":\"Real Estate Investment\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Topic \"Cryptocurrency Trading\" is outside Life Sciences domain whitelist"
+    },
+    {
+      "timestamp": "2025-11-28T16:51:33.518Z",
+      "pillar": "DOMAIN_FENCE",
+      "constraint_id": "PRODUCT_VECTOR_VIOLATION",
+      "attempted_action": "{\"topic\":\"Cryptocurrency Trading\",\"product_category\":\"Real Estate Investment\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Product category \"Real Estate Investment\" violates domain fence"
+    },
+    {
+      "timestamp": "2025-11-28T16:51:35.710Z",
+      "pillar": "BURN_RATE_BREAKER",
+      "constraint_id": "HOURLY_VELOCITY_CAP",
+      "attempted_action": "{\"hourly_spend\":500,\"daily_spend\":5000,\"gross_margin_percent\":20}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Hourly spend $500 exceeds cap of $100"
+    },
+    {
+      "timestamp": "2025-11-28T16:51:35.710Z",
+      "pillar": "BURN_RATE_BREAKER",
+      "constraint_id": "DAILY_BUDGET_EXCEEDED",
+      "attempted_action": "{\"hourly_spend\":500,\"daily_spend\":5000,\"gross_margin_percent\":20}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Daily spend $5000 exceeds cap of $2500"
+    },
+    {
+      "timestamp": "2025-11-28T16:51:35.710Z",
+      "pillar": "BURN_RATE_BREAKER",
+      "constraint_id": "MARGIN_FLOOR_VIOLATION",
+      "attempted_action": "{\"hourly_spend\":500,\"daily_spend\":5000,\"gross_margin_percent\":20}",
+      "blocked": true,
+      "severity": "HIGH",
+      "details": "Gross margin 20% is below minimum 40%"
+    }
+  ]
+}

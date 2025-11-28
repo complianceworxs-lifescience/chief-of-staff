@@ -228,8 +228,10 @@ class L7ConstitutionalConstraints {
     } catch (error) {
       console.error('[L7Constitution] Error loading state, using defaults:', error);
     }
-    this.saveState(DEFAULT_CONSTRAINTS);
-    return { ...DEFAULT_CONSTRAINTS };
+    // Set default state and save
+    this.state = { ...DEFAULT_CONSTRAINTS };
+    this.saveState();
+    return this.state;
   }
 
   private enforceImmutability(loaded: ConstitutionalState): ConstitutionalState {
