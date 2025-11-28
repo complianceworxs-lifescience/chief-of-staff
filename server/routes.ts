@@ -2801,6 +2801,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // LLM Agent Reasoning routes (Real AI-powered decision-making with OpenAI GPT-5)
   app.use("/api/llm-agents", (await import("./routes/llm-agent-reasoning")).default);
   
+  // Architect Gateway routes (Single entry point for all OpenAI communication)
+  // Three-Tier Action Classification, Governor Policy Engine, Auditor, Kill Switch
+  app.use("/api/architect", (await import("./routes/architect-gateway")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
