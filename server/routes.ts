@@ -36,6 +36,7 @@ import leadGenerationModeRouter from "./routes/lead-generation-mode";
 import broadcastExtractStrategyRouter from "./routes/broadcast-extract-strategy";
 import l6ShadowModeRouter from "./routes/l6-shadow-mode";
 import stripeRouter from "./routes/stripe";
+import researchMandateRouter from "./routes/research-mandate";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -154,6 +155,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Stripe payment routes (via Replit Connector)
   app.use("/api/stripe", stripeRouter);
   console.log('💳 STRIPE PAYMENT INTEGRATION routes mounted at /api/stripe');
+  
+  // Mount Research Mandate routes (First Mission - 5 Questions)
+  app.use("/api/research", researchMandateRouter);
+  console.log('🔬 AUTOMATED RESEARCH MANDATE routes mounted at /api/research');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
