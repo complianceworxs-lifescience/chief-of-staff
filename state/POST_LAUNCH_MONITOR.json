@@ -1,0 +1,91 @@
+{
+  "protocol_active": false,
+  "monitoring_window": {
+    "start": "2025-11-28T08:00:00.000Z",
+    "end": "2025-11-28T12:00:00.000Z",
+    "timezone": "EST"
+  },
+  "pulse_history": [
+    {
+      "timestamp": "2025-11-28T15:32:04.893Z",
+      "check_type": "EMAIL_VELOCITY",
+      "status": "YELLOW",
+      "metrics": {
+        "open_rate": "30.0%",
+        "unique_opens": 127,
+        "velocity": "7.7 min avg",
+        "trend": "FLAT",
+        "first_hour_rate": "15.3%",
+        "rising_leader_activated": 100,
+        "strategist_activated": 55,
+        "architect_activated": 61
+      },
+      "thresholds": {
+        "green": "≥ 22% open rate in first hour; upward trend",
+        "yellow": "12–21% first-hour open rate; flat trend",
+        "red": "< 12% first-hour open rate; declining"
+      },
+      "actions_taken": [
+        "L6: Flagged visibility score",
+        "L5: Evaluating send-timing adjustment for delayed segments"
+      ],
+      "alert_chairman": false
+    },
+    {
+      "timestamp": "2025-11-28T15:32:04.895Z",
+      "check_type": "CHECKOUT_RECOVERY",
+      "status": "YELLOW",
+      "metrics": {
+        "abandonment_events": 51,
+        "recovery_trigger_rate": "99.6%",
+        "click_back_rate": "28.9%",
+        "recovery_conversion_rate": "15.5%",
+        "rescue_window_compliance": "COMPLIANT",
+        "recovered_revenue": "$985"
+      },
+      "thresholds": {
+        "green": "≥ 35% click-back; ≥ 10% recovered conversions",
+        "yellow": "20–34% click-back; 5–9% recovered conversions",
+        "red": "< 20% click-back or < 5% conversions"
+      },
+      "actions_taken": [
+        "L6: Friction Map + Propensity-to-Pay update",
+        "L5: Evaluating recovery email intensity within templates"
+      ],
+      "alert_chairman": false
+    },
+    {
+      "timestamp": "2025-11-28T15:32:04.896Z",
+      "check_type": "REVENUE_ATTRIBUTION",
+      "status": "YELLOW",
+      "metrics": {
+        "live_payment_events": 21,
+        "attribution_rate": "94.8%",
+        "conversion_velocity": "2.86/15min",
+        "avg_cart_value": "$497",
+        "webhook_last_signal": "2025-11-28T15:31:46.727Z",
+        "webhook_silence_minutes": 0,
+        "tier_starter": 5,
+        "tier_professional": 4,
+        "tier_enterprise": 3
+      },
+      "thresholds": {
+        "green": "≥ 95% attribution; consistent flow",
+        "yellow": "80–94% attribution; some missing source data",
+        "red": "< 80% attribution OR webhook silence > 20 min"
+      },
+      "actions_taken": [
+        "L6: Re-computing attribution confidence",
+        "L6: Validating link path integrity"
+      ],
+      "alert_chairman": false
+    }
+  ],
+  "chairman_alerts": [],
+  "red_alert_timers": {
+    "EMAIL_VELOCITY": 0,
+    "CHECKOUT_RECOVERY": 0,
+    "REVENUE_ATTRIBUTION": 0
+  },
+  "last_updated": "2025-11-28T15:32:04.896Z"
+}
