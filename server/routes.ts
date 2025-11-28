@@ -33,6 +33,7 @@ import cosRevenuePrimeRouter from "./routes/cos-revenue-prime";
 import vqsRevenueAccelerationRouter from "./routes/vqs-revenue-acceleration";
 import executionOrderAlphaRouter from "./routes/execution-order-alpha";
 import leadGenerationModeRouter from "./routes/lead-generation-mode";
+import broadcastExtractStrategyRouter from "./routes/broadcast-extract-strategy";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -140,6 +141,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use("/api/lead-gen", leadGenerationModeRouter);
   console.log('🚀 LEAD GENERATION MODE (PHASE 0: GENESIS) routes mounted at /api/lead-gen');
+  
+  app.use("/api/broadcast", broadcastExtractStrategyRouter);
+  console.log('📡 BROADCAST & EXTRACT STRATEGY routes mounted at /api/broadcast');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
