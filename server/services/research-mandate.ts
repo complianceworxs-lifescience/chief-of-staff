@@ -1,7 +1,36 @@
-import OpenAI from 'openai';
+import { GoogleGenAI } from "@google/genai";
 import { storage } from '../storage';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+
+function getGeminiClient() {
+  if (!GEMINI_API_KEY) {
+    throw new Error('Gemini API key not configured. Set AI_INTEGRATIONS_GEMINI_API_KEY.');
+  }
+  return new GoogleGenAI({ 
+    apiKey: GEMINI_API_KEY,
+    ...(GEMINI_BASE_URL ? { baseURL: GEMINI_BASE_URL } : {})
+  });
+}
+
+async function callGemini(prompt: string): Promise<any> {
+  const ai = getGeminiClient();
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: prompt + "\n\nRespond with valid JSON only, no markdown formatting." }]
+      }
+    ]
+  });
+
+  const content = response.text?.trim() || '';
+  const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return JSON.parse(jsonContent);
+}
 
 interface ResearchQuestion {
   id: string;
