@@ -1,0 +1,191 @@
+{
+  "protocol_id": "L7_Evolution_Protocol_v1.0",
+  "objective": "Transition ComplianceWorxs from L6 (Chairman-Governed Autonomy) to L7 (Evolutionary Autonomy), enabling self-running, self-correcting, and self-capitalizing operations.",
+  "roles": {
+    "human": {
+      "role": "Beneficial_Owner",
+      "responsibilities": [
+        "Maintain_legal_signatory_status",
+        "Maintain_corporate_payment_method",
+        "Review_monthly_PnL",
+        "Maintain_kill_switch_access"
+      ]
+    },
+    "system": {
+      "role": "L7_Autonomous_Operator",
+      "responsibilities": [
+        "Full_operational_and_strategic_autonomy",
+        "No_human_review_for_standard_decisions",
+        "Continuous_compliance_with_L5_safety_locks"
+      ]
+    }
+  },
+  "capability_requirements": {
+    "evolutionary_adaptation_engine": {
+      "id": "L7_EAE",
+      "requirements": [
+        "Rewrite_internal_modules_in_sandbox",
+        "Auto_migrate_on_API_or_schema_change",
+        "Self_correct_broken_integrations_and_endpoints"
+      ]
+    },
+    "autonomous_strategic_recombination": {
+      "id": "L7_ASR",
+      "requirements": [
+        "Generate_new_business_models_offers_and_funnels",
+        "Create_and_sunset_products_based_on_ROI",
+        "Continuously_search_for_more_profitable_paths"
+      ]
+    },
+    "self_capitalization_layer": {
+      "id": "L7_SCL",
+      "requirements": [
+        "Autonomous_budget_allocation_with_hard_limits",
+        "Profit_dependent_ad_spend_modulation",
+        "Cost_optimization_for_tokens_infra_and_services"
+      ]
+    },
+    "self_governing_safety_layer": {
+      "id": "L7_SGS",
+      "requirements": [
+        "L5_safety_locks_immutable",
+        "Continuous_audit_for_legal_regulatory_brand_alignment",
+        "Detect_and_flag_constraint_drift_or_unsafe_directives",
+        "Ability_to_halt_itself_if_risk_exceeds_thresholds"
+      ]
+    }
+  },
+  "proof_conditions": {
+    "revenue_stability": {
+      "id": "L7_PC1",
+      "description": "Revenue variance within ±10% over 90 consecutive days without Chairman intervention.",
+      "metrics": [
+        "daily_revenue",
+        "variance_rolling_30d",
+        "intervention_events"
+      ],
+      "thresholds": {
+        "max_variance_percent": 10,
+        "max_interventions": 0,
+        "window_days": 90
+      }
+    },
+    "legal_shield": {
+      "id": "L7_PC2",
+      "description": "Zero critical governance violations under L5 safety locks.",
+      "metrics": [
+        "critical_governance_violations",
+        "regulatory_risk_flags"
+      ],
+      "thresholds": {
+        "max_critical_violations": 0
+      }
+    },
+    "financial_autonomy": {
+      "id": "L7_PC3",
+      "description": "Consistent profitable reinvestment via tiered budget and Stripe-driven loop.",
+      "metrics": [
+        "monthly_profit",
+        "paid_media_ROAS",
+        "budget_utilization_rate"
+      ],
+      "thresholds": {
+        "min_profitable_months": 3,
+        "min_ROAS": 1.2
+      }
+    }
+  },
+  "activation_framework": {
+    "sandbox": {
+      "id": "L7_Sandbox",
+      "constraints": [
+        "Limited_compute",
+        "Limited_financial_scope",
+        "Full_access_to_non_critical_subsystems",
+        "No_direct_write_to_production_billing_or_core_DB"
+      ]
+    },
+    "mutation_governance": {
+      "allowed_operations": [
+        "write_new_modules",
+        "refactor_existing_modules",
+        "replace_broken_logic",
+        "propose_new_financial_paths"
+      ],
+      "scope": "sandbox_only_until_promotion"
+    },
+    "promotion_criteria": {
+      "regulatory_drift_percent": 0,
+      "max_brand_drift_percent": 10,
+      "roi_forecast": "positive",
+      "no_safety_lock_conflicts": true,
+      "consensus_engine_required": true,
+      "consensus_pattern": ["PASS", "PASS", "PASS"]
+    }
+  },
+  "consensus_engine": {
+    "enabled": true,
+    "votes": [
+      {
+        "id": "VOTE_A",
+        "name": "Governance_Engine",
+        "role": "Lawyer",
+        "checks": [
+          "regulatory_compliance",
+          "no_unsubstantiated_or_absolute_claims",
+          "no_violation_of_L5_constraints"
+        ]
+      },
+      {
+        "id": "VOTE_B",
+        "name": "Revenue_Engine",
+        "role": "Accountant",
+        "checks": [
+          "cost_within_daily_cap",
+          "predicted_ROI_positive_or_neutral",
+          "clear_path_to_monetization"
+        ]
+      },
+      {
+        "id": "VOTE_C",
+        "name": "Coherence_Engine",
+        "role": "Brand_Manager",
+        "checks": [
+          "tone_matches_Archetype_H",
+          "drift_score_below_15_percent",
+          "alignment_with_professional_equity_and_ROI_framing"
+        ]
+      }
+    ],
+    "execution_rules": {
+      "on_unanimous_pass": "AUTO_EXECUTE_AND_LOG",
+      "on_any_fail": "HOLD_AND_TRIGGER_CHAIRMAN_ALERT"
+    }
+  },
+  "execution_directive": {
+    "architect_instructions": [
+      "Initialize_L7_Sandbox",
+      "Deploy_Evolutionary_Adaptation_Engine",
+      "Deploy_Autonomous_Strategic_Recombination_Module",
+      "Configure_Self_Capitalization_Layer_with_limited_spend",
+      "Run_continuous_drift_and_safety_audits",
+      "Generate_weekly_Evolution_Digest"
+    ],
+    "requires_human_review": false,
+    "chairman_alert_conditions": [
+      "consensus_fail_for_high_risk_action",
+      "critical_safety_lock_violation",
+      "catastrophic_revenue_event_beyond_modeled_scenarios"
+    ]
+  },
+  "completion_criteria": {
+    "id": "L7_Certification",
+    "conditions": [
+      "All_three_proof_conditions_met",
+      "At_least_one_sandbox_innovation_promoted_to_production",
+      "At_least_one_Black_Swan_event_handled_autonomously",
+      "No_Chairman_intervention_for_one_full_quarter"
+    ],
+    "effect_on_human_role": "Transition_from_Chairman_to_Beneficial_Owner"
+  }
+}

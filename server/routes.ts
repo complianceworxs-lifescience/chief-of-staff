@@ -2813,6 +2813,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Three Pulse Checks: Email Velocity, Checkout Recovery, Revenue Attribution
   app.use("/api/post-launch", (await import("./routes/post-launch-monitor")).default);
   
+  // L7 Evolution Protocol routes (Evolutionary Autonomy)
+  // Four Engines: EAE, ASR, SCL, SGS + Sandbox + Proof Conditions
+  app.use("/api/l7", (await import("./routes/l7-evolution")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
