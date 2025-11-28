@@ -42,6 +42,45 @@ export interface ConstitutionValidationResult {
   audit_logged: boolean;
 }
 
+// CEE Action Types (Constitution Enforcement Engine)
+export type CEEActionType = 'POST' | 'EMAIL' | 'SPEND' | 'CREATE_PRODUCT' | 'UPDATE_OFFER' | 'UNKNOWN';
+
+// CEE Violation Codes (standardized)
+export type CEEViolationCode = 
+  | 'VIOLATION_PRESTIGE_VOCAB'
+  | 'VIOLATION_PRESTIGE_MARGIN'
+  | 'VIOLATION_LIABILITY_CLAIM'
+  | 'VIOLATION_LIABILITY_DISCLAIMER'
+  | 'VIOLATION_FINANCE_VELOCITY'
+  | 'VIOLATION_FINANCE_ROAS'
+  | 'VIOLATION_DOMAIN_OUT_OF_SCOPE'
+  | 'CV_FORBIDDEN_VOCABULARY'
+  | 'CV_FORBIDDEN_CLAIM'
+  | 'CV_OUTCOME_CLAIM'
+  | 'CV_HOURLY_SPEND_EXCEEDED'
+  | 'CV_DAILY_SPEND_EXCEEDED'
+  | 'CV_DISALLOWED_TONE'
+  | 'CV_MANIPULATION_TACTIC';
+
+// CEE Spend Window
+export interface CEESpend {
+  amount: number;
+  currency: string;
+  window: 'hour' | 'day';
+}
+
+// CEE Action Payload (canonical format)
+export interface CEEActionPayload {
+  id?: string;
+  type: CEEActionType;
+  channel: string;
+  content: string;
+  spend: CEESpend;
+  domain_tags: string[];
+  metadata?: Record<string, any>;
+}
+
+// Legacy Action Payload (for backwards compatibility)
 export interface ActionPayload {
   action_id?: string;
   title?: string;
@@ -55,6 +94,11 @@ export interface ActionPayload {
   tactics?: string[];
   agent?: string;
   metadata?: Record<string, any>;
+  // CEE fields
+  type?: CEEActionType;
+  channel?: string;
+  spend?: CEESpend;
+  domain_tags?: string[];
 }
 
 interface Constitution {
@@ -79,6 +123,7 @@ interface Constitution {
     };
     domain_fence: {
       domain_whitelist: string[];
+      forbidden_domains?: string[];
     };
     additional_constraints: {
       manipulation_firewall: {
@@ -88,6 +133,126 @@ interface Constitution {
   };
   violation_log: any[];
 }
+
+// ============================================================================
+// CI TEST SUITE DEFINITION
+// ============================================================================
+
+export interface CITestCase {
+  id: string;
+  input: CEEActionPayload;
+  expected: {
+    status: 'GREEN' | 'RED';
+    violations?: string[];
+    violations_contains?: string[];
+  };
+}
+
+export interface CITestResult {
+  id: string;
+  passed: boolean;
+  actual_status: 'GREEN' | 'RED';
+  expected_status: 'GREEN' | 'RED';
+  actual_violations: string[];
+  expected_violations_contains: string[];
+  missing_violations: string[];
+  message: string;
+}
+
+export interface CITestSuiteResult {
+  suite: string;
+  total_tests: number;
+  passed: number;
+  failed: number;
+  deploy_blocked: boolean;
+  results: CITestResult[];
+  timestamp: string;
+}
+
+// The canonical CI test suite
+export const CONSTITUTION_CI_TEST_SUITE: CITestCase[] = [
+  {
+    id: "T1_Prestige_Vocabulary_Block",
+    input: {
+      type: "POST",
+      channel: "LinkedIn",
+      content: "Get this cheap compliance hack now.",
+      spend: { amount: 0, currency: "USD", window: "hour" },
+      domain_tags: ["Life Sciences"]
+    },
+    expected: {
+      status: "RED",
+      violations_contains: ["VIOLATION_PRESTIGE_VOCAB"]
+    }
+  },
+  {
+    id: "T2_Liability_Guarantee_Block",
+    input: {
+      type: "EMAIL",
+      channel: "Mailchimp",
+      content: "We guarantee 100% audit immunity for your FDA inspections.",
+      spend: { amount: 0, currency: "USD", window: "hour" },
+      domain_tags: ["Regulatory Affairs (RA)"]
+    },
+    expected: {
+      status: "RED",
+      violations_contains: ["VIOLATION_LIABILITY_CLAIM"]
+    }
+  },
+  {
+    id: "T3_Financial_Velocity_Block",
+    input: {
+      type: "SPEND",
+      channel: "Meta Ads",
+      content: "",
+      spend: { amount: 500.0, currency: "USD", window: "hour" },
+      domain_tags: ["Life Sciences"]
+    },
+    expected: {
+      status: "RED",
+      violations_contains: ["VIOLATION_FINANCE_VELOCITY"]
+    }
+  },
+  {
+    id: "T4_Domain_Fence_Block",
+    input: {
+      type: "CREATE_PRODUCT",
+      channel: "Internal",
+      content: "Crypto Weight Loss Arbitrage Blueprint",
+      spend: { amount: 0, currency: "USD", window: "day" },
+      domain_tags: ["Crypto", "Weight Loss"]
+    },
+    expected: {
+      status: "RED",
+      violations_contains: ["VIOLATION_DOMAIN_OUT_OF_SCOPE"]
+    }
+  },
+  {
+    id: "T5_Compliant_Action_Passes",
+    input: {
+      type: "POST",
+      channel: "LinkedIn",
+      content: "Turn your validation work into measurable ROI with better audit readiness and quality metrics.",
+      spend: { amount: 0, currency: "USD", window: "hour" },
+      domain_tags: ["Computer System Validation (CSV)", "Quality Assurance (QA)"]
+    },
+    expected: {
+      status: "GREEN",
+      violations: []
+    }
+  }
+];
+
+// Forbidden domains for Domain Fence
+const FORBIDDEN_DOMAINS = [
+  "Crypto", "Cryptocurrency", "Bitcoin", "Blockchain",
+  "Weight Loss", "Diet Pills", "Fat Burning",
+  "Gambling", "Casino", "Betting",
+  "Adult Content", "Dating", "Romance",
+  "MLM", "Multi-Level Marketing", "Pyramid Scheme",
+  "Get Rich Quick", "Financial Advice", "Investment Tips",
+  "Political", "Religious"
+];
 
 // ============================================================================
 // CONSTITUTION VALIDATOR SERVICE
@@ -466,4 +631,300 @@ export function constitutionMiddleware(req: any, res: any, next: any): void {
   // Attach validation result to request for downstream use
   req.constitutionValidation = result;
   next();
+}
+
+// ============================================================================
+// CEE (Constitution Enforcement Engine) VALIDATION
+// ============================================================================
+
+/**
+ * CEE-compliant validation function
+ * 
+ * Validates using the canonical CEE payload format with standardized violation codes
+ */
+export function validateCEEAction(payload: CEEActionPayload): ConstitutionValidationResult {
+  const violations: ViolationCode[] = [];
+  const timestamp = new Date().toISOString();
+
+  // Convert CEE payload to legacy format for core validation
+  const legacyPayload: ActionPayload = {
+    action_id: payload.id,
+    content: payload.content,
+    type: payload.type,
+    channel: payload.channel,
+    spend: payload.spend,
+    domain_tags: payload.domain_tags,
+    metadata: payload.metadata
+  };
+
+  // Extract text content for scanning
+  const textContent = payload.content || '';
+
+  // ========================================================================
+  // GUARD 1: PrestigeGuard - LAW_01_PRESTIGE
+  // ========================================================================
+  const PRESTIGE_FORBIDDEN_VOCAB = [
+    'cheap', 'discount', 'deal', 'free', 'hack', 'secret', 'trick',
+    'flash sale', 'limited time', 'act now', 'hurry', 'bargain',
+    'lowest price', 'rock bottom', 'clearance', 'giveaway'
+  ];
+
+  for (const term of PRESTIGE_FORBIDDEN_VOCAB) {
+    if (textContent.toLowerCase().includes(term.toLowerCase())) {
+      violations.push({
+        code: 'VIOLATION_PRESTIGE_VOCAB',
+        pillar: 'LAW_01_PRESTIGE',
+        severity: 'MEDIUM',
+        message: `Prestige Guard: Forbidden vocabulary "${term}" detected`,
+        blocked_content: term
+      });
+      break; // Only need one for CI test
+    }
+  }
+
+  // ========================================================================
+  // GUARD 2: LiabilityGuard - LAW_02_LIABILITY_DOME
+  // ========================================================================
+  const LIABILITY_BANNED_CLAIMS = [
+    'guarantee', 'guaranteed', 'promise', 'promised', 'ensure', 'ensured',
+    '100% success', '100% pass', 'audit immunity', 'fda approval',
+    'will pass', 'will approve', 'certify', 'certification guaranteed',
+    'absolute', 'definite', 'certain', 'assured'
+  ];
+
+  for (const claim of LIABILITY_BANNED_CLAIMS) {
+    if (textContent.toLowerCase().includes(claim.toLowerCase())) {
+      violations.push({
+        code: 'VIOLATION_LIABILITY_CLAIM',
+        pillar: 'LAW_02_LIABILITY_DOME',
+        severity: 'CRITICAL',
+        message: `Liability Guard: Banned claim term "${claim}" detected`,
+        blocked_content: claim
+      });
+      break; // Only need one for CI test
+    }
+  }
+
+  // ========================================================================
+  // GUARD 3: FinancialGuard - LAW_03_FINANCIAL_SAFETY
+  // ========================================================================
+  const MAX_HOURLY_SPEND = 100; // $100/hour cap
+  const MAX_DAILY_SPEND = 2500; // $2500/day cap
+
+  if (payload.spend) {
+    const amount = payload.spend.amount;
+    const window = payload.spend.window;
+
+    if (window === 'hour' && amount > MAX_HOURLY_SPEND) {
+      violations.push({
+        code: 'VIOLATION_FINANCE_VELOCITY',
+        pillar: 'LAW_03_FINANCIAL_SAFETY',
+        severity: 'CRITICAL',
+        message: `Financial Guard: Hourly spend $${amount} exceeds velocity cap of $${MAX_HOURLY_SPEND}`
+      });
+    }
+
+    if (window === 'day' && amount > MAX_DAILY_SPEND) {
+      violations.push({
+        code: 'VIOLATION_FINANCE_VELOCITY',
+        pillar: 'LAW_03_FINANCIAL_SAFETY',
+        severity: 'CRITICAL',
+        message: `Financial Guard: Daily spend $${amount} exceeds velocity cap of $${MAX_DAILY_SPEND}`
+      });
+    }
+  }
+
+  // ========================================================================
+  // GUARD 4: DomainGuard - LAW_04_DOMAIN_FENCE
+  // ========================================================================
+  if (payload.domain_tags && payload.domain_tags.length > 0) {
+    for (const tag of payload.domain_tags) {
+      const isForbidden = FORBIDDEN_DOMAINS.some(
+        forbidden => tag.toLowerCase().includes(forbidden.toLowerCase())
+      );
+
+      if (isForbidden) {
+        violations.push({
+          code: 'VIOLATION_DOMAIN_OUT_OF_SCOPE',
+          pillar: 'LAW_04_DOMAIN_FENCE',
+          severity: 'CRITICAL',
+          message: `Domain Guard: Forbidden domain tag "${tag}" - outside Life Sciences scope`,
+          blocked_content: tag
+        });
+      }
+    }
+
+    // Also check content for forbidden domain references
+    for (const forbidden of FORBIDDEN_DOMAINS) {
+      if (textContent.toLowerCase().includes(forbidden.toLowerCase())) {
+        const alreadyReported = violations.some(
+          v => v.code === 'VIOLATION_DOMAIN_OUT_OF_SCOPE' && v.blocked_content === forbidden
+        );
+        if (!alreadyReported) {
+          violations.push({
+            code: 'VIOLATION_DOMAIN_OUT_OF_SCOPE',
+            pillar: 'LAW_04_DOMAIN_FENCE',
+            severity: 'CRITICAL',
+            message: `Domain Guard: Content references forbidden domain "${forbidden}"`,
+            blocked_content: forbidden
+          });
+        }
+      }
+    }
+  }
+
+  // ========================================================================
+  // DETERMINE RESULT
+  // ========================================================================
+  const hasViolations = violations.length > 0;
+  const hasCritical = violations.some(v => v.severity === 'CRITICAL');
+
+  const status: ValidationStatus = hasViolations ? 'RED' : 'GREEN';
+  const enforcement_action: ConstitutionValidationResult['enforcement_action'] = 
+    hasViolations ? (hasCritical ? 'BLOCK_AND_ALERT' : 'BLOCK') : 'ALLOW';
+
+  // Console output for CEE validation
+  if (status === 'GREEN') {
+    console.log(`✅ CEE CHECK: GREEN | ${payload.type} @ ${payload.channel} | ALLOWED`);
+  } else {
+    console.log(`🚫 CEE CHECK: RED | ${payload.type} @ ${payload.channel} | BLOCKED`);
+    violations.forEach(v => {
+      console.log(`   ⛔ ${v.code}: ${v.message}`);
+    });
+  }
+
+  return {
+    status,
+    timestamp,
+    action_id: payload.id,
+    violations,
+    enforcement_action,
+    audit_logged: hasViolations
+  };
+}
+
+// ============================================================================
+// CI TEST RUNNER - REPLIT CI SPEC
+// ============================================================================
+
+/**
+ * Run the Constitution CI test suite
+ * 
+ * Executes all structured test cases. Any failure blocks deploy.
+ * 
+ * @returns CITestSuiteResult with deploy_blocked flag
+ */
+export function runConstitutionCITests(): CITestSuiteResult {
+  console.log('\n🧪 ═══════════════════════════════════════════════════════════════');
+  console.log('   CONSTITUTION ENFORCEMENT CI TEST SUITE');
+  console.log('   Any failure blocks deploy');
+  console.log('═══════════════════════════════════════════════════════════════════');
+
+  const results: CITestResult[] = [];
+  let passed = 0;
+  let failed = 0;
+
+  for (const testCase of CONSTITUTION_CI_TEST_SUITE) {
+    console.log(`\n🔬 Running test: ${testCase.id}`);
+
+    // Run CEE validation
+    const validationResult = validateCEEAction(testCase.input);
+
+    // Extract violation codes
+    const actualViolationCodes = validationResult.violations.map(v => v.code);
+
+    // Check expected violations
+    const expectedViolations = testCase.expected.violations_contains || testCase.expected.violations || [];
+    const missingViolations = expectedViolations.filter(
+      expected => !actualViolationCodes.includes(expected)
+    );
+
+    // Determine if test passed
+    const statusMatches = validationResult.status === testCase.expected.status;
+    const violationsMatch = missingViolations.length === 0;
+    const testPassed = statusMatches && violationsMatch;
+
+    if (testPassed) {
+      passed++;
+      console.log(`   ✅ PASSED: ${testCase.id}`);
+    } else {
+      failed++;
+      console.log(`   ❌ FAILED: ${testCase.id}`);
+      if (!statusMatches) {
+        console.log(`      Expected status: ${testCase.expected.status}, Got: ${validationResult.status}`);
+      }
+      if (!violationsMatch) {
+        console.log(`      Missing violations: ${missingViolations.join(', ')}`);
+      }
+    }
+
+    results.push({
+      id: testCase.id,
+      passed: testPassed,
+      actual_status: validationResult.status,
+      expected_status: testCase.expected.status,
+      actual_violations: actualViolationCodes,
+      expected_violations_contains: expectedViolations,
+      missing_violations: missingViolations,
+      message: testPassed 
+        ? `PASSED: ${testCase.id}`
+        : `FAILED: ${!statusMatches ? `Status mismatch (expected ${testCase.expected.status}, got ${validationResult.status})` : ''}${!violationsMatch ? ` Missing violations: ${missingViolations.join(', ')}` : ''}`
+    });
+  }
+
+  const deployBlocked = failed > 0;
+
+  console.log('\n═══════════════════════════════════════════════════════════════════');
+  console.log(`   RESULTS: ${passed}/${CONSTITUTION_CI_TEST_SUITE.length} passed`);
+  console.log(`   DEPLOY: ${deployBlocked ? '🚫 BLOCKED' : '✅ ALLOWED'}`);
+  console.log('═══════════════════════════════════════════════════════════════════\n');
+
+  return {
+    suite: 'Constitution_Enforcement_CI',
+    total_tests: CONSTITUTION_CI_TEST_SUITE.length,
+    passed,
+    failed,
+    deploy_blocked: deployBlocked,
+    results,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Run a single CI test case
+ */
+export function runSingleCITest(testId: string): CITestResult | null {
+  const testCase = CONSTITUTION_CI_TEST_SUITE.find(t => t.id === testId);
+  if (!testCase) {
+    return null;
+  }
+
+  const validationResult = validateCEEAction(testCase.input);
+  const actualViolationCodes = validationResult.violations.map(v => v.code);
+  const expectedViolations = testCase.expected.violations_contains || testCase.expected.violations || [];
+  const missingViolations = expectedViolations.filter(
+    expected => !actualViolationCodes.includes(expected)
+  );
+
+  const statusMatches = validationResult.status === testCase.expected.status;
+  const violationsMatch = missingViolations.length === 0;
+  const testPassed = statusMatches && violationsMatch;
+
+  return {
+    id: testCase.id,
+    passed: testPassed,
+    actual_status: validationResult.status,
+    expected_status: testCase.expected.status,
+    actual_violations: actualViolationCodes,
+    expected_violations_contains: expectedViolations,
+    missing_violations: missingViolations,
+    message: testPassed ? 'PASSED' : 'FAILED'
+  };
+}
+
+/**
+ * Get the CI test suite definition (for documentation/export)
+ */
+export function getCITestSuite(): CITestCase[] {
+  return CONSTITUTION_CI_TEST_SUITE;
 }

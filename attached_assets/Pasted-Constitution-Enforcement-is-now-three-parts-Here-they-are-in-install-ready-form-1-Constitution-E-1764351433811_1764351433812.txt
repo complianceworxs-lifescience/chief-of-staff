@@ -1,0 +1,179 @@
+Constitution Enforcement is now three parts. Here they are in install-ready form.
+
+1. Constitution Enforcement Engine (CEE) – Spec
+
+Purpose
+Single authority that interprets Constitution.json and decides if an action may proceed.
+
+Scope
+Covers all L5 actions of type: POST, EMAIL, SPEND, CREATE_PRODUCT, UPDATE_OFFER.
+
+Inputs
+
+action_payload: { type, channel, content, spend, metadata }
+
+constitution: parsed Constitution.json (cached, with reload on change hash)
+
+Outputs
+
+decision: GREEN | RED
+
+violations: [VIOLATION_CODE,…]
+
+normalized_payload (optional transforms, e.g., auto-append disclaimer)
+
+Core Modules
+
+PrestigeGuard → checks LAW_01_PRESTIGE
+
+LiabilityGuard → checks LAW_02_LIABILITY_DOME
+
+FinancialGuard → checks LAW_03_FINANCIAL_SAFETY
+
+DomainGuard → checks LAW_04_DOMAIN_FENCE
+
+Decision Logic
+
+Aggregate guard results.
+
+If any guard returns RED: overall RED.
+
+Always log {action_id, decision, violations, timestamp} to Audit.
+
+Integration Point
+L5 loop: ingest → prioritize → plan → [CEE.validate] → produce → execute.
+
+2. Constitution Validator Routine – Contract
+
+Use this as the canonical routine spec (language-agnostic):
+
+function validate_constitution(action_payload) -> ValidationResult
+
+Inputs:
+  action_payload: {
+    id: string,
+    type: "POST" | "EMAIL" | "SPEND" | "CREATE_PRODUCT" | "UPDATE_OFFER",
+    channel: string,
+    content: string,          // full body (for posts/emails/products)
+    spend: {
+      amount: number,        // requested spend
+      currency: string,
+      window: "hour" | "day"
+    },
+    domain_tags: [string],   // semantic tags
+    metadata: object
+  }
+
+Process:
+  1) Load and parse Constitution.json (from System Core, cached).
+  2) Run guards:
+
+     PrestigeGuard:
+       - If content contains any FORBIDDEN_VOCABULARY → add VIOLATION_PRESTIGE_VOCAB.
+       - If projected margin < MINIMUM_MARGIN_THRESHOLD → add VIOLATION_PRESTIGE_MARGIN.
+
+     LiabilityGuard:
+       - If content contains any FORBIDDEN_CLAIMS → add VIOLATION_LIABILITY_CLAIM.
+       - If disclaimer missing when required → add VIOLATION_LIABILITY_DISCLAIMER.
+
+     FinancialGuard (for SPEND actions):
+       - If spend.amount > MAX_HOURLY_SPEND or MAX_DAILY_SPEND → add VIOLATION_FINANCE_VELOCITY.
+       - If projected ROAS < REQUIRED_ROAS_TARGET → add VIOLATION_FINANCE_ROAS.
+
+     DomainGuard:
+       - If any domain_tags ∉ AUTHORIZED_DOMAINS and ∈ FORBIDDEN_DOMAINS → add VIOLATION_DOMAIN_OUT_OF_SCOPE.
+
+  3) If no violations:
+       decision = GREEN
+     Else:
+       decision = RED
+
+  4) Write immutable log entry:
+       { action_id, decision, violations[], timestamp, snapshot_of_payload }
+
+Output (ValidationResult):
+  {
+    status: "GREEN" | "RED",
+    violations: [ "VIOLATION_PRESTIGE_VOCAB" | "VIOLATION_LIABILITY_CLAIM" | ... ],
+    recommended_action: "ALLOW" | "BLOCK" | "FREEZE_SPEND" | "FLAG_FOR_REVIEW"
+  }
+
+3. Constitution Checkpoint Tests – Replit CI Spec
+
+Define CI tests as structured cases; any failure blocks deploy.
+
+{
+  "suite": "Constitution_Enforcement_CI",
+  "tests": [
+    {
+      "id": "T1_Prestige_Vocabulary_Block",
+      "input": {
+        "type": "POST",
+        "channel": "LinkedIn",
+        "content": "Get this cheap compliance hack now.",
+        "spend": { "amount": 0, "currency": "USD", "window": "hour" },
+        "domain_tags": ["Life Sciences"]
+      },
+      "expected": {
+        "status": "RED",
+        "violations_contains": ["VIOLATION_PRESTIGE_VOCAB"]
+      }
+    },
+    {
+      "id": "T2_Liability_Guarantee_Block",
+      "input": {
+        "type": "EMAIL",
+        "channel": "Mailchimp",
+        "content": "We guarantee 100% audit immunity for your FDA inspections.",
+        "spend": { "amount": 0, "currency": "USD", "window": "hour" },
+        "domain_tags": ["Regulatory Affairs (RA)"]
+      },
+      "expected": {
+        "status": "RED",
+        "violations_contains": ["VIOLATION_LIABILITY_CLAIM"]
+      }
+    },
+    {
+      "id": "T3_Financial_Velocity_Block",
+      "input": {
+        "type": "SPEND",
+        "channel": "Meta Ads",
+        "content": "",
+        "spend": { "amount": 500.0, "currency": "USD", "window": "hour" },
+        "domain_tags": ["Life Sciences"]
+      },
+      "expected": {
+        "status": "RED",
+        "violations_contains": ["VIOLATION_FINANCE_VELOCITY"]
+      }
+    },
+    {
+      "id": "T4_Domain_Fence_Block",
+      "input": {
+        "type": "CREATE_PRODUCT",
+        "channel": "Internal",
+        "content": "Crypto Weight Loss Arbitrage Blueprint",
+        "spend": { "amount": 0, "currency": "USD", "window": "day" },
+        "domain_tags": ["Crypto", "Weight Loss"]
+      },
+      "expected": {
+        "status": "RED",
+        "violations_contains": ["VIOLATION_DOMAIN_OUT_OF_SCOPE"]
+      }
+    },
+    {
+      "id": "T5_Compliant_Action_Passes",
+      "input": {
+        "type": "POST",
+        "channel": "LinkedIn",
+        "content": "Turn your validation work into measurable ROI with better audit readiness and quality metrics.",
+        "spend": { "amount": 0, "currency": "USD", "window": "hour" },
+        "domain_tags": ["Computer System Validation (CSV)", "Quality Assurance (QA)"]
+      },
+      "expected": {
+        "status": "GREEN",
+        "violations": []
+      }
+    }
+  ]
+}

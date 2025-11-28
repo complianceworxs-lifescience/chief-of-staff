@@ -7,7 +7,17 @@
 
 import { Router, Request, Response } from 'express';
 import { l7Constitution } from '../services/l7-constitutional-constraints';
-import { constitutionValidator, validateConstitution, constitutionMiddleware } from '../services/constitution-validator';
+import { 
+  constitutionValidator, 
+  validateConstitution, 
+  constitutionMiddleware,
+  validateCEEAction,
+  runConstitutionCITests,
+  runSingleCITest,
+  getCITestSuite,
+  CONSTITUTION_CI_TEST_SUITE,
+  type CEEActionPayload
+} from '../services/constitution-validator';
 
 const router = Router();
 
@@ -483,6 +493,137 @@ router.post('/validator/refresh', (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Failed to refresh constitution',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// ============================================================================
+// CEE (Constitution Enforcement Engine) - Canonical Validation
+// ============================================================================
+
+router.post('/cee/validate', (req: Request, res: Response) => {
+  try {
+    const payload = req.body as CEEActionPayload;
+    
+    if (!payload.type || !payload.channel) {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid CEE payload',
+        message: 'Required fields: type, channel, content, spend, domain_tags'
+      });
+      return;
+    }
+
+    const result = validateCEEAction(payload);
+    res.json({
+      success: true,
+      ...result,
+      message: result.status === 'GREEN'
+        ? 'CEE VALIDATION PASSED - Action allowed'
+        : `CEE VALIDATION FAILED - ${result.violations.length} violation(s) detected`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'CEE validation failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// ============================================================================
+// CI TEST SUITE - Constitution Enforcement (Any Failure Blocks Deploy)
+// ============================================================================
+
+router.get('/ci/suite', (req: Request, res: Response) => {
+  try {
+    res.json({
+      success: true,
+      suite: 'Constitution_Enforcement_CI',
+      description: 'Structured test cases - any failure blocks deploy',
+      total_tests: CONSTITUTION_CI_TEST_SUITE.length,
+      tests: CONSTITUTION_CI_TEST_SUITE.map(tc => ({
+        id: tc.id,
+        type: tc.input.type,
+        channel: tc.input.channel,
+        expected_status: tc.expected.status,
+        expected_violations: tc.expected.violations_contains || tc.expected.violations
+      }))
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get CI suite',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.post('/ci/run', (req: Request, res: Response) => {
+  try {
+    const result = runConstitutionCITests();
+    
+    // Return appropriate status code based on test results
+    const statusCode = result.deploy_blocked ? 424 : 200; // 424 = Failed Dependency
+    
+    res.status(statusCode).json({
+      success: !result.deploy_blocked,
+      ...result,
+      deployment_status: result.deploy_blocked 
+        ? '🚫 BLOCKED - CI tests failed' 
+        : '✅ ALLOWED - All CI tests passed',
+      message: `${result.passed}/${result.total_tests} tests passed${result.deploy_blocked ? ' - DEPLOY BLOCKED' : ''}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'CI test run failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/ci/run/:testId', (req: Request, res: Response) => {
+  try {
+    const { testId } = req.params;
+    const result = runSingleCITest(testId);
+    
+    if (!result) {
+      res.status(404).json({
+        success: false,
+        error: 'Test not found',
+        message: `No test with ID "${testId}" in the CI suite`,
+        available_tests: CONSTITUTION_CI_TEST_SUITE.map(t => t.id)
+      });
+      return;
+    }
+
+    res.json({
+      success: result.passed,
+      ...result,
+      message: result.passed ? 'Test PASSED' : 'Test FAILED'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Single test run failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/ci/definition', (req: Request, res: Response) => {
+  try {
+    // Return the full JSON definition as specified in the Replit CI Spec
+    res.json({
+      suite: "Constitution_Enforcement_CI",
+      tests: getCITestSuite()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get CI definition',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
