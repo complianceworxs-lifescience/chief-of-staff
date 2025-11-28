@@ -32,6 +32,7 @@ import l5UpgradeBundleV2Router from "./routes/l5-upgrade-bundle-v2";
 import cosRevenuePrimeRouter from "./routes/cos-revenue-prime";
 import vqsRevenueAccelerationRouter from "./routes/vqs-revenue-acceleration";
 import executionOrderAlphaRouter from "./routes/execution-order-alpha";
+import leadGenerationModeRouter from "./routes/lead-generation-mode";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -136,6 +137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use("/api/execution-order", executionOrderAlphaRouter);
   console.log('🎯 EXECUTION ORDER: ALPHA routes mounted at /api/execution-order');
+  
+  app.use("/api/lead-gen", leadGenerationModeRouter);
+  console.log('🚀 LEAD GENERATION MODE (PHASE 0: GENESIS) routes mounted at /api/lead-gen');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
