@@ -34,6 +34,7 @@ import vqsRevenueAccelerationRouter from "./routes/vqs-revenue-acceleration";
 import executionOrderAlphaRouter from "./routes/execution-order-alpha";
 import leadGenerationModeRouter from "./routes/lead-generation-mode";
 import broadcastExtractStrategyRouter from "./routes/broadcast-extract-strategy";
+import l6ShadowModeRouter from "./routes/l6-shadow-mode";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -144,6 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use("/api/broadcast", broadcastExtractStrategyRouter);
   console.log('📡 BROADCAST & EXTRACT STRATEGY routes mounted at /api/broadcast');
+  
+  // Mount L6 SHADOW MODE ADVISORS routes
+  app.use("/api/l6-shadow", l6ShadowModeRouter);
+  console.log('👁️  L6 SHADOW MODE ADVISORS (READ-ONLY) routes mounted at /api/l6-shadow');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {

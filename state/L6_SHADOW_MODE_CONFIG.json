@@ -1,0 +1,136 @@
+{
+  "directive": "L6 SHADOW MODE ADVISORS",
+  "version": "1.0",
+  "activated": "2025-11-28T02:30:00.000Z",
+  "status": "ACTIVE",
+
+  "governance": {
+    "role_of_cos": {
+      "l5_cos": "SOLE EXECUTION ENGINE",
+      "l6_modules": "READ-ONLY ADVISORS",
+      "l6_output_types": ["SCORES", "FLAGS", "RANKINGS", "REPORTS"],
+      "l6_restrictions": "No direct API calls to Publishing, Billing, or Orchestration layers"
+    },
+    
+    "integration_rules": {
+      "cos_ingests_as": [
+        "Priority adjustments",
+        "Advisory prompts",
+        "Pause/Review flags"
+      ],
+      "execution_constraint": "No change applied unless initiated by L5-approved action template",
+      "hierarchy": "L6 acts within L5 framework, not above it"
+    }
+  },
+
+  "data_access": {
+    "mode": "READ-ONLY",
+    "sources": [
+      "Stripe events, checkout sessions, cart status",
+      "Email events (opens, clicks, replies), campaign metadata",
+      "LinkedIn/website behavioral signals (page views, time on page)",
+      "Content corpus + Golden Archetype reference assets"
+    ]
+  },
+
+  "capabilities": {
+    "propensity_to_pay_scorer": {
+      "status": "ACTIVE",
+      "type": "Predictive Layer",
+      "description": "Assigns 0-100 Score to every contact based on behavioral signals",
+      "l5_constraint": "Cannot send messages. Only passes score to L5 CoS.",
+      "l5_execution": "CoS uses score to re-order To-Do list, calling Score > 90 leads first"
+    },
+    
+    "sentiment_heatmap": {
+      "status": "ACTIVE",
+      "type": "Sensory Expansion",
+      "description": "Monitors LinkedIn Group posts and Email replies for emotional tone",
+      "l5_constraint": "Cannot change content",
+      "l5_execution": "Triggers advisory to L5 Marketing Agent for tone shift recommendations"
+    },
+    
+    "shadow_challenger": {
+      "status": "ACTIVE",
+      "type": "Simulation Mode",
+      "description": "Runs thousands of simulations to find better strategies",
+      "l5_constraint": "Creates Hypothesis Report but changes nothing",
+      "l5_execution": "You or L5 CoS review report and authorize adoption if +20% revenue lift shown"
+    },
+    
+    "drift_detective": {
+      "status": "ACTIVE",
+      "type": "Safety Monitor",
+      "description": "Scores outgoing drafts against Golden Archetype",
+      "l5_constraint": "Cannot delete or rewrite content",
+      "l5_execution": "Flags Drift Warning. CoS can pause publishing if Drift Score exceeds threshold"
+    },
+    
+    "revenue_early_warning": {
+      "status": "ACTIVE",
+      "type": "Safety Monitor",
+      "description": "Monitors revenue signals for anomalies",
+      "l5_constraint": "No autonomous correction",
+      "l5_execution": "Alerts L5 for intervention when thresholds breached"
+    },
+    
+    "offer_sensitivity_scanner": {
+      "status": "ACTIVE",
+      "type": "Predictive Layer",
+      "description": "Price-Elasticity Predictor for offer optimization",
+      "l5_constraint": "Only recommendations",
+      "l5_execution": "L5 decides whether to adopt pricing changes"
+    },
+    
+    "path_friction_analyzer": {
+      "status": "ACTIVE",
+      "type": "Diagnostic",
+      "description": "Checkout Resistance Mapping identifies friction points",
+      "l5_constraint": "Only diagnostic reports",
+      "l5_execution": "L5 prioritizes which friction points to address"
+    },
+    
+    "signal_to_noise_gatekeeper": {
+      "status": "ACTIVE",
+      "type": "Prioritization Engine",
+      "description": "Filters noise from actionable signals",
+      "l5_constraint": "Prioritization only",
+      "l5_execution": "L5 determines actions based on filtered signal queue"
+    }
+  },
+
+  "permissible_l6_patterns": {
+    "l6_predictive_layer": {
+      "allowed": true,
+      "description": "Predict user behavior, revenue velocity, churn risk, abandonment probability",
+      "constraint": "Do not execute actions without L5 approval paths"
+    },
+    "l6_prioritization_engine": {
+      "allowed": true,
+      "description": "Rank leads, pages, or offers by attention priority",
+      "constraint": "L5 still determines action and thresholds"
+    },
+    "l6_sensory_expansion": {
+      "allowed": true,
+      "description": "Add more inputs (Stripe, Mailchimp, behavioral signals)",
+      "constraint": "L5 logic controls responses"
+    },
+    "l6_simulation_mode": {
+      "allowed": true,
+      "description": "Run what-if scenarios predicting revenue impact",
+      "constraint": "No autonomous action—only recommendations"
+    },
+    "l6_advisory_layer": {
+      "allowed": true,
+      "description": "Produce prescriptive recommendations",
+      "constraint": "Require L5 execution approval"
+    },
+    "l6_safety_monitors": {
+      "allowed": true,
+      "description": "Watch for anomalies in revenue, API costs, or system drift",
+      "constraint": "No autonomous correction—alert L5 only"
+    }
+  },
+
+  "essence": "L6 may see more, predict more, rank more, and advise more, but may NOT act outside L5's authority structure."
+}
