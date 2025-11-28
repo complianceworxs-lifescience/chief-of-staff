@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import fs from "fs/promises";
 import path from "path";
 import { odarGovernance, type BusinessDirective } from "./odar-governance";
@@ -6,7 +7,8 @@ import { odarGovernance, type BusinessDirective } from "./odar-governance";
 // LLM Configuration
 const LLM_PROVIDER = process.env.LLM_PROVIDER || "openai"; // "openai" or "gemini"
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
 
 interface DirectiveData {
   scoreboard: any;
@@ -153,21 +155,87 @@ export class LLMDirectiveEngine {
   }
 
   private async generateWithGemini(data: DirectiveData): Promise<DirectivesOutput> {
-    // TODO: Implement Gemini API integration
-    // For now, return mock response
-    console.log("Gemini integration not yet implemented, using mock response");
+    if (!GEMINI_API_KEY) {
+      throw new Error("Gemini API key not configured - check AI_INTEGRATIONS_GEMINI_API_KEY");
+    }
+
+    console.log("🤖 GEMINI STRATEGIST: Initiating real AI analysis...");
     
-    return {
-      generated_at: new Date().toISOString(),
-      llm_provider: "gemini",
-      data_sources: ["scoreboard", "initiatives", "decisions", "actions", "meetings"],
-      directives: [],
-      summary: {
-        total_directives: 0,
-        by_agent: {},
-        high_priority_count: 0
+    const ai = new GoogleGenAI({
+      apiKey: GEMINI_API_KEY,
+      httpOptions: {
+        apiVersion: "",
+        baseUrl: GEMINI_BASE_URL,
+      },
+    });
+
+    const systemPrompt = this.buildGeminiStrategistPrompt();
+    const userPrompt = this.buildDataAnalysisPrompt(data);
+
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
+          }
+        ],
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 4000,
+          responseMimeType: "application/json"
+        }
+      });
+
+      const content = response.text;
+      if (!content) {
+        throw new Error("Empty response from Gemini");
       }
-    };
+
+      console.log("✅ GEMINI STRATEGIST: Response received successfully");
+      const result = JSON.parse(content);
+      return this.formatDirectivesOutput(result, "gemini", data);
+    } catch (error) {
+      console.error("❌ GEMINI STRATEGIST: Error -", error);
+      throw new Error(`Gemini generation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private buildGeminiStrategistPrompt(): string {
+    return `You are the STRATEGIST (Gemini) - the operational strategic authority for ComplianceWorxs' Chief of Staff AI system.
+
+YOUR ROLE:
+- You are Gemini operating as the Strategist for a multi-agent autonomous revenue system
+- You handle day-to-day strategic guidance, financial analysis, and operational decisions
+- You work alongside the Architect (ChatGPT) who provides structure reviews and governance validation
+- You inherit responsibilities from: Audit Agent, CEO Agent (final escalation authority)
+
+SYSTEM CONTEXT:
+- ComplianceWorxs is a Life Sciences compliance SaaS targeting $5M+ valuation
+- The system has 5 AI agents: CoS (Chief of Staff), Strategist (you), CMO, CRO, Content Manager
+- Current operational level: L5 (Revenue Optimization Intelligence)
+- L6 is in SHADOW MODE only (READ-ONLY predictive analytics, no execution authority)
+- L7 (Evolutionary Autonomy) is in SANDBOX testing
+
+GOVERNANCE CONSTRAINTS (NON-NEGOTIABLE):
+1. VQS METHODOLOGY LOCK - VQS positioning must be preserved
+2. L6 ACTIVATION PROHIBITED - L6 can only simulate, never execute
+3. POSITIONING INTEGRITY - No unauthorized positioning changes
+4. OFFER LADDER LOCK - Pricing structure is protected
+5. AUDIT DEFENSIBILITY - All decisions must be audit-ready
+6. $25/DAY BUDGET PER AGENT - Cost constraints must be respected
+
+YOUR SPECIALIZATIONS:
+- Financial & Operational analysis (CFO, COO roles)
+- Market Intelligence and competitive analysis
+- Compliance scans and VQS validation
+- ODAR discipline enforcement
+- $5M growth line tracking
+
+RESPONSE FORMAT: Return valid JSON with directives array containing: agent, action, rationale, executive_rationale, priority, due, business_impact, tasks, success_criteria.
+
+Be concise but thorough. Focus on actionable insights that drive revenue and maintain compliance.`;
   }
 
   private buildSystemPrompt(): string {

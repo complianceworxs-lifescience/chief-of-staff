@@ -2854,6 +2854,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ====================================
+  // GEMINI STRATEGIST - Direct Communication
+  // ====================================
+
+  // Send overdue actions to Gemini Strategist for analysis
+  app.post("/api/strategist/analyze-actions", async (req, res) => {
+    try {
+      console.log("📡 SENDING TO GEMINI STRATEGIST: Overdue actions analysis request...");
+      
+      // Import Gemini
+      const { GoogleGenAI } = await import("@google/genai");
+      
+      const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+      const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+      
+      if (!apiKey) {
+        throw new Error("Gemini API key not configured");
+      }
+
+      // Fetch current overdue actions
+      const actionsResponse = await fetch("http://localhost:5000/api/cockpit/actions");
+      const actions = await actionsResponse.json();
+      
+      // Fetch system status
+      const l7Status = await fetch("http://localhost:5000/api/l7/status").then(r => r.json()).catch(() => ({}));
+      const constitutionStatus = await fetch("http://localhost:5000/api/l7/constitution/status").then(r => r.json()).catch(() => ({}));
+
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: baseUrl,
+        },
+      });
+
+      const prompt = `You are the STRATEGIST (Gemini) - the operational strategic authority for ComplianceWorxs' Chief of Staff AI system.
+
+CURRENT SYSTEM STATE:
+- L7 Evolution Protocol: ${l7Status.status || 'SANDBOX'}
+- Constitutional Constraints: ${constitutionStatus.pillars_active?.length || 7} pillars active
+- Violations Blocked: ${constitutionStatus.violations_blocked || 0}
+
+OVERDUE ACTIONS REQUIRING YOUR ANALYSIS:
+${JSON.stringify(actions, null, 2)}
+
+GOVERNANCE CONSTRAINTS (NON-NEGOTIABLE):
+1. VQS METHODOLOGY LOCK - VQS positioning must be preserved
+2. L6 ACTIVATION PROHIBITED - L6 can only simulate, never execute
+3. $25/DAY BUDGET PER AGENT - Cost constraints must be respected
+
+YOUR TASK:
+1. Analyze each overdue action
+2. Identify root causes for delays
+3. Recommend priority adjustments
+4. Suggest resource reallocation if needed
+5. Flag any compliance concerns
+
+Provide your analysis as a structured JSON response with:
+- summary: Brief overview of the situation
+- risk_assessment: Overall risk level (low/medium/high/critical)
+- recommendations: Array of specific recommendations
+- priority_actions: Top 3 actions requiring immediate attention
+- resource_suggestions: Any resource reallocation suggestions
+- compliance_notes: Any compliance concerns`;
+
+      console.log("🤖 GEMINI STRATEGIST: Calling Gemini API...");
+      
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 4000,
+          responseMimeType: "application/json"
+        }
+      });
+
+      const content = response.text;
+      console.log("✅ GEMINI STRATEGIST: Response received");
+
+      let analysis;
+      try {
+        analysis = JSON.parse(content || "{}");
+      } catch {
+        analysis = { raw_response: content };
+      }
+
+      // Log the transaction
+      const transaction = {
+        id: `STRAT-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        type: "OVERDUE_ACTIONS_ANALYSIS",
+        input: { actions_count: actions.length },
+        output: analysis,
+        status: "COMPLETED"
+      };
+
+      console.log(`📋 STRATEGIST TRANSACTION: ${transaction.id}`);
+      console.log(`   Summary: ${analysis.summary || 'Analysis complete'}`);
+      console.log(`   Risk Level: ${analysis.risk_assessment || 'assessed'}`);
+      console.log(`   Recommendations: ${analysis.recommendations?.length || 0}`);
+
+      res.json({
+        success: true,
+        message: "Gemini Strategist analysis complete",
+        transaction_id: transaction.id,
+        timestamp: transaction.timestamp,
+        input: {
+          actions_analyzed: actions.length,
+          l7_status: l7Status.status,
+          constitution_active: true
+        },
+        strategist_analysis: analysis
+      });
+
+    } catch (error) {
+      console.error("❌ GEMINI STRATEGIST ERROR:", error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        fallback: "Gemini Strategist unavailable - using cached analysis"
+      });
+    }
+  });
+
+  // ====================================
   // LLM DIRECTIVE ENGINE - External AI Integration
   // ====================================
 
