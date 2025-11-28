@@ -295,6 +295,86 @@ router.post('/inbound/route-batch', async (req, res) => {
 });
 
 // ============================================================================
+// DARK SOCIAL INTENT MINER (Phase 1.5 - Force Multiplier)
+// ============================================================================
+
+router.post('/dark-social/mine', async (req, res) => {
+  try {
+    const signal = req.body;
+    const result = await l6ShadowMode.darkSocial.mineSignal(signal);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Dark social signal mining failed' });
+  }
+});
+
+router.post('/dark-social/batch', async (req, res) => {
+  try {
+    const { signals } = req.body;
+    const result = await l6ShadowMode.darkSocial.analyzeSignalBatch(signals || []);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Batch signal analysis failed' });
+  }
+});
+
+router.post('/dark-social/groups', async (req, res) => {
+  try {
+    const { groupSignals } = req.body;
+    const result = await l6ShadowMode.darkSocial.analyzeGroupActivity(groupSignals || []);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Group activity analysis failed' });
+  }
+});
+
+// ============================================================================
+// LEAD MAGNET ACTIVATION TRACKER (Phase 1.5 - Attribution)
+// ============================================================================
+
+router.post('/lead-magnet/track', async (req, res) => {
+  try {
+    const download = req.body;
+    const result = await l6ShadowMode.leadMagnet.trackDownload(download);
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Download tracking failed' });
+  }
+});
+
+router.post('/lead-magnet/conversion-report', async (req, res) => {
+  try {
+    const { downloads, leadMagnetName } = req.body;
+    const result = await l6ShadowMode.leadMagnet.generateConversionReport(
+      downloads || [], 
+      leadMagnetName || 'Audit Readiness Checklist'
+    );
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Conversion report generation failed' });
+  }
+});
+
+router.post('/lead-magnet/dark-social-roi', async (req, res) => {
+  try {
+    const { downloads, campaignCost } = req.body;
+    const result = await l6ShadowMode.leadMagnet.generateDarkSocialROI(
+      downloads || [], 
+      campaignCost || 0
+    );
+    l6ShadowMode.queueAdvisory(result);
+    res.json({ success: true, advisory: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Dark social ROI calculation failed' });
+  }
+});
+
+// ============================================================================
 // ADVISORY QUEUE MANAGEMENT
 // ============================================================================
 

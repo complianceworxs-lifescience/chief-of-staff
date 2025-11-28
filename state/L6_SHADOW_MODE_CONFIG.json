@@ -136,6 +136,30 @@
       "l5_execution": "Prevents hot leads from getting buried in noise. Routes to URGENT/HIGH/MEDIUM/LOW queues",
       "phase": "PHASE_1_MONDAY",
       "architect_rating": { "revenue_impact": 8, "complexity": 4, "l5_risk": 2 }
+    },
+    
+    "dark_social_intent_miner": {
+      "status": "ACTIVE",
+      "type": "Signal Harvester",
+      "description": "Mines LinkedIn reactions, comments, profile views, and group activity to identify high-intent prospects BEFORE they respond",
+      "l5_constraint": "Signal scoring only. Cannot send connection requests or messages",
+      "l5_execution": "Feeds high-intent prospects to Lead Qualification AI. Enables proactive outreach to engaged but silent prospects",
+      "phase": "PHASE_1.5_DARK_SOCIAL",
+      "architect_rating": { "revenue_impact": 10, "complexity": 5, "l5_risk": 2 },
+      "force_multiplier": true,
+      "genesis_campaign_critical": true
+    },
+    
+    "lead_magnet_activation_tracker": {
+      "status": "ACTIVE",
+      "type": "Attribution Engine",
+      "description": "Connects Audit Readiness Checklist downloads back to source (LinkedIn post, group, email campaign)",
+      "l5_constraint": "Attribution reporting only. Cannot modify campaigns or lead flows",
+      "l5_execution": "Proves dark social ROI. Shows which LinkedIn groups/posts are converting. Enables double-down on high-performing channels",
+      "phase": "PHASE_1.5_DARK_SOCIAL",
+      "architect_rating": { "revenue_impact": 9, "complexity": 4, "l5_risk": 1 },
+      "force_multiplier": true,
+      "genesis_campaign_critical": true
     }
   },
 

@@ -1460,6 +1460,593 @@ export class SignalToNoiseGatekeeper {
 }
 
 // ============================================================================
+// L6 CAPABILITY 13: DARK SOCIAL INTENT MINER
+// ============================================================================
+
+interface DarkSocialSignal {
+  signalId: string;
+  platform: 'LINKEDIN' | 'TWITTER' | 'SLACK' | 'DISCORD' | 'COMMUNITY';
+  signalType: 'REACTION' | 'COMMENT' | 'SHARE' | 'PROFILE_VIEW' | 'GROUP_ACTIVITY' | 'MENTION' | 'DM_OPEN';
+  personaTag: string;
+  companyName?: string;
+  jobTitle?: string;
+  industry?: string;
+  engagementDepth: number; // 1-10 scale
+  timestamp: string;
+  content?: string;
+  sourcePost?: string;
+  groupName?: string;
+}
+
+interface DarkSocialIntentScore {
+  prospectId: string;
+  name?: string;
+  company?: string;
+  title?: string;
+  intentScore: number; // 0-100
+  signalCount: number;
+  signals: DarkSocialSignal[];
+  buyingStage: 'AWARENESS' | 'CONSIDERATION' | 'DECISION' | 'DORMANT';
+  icpMatch: number; // 0-100
+  recommendedAction: string;
+  urgency: 'IMMEDIATE' | 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export class DarkSocialIntentMiner {
+  private readonly MODULE_NAME = 'L6_DARK_SOCIAL_INTENT_MINER';
+
+  /**
+   * Mines LinkedIn and other dark social signals to identify high-intent prospects.
+   * READ-ONLY: Scores signals but cannot reach out automatically.
+   * L5 Constraint: Prioritizes prospects for CoS/CRO to action.
+   * 
+   * KEY INSIGHT: Most B2B buyers research in "dark social" (private channels,
+   * LinkedIn groups, DMs) before ever filling out a form. This capability
+   * surfaces those hidden signals.
+   */
+  async mineSignal(signal: Omit<DarkSocialSignal, 'signalId'>): Promise<L6AdvisoryOutput> {
+    const signalId = `dss_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    const fullSignal: DarkSocialSignal = {
+      signalId,
+      ...signal
+    };
+
+    // Calculate engagement depth score
+    let depthMultiplier = 1;
+    
+    // Higher value signals
+    const highValueSignals = ['COMMENT', 'SHARE', 'DM_OPEN', 'GROUP_ACTIVITY'];
+    if (highValueSignals.includes(signal.signalType)) {
+      depthMultiplier = 1.5;
+    }
+    
+    // LinkedIn is highest priority for B2B Life Sciences
+    if (signal.platform === 'LINKEDIN') {
+      depthMultiplier *= 1.3;
+    }
+
+    // ICP matching for Life Sciences
+    let icpScore = 50; // Base score
+    const lifeSciencesKeywords = ['pharma', 'biotech', 'medical device', 'life sciences', 'cro', 'cmo', 
+                                   'diagnostics', 'clinical', 'regulatory', 'quality', 'validation', 
+                                   'compliance', 'fda', 'ema', 'gxp', 'gmp', 'csv'];
+    
+    const industryLower = (signal.industry || '').toLowerCase();
+    const titleLower = (signal.jobTitle || '').toLowerCase();
+    const contentLower = (signal.content || '').toLowerCase();
+    
+    const industryMatches = lifeSciencesKeywords.filter(kw => industryLower.includes(kw)).length;
+    const titleMatches = lifeSciencesKeywords.filter(kw => titleLower.includes(kw)).length;
+    const contentMatches = lifeSciencesKeywords.filter(kw => contentLower.includes(kw)).length;
+    
+    icpScore += industryMatches * 15;
+    icpScore += titleMatches * 10;
+    icpScore += contentMatches * 5;
+    icpScore = Math.min(100, icpScore);
+
+    // Decision-maker title boost
+    const decisionMakerTitles = ['director', 'vp', 'vice president', 'head', 'chief', 'senior', 'manager', 'lead'];
+    if (decisionMakerTitles.some(t => titleLower.includes(t))) {
+      icpScore = Math.min(100, icpScore + 15);
+    }
+
+    // Calculate overall intent score
+    const baseIntent = signal.engagementDepth * 10;
+    const intentScore = Math.min(100, Math.round(baseIntent * depthMultiplier * (icpScore / 50)));
+
+    // Determine urgency
+    let urgency: 'IMMEDIATE' | 'HIGH' | 'MEDIUM' | 'LOW';
+    if (intentScore >= 80 && icpScore >= 70) {
+      urgency = 'IMMEDIATE';
+    } else if (intentScore >= 60 || icpScore >= 80) {
+      urgency = 'HIGH';
+    } else if (intentScore >= 40) {
+      urgency = 'MEDIUM';
+    } else {
+      urgency = 'LOW';
+    }
+
+    // Generate recommended action
+    let recommendedAction: string;
+    if (urgency === 'IMMEDIATE') {
+      recommendedAction = `HOT PROSPECT: ${signal.personaTag} showed high intent. Connect on LinkedIn within 24h with personalized message referencing their ${signal.signalType.toLowerCase()}.`;
+    } else if (urgency === 'HIGH') {
+      recommendedAction = `WARM PROSPECT: Add to priority nurture sequence. Monitor for additional signals before direct outreach.`;
+    } else if (urgency === 'MEDIUM') {
+      recommendedAction = `NURTURE: Include in content distribution for Audit Readiness topic. Build relationship over 2-4 weeks.`;
+    } else {
+      recommendedAction = `MONITOR: Log signal but no immediate action. May not be ICP fit.`;
+    }
+
+    return {
+      type: 'ALERT',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        signalId,
+        platform: signal.platform,
+        signalType: signal.signalType,
+        personaTag: signal.personaTag,
+        company: signal.companyName,
+        title: signal.jobTitle,
+        intentScore,
+        icpScore,
+        urgency,
+        recommendedAction,
+        sourcePost: signal.sourcePost,
+        groupName: signal.groupName,
+        rawSignal: fullSignal
+      },
+      requiresL5Approval: false,
+      confidence: 0.78
+    };
+  }
+
+  /**
+   * Batch analyze all dark social signals for a time period.
+   * Returns ranked list of high-intent prospects.
+   */
+  async analyzeSignalBatch(signals: Omit<DarkSocialSignal, 'signalId'>[]): Promise<L6AdvisoryOutput> {
+    const processedSignals = await Promise.all(
+      signals.map(s => this.mineSignal(s))
+    );
+
+    // Group by prospect/persona
+    const prospectMap = new Map<string, {
+      signals: any[];
+      totalIntent: number;
+      maxIcp: number;
+    }>();
+
+    for (const result of processedSignals) {
+      const key = result.payload.personaTag;
+      const existing = prospectMap.get(key) || { signals: [], totalIntent: 0, maxIcp: 0 };
+      existing.signals.push(result.payload);
+      existing.totalIntent += result.payload.intentScore;
+      existing.maxIcp = Math.max(existing.maxIcp, result.payload.icpScore);
+      prospectMap.set(key, existing);
+    }
+
+    // Convert to ranked list
+    const rankedProspects = Array.from(prospectMap.entries())
+      .map(([persona, data]) => ({
+        personaTag: persona,
+        signalCount: data.signals.length,
+        combinedIntentScore: Math.min(100, Math.round(data.totalIntent / data.signals.length * (1 + data.signals.length * 0.1))),
+        icpScore: data.maxIcp,
+        company: data.signals[0]?.company,
+        title: data.signals[0]?.title,
+        topSignals: data.signals.slice(0, 3)
+      }))
+      .sort((a, b) => b.combinedIntentScore - a.combinedIntentScore);
+
+    const hotProspects = rankedProspects.filter(p => p.combinedIntentScore >= 70);
+    const warmProspects = rankedProspects.filter(p => p.combinedIntentScore >= 40 && p.combinedIntentScore < 70);
+
+    return {
+      type: 'RANKING',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        totalSignals: signals.length,
+        uniqueProspects: rankedProspects.length,
+        hotProspects: hotProspects.length,
+        warmProspects: warmProspects.length,
+        priorityQueue: rankedProspects.slice(0, 10),
+        insight: hotProspects.length > 0 
+          ? `${hotProspects.length} HIGH-INTENT prospects detected. Top prospect: ${hotProspects[0]?.personaTag} (${hotProspects[0]?.company || 'Unknown Company'})`
+          : 'No hot prospects in this batch. Consider expanding dark social monitoring.',
+        recommendation: `Focus outreach on top ${Math.min(5, hotProspects.length)} prospects. ${warmProspects.length} prospects in nurture stage.`
+      },
+      requiresL5Approval: false,
+      confidence: 0.82
+    };
+  }
+
+  /**
+   * Real-time LinkedIn group monitoring summary.
+   * Identifies which LinkedIn groups are generating the most ICP signals.
+   */
+  async analyzeGroupActivity(groupSignals: {
+    groupName: string;
+    groupId?: string;
+    memberCount?: number;
+    signals: Omit<DarkSocialSignal, 'signalId'>[];
+  }[]): Promise<L6AdvisoryOutput> {
+    const groupAnalysis = await Promise.all(
+      groupSignals.map(async (group) => {
+        const signalResults = await Promise.all(
+          group.signals.map(s => this.mineSignal({ ...s, groupName: group.groupName }))
+        );
+        
+        const avgIntent = signalResults.reduce((sum, r) => sum + r.payload.intentScore, 0) / signalResults.length || 0;
+        const avgIcp = signalResults.reduce((sum, r) => sum + r.payload.icpScore, 0) / signalResults.length || 0;
+        const hotSignals = signalResults.filter(r => r.payload.urgency === 'IMMEDIATE' || r.payload.urgency === 'HIGH');
+        
+        return {
+          groupName: group.groupName,
+          memberCount: group.memberCount,
+          signalCount: group.signals.length,
+          avgIntentScore: Math.round(avgIntent),
+          avgIcpScore: Math.round(avgIcp),
+          hotProspectCount: hotSignals.length,
+          roi: Math.round((avgIntent * avgIcp * group.signals.length) / 1000),
+          priority: avgIcp >= 70 && avgIntent >= 50 ? 'HIGH' : avgIcp >= 50 ? 'MEDIUM' : 'LOW'
+        };
+      })
+    );
+
+    // Rank groups by ROI
+    groupAnalysis.sort((a, b) => b.roi - a.roi);
+
+    const priorityGroups = groupAnalysis.filter(g => g.priority === 'HIGH');
+
+    return {
+      type: 'REPORT',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        totalGroups: groupSignals.length,
+        priorityGroups: priorityGroups.length,
+        groupRankings: groupAnalysis,
+        topGroup: groupAnalysis[0],
+        recommendation: priorityGroups.length > 0
+          ? `Focus engagement on ${priorityGroups.length} high-priority groups. Top: "${priorityGroups[0]?.groupName}" (${priorityGroups[0]?.hotProspectCount} hot prospects)`
+          : 'No high-priority groups identified. Consider joining more Life Sciences focused groups.',
+        darkSocialStrategy: 'Post value-first content in top 3 groups 2-3x/week. Engage thoughtfully on comments. Avoid direct pitching.'
+      },
+      requiresL5Approval: false,
+      confidence: 0.75
+    };
+  }
+}
+
+// ============================================================================
+// L6 CAPABILITY 14: LEAD MAGNET ACTIVATION TRACKER
+// ============================================================================
+
+interface LeadMagnetDownload {
+  downloadId: string;
+  leadMagnetType: 'AUDIT_READINESS_CHECKLIST' | 'WHITEPAPER' | 'CASE_STUDY' | 'TEMPLATE' | 'GUIDE' | 'WEBINAR';
+  leadMagnetName: string;
+  downloadTimestamp: string;
+  
+  // Source tracking
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  referrer?: string;
+  linkedinPostId?: string;
+  linkedinGroupId?: string;
+  linkedinGroupName?: string;
+  
+  // Lead info
+  email?: string;
+  name?: string;
+  company?: string;
+  jobTitle?: string;
+  
+  // Engagement
+  timeOnPage?: number; // seconds
+  scrollDepth?: number; // 0-100%
+  completedForm?: boolean;
+  formFields?: Record<string, any>;
+}
+
+interface LeadMagnetConversionReport {
+  leadMagnetName: string;
+  totalDownloads: number;
+  conversionRate: number;
+  topSources: { source: string; count: number; conversionRate: number }[];
+  avgTimeToDownload: number;
+  qualityScore: number; // Based on ICP match of downloaders
+}
+
+export class LeadMagnetActivationTracker {
+  private readonly MODULE_NAME = 'L6_LEAD_MAGNET_ACTIVATION_TRACKER';
+
+  /**
+   * Tracks lead magnet downloads and correlates them to dark social sources.
+   * READ-ONLY: Provides attribution and conversion insights.
+   * L5 Constraint: CoS/CMO uses insights to optimize distribution strategy.
+   * 
+   * KEY INSIGHT: Connects the "Audit Readiness Checklist" downloads back to
+   * which LinkedIn posts/groups drove them, proving dark social ROI.
+   */
+  async trackDownload(download: Omit<LeadMagnetDownload, 'downloadId'>): Promise<L6AdvisoryOutput> {
+    const downloadId = `lmd_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    
+    // Determine source category
+    let sourceCategory: 'LINKEDIN_POST' | 'LINKEDIN_GROUP' | 'EMAIL' | 'DIRECT' | 'ORGANIC_SEARCH' | 'PAID' | 'REFERRAL' | 'UNKNOWN';
+    let sourceName = 'Unknown';
+    
+    if (download.linkedinPostId || download.utm_source?.toLowerCase().includes('linkedin')) {
+      sourceCategory = download.linkedinGroupId ? 'LINKEDIN_GROUP' : 'LINKEDIN_POST';
+      sourceName = download.linkedinGroupName || download.utm_campaign || 'LinkedIn';
+    } else if (download.utm_source?.toLowerCase().includes('email') || download.utm_medium?.toLowerCase() === 'email') {
+      sourceCategory = 'EMAIL';
+      sourceName = download.utm_campaign || 'Email Campaign';
+    } else if (download.utm_medium?.toLowerCase() === 'cpc' || download.utm_medium?.toLowerCase() === 'paid') {
+      sourceCategory = 'PAID';
+      sourceName = download.utm_source || 'Paid Campaign';
+    } else if (download.referrer && !download.referrer.includes(process.env.REPLIT_DEV_DOMAIN || 'complianceworxs')) {
+      sourceCategory = 'REFERRAL';
+      sourceName = new URL(download.referrer).hostname;
+    } else if (download.referrer?.includes('google') || download.referrer?.includes('bing')) {
+      sourceCategory = 'ORGANIC_SEARCH';
+      sourceName = 'Organic Search';
+    } else if (!download.referrer || download.referrer === '') {
+      sourceCategory = 'DIRECT';
+      sourceName = 'Direct Traffic';
+    } else {
+      sourceCategory = 'UNKNOWN';
+    }
+
+    // Calculate lead quality score based on ICP signals
+    let qualityScore = 50; // Base score
+    const lifeSciencesKeywords = ['pharma', 'biotech', 'medical device', 'life sciences', 'cro', 'cmo',
+                                   'diagnostics', 'clinical', 'regulatory', 'quality', 'validation',
+                                   'compliance', 'fda', 'ema', 'gxp', 'gmp'];
+    
+    const companyLower = (download.company || '').toLowerCase();
+    const titleLower = (download.jobTitle || '').toLowerCase();
+    
+    if (lifeSciencesKeywords.some(kw => companyLower.includes(kw) || titleLower.includes(kw))) {
+      qualityScore += 25;
+    }
+    
+    // Decision-maker boost
+    const decisionMakerTitles = ['director', 'vp', 'vice president', 'head', 'chief', 'senior manager'];
+    if (decisionMakerTitles.some(t => titleLower.includes(t))) {
+      qualityScore += 20;
+    }
+    
+    // Corporate email boost (not gmail, yahoo, etc.)
+    const genericDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com'];
+    if (download.email && !genericDomains.some(d => download.email?.toLowerCase().includes(d))) {
+      qualityScore += 10;
+    }
+    
+    // Engagement boost
+    if ((download.timeOnPage || 0) > 120) qualityScore += 5; // 2+ minutes
+    if ((download.scrollDepth || 0) > 75) qualityScore += 5; // Read most of page
+    
+    qualityScore = Math.min(100, qualityScore);
+
+    // Calculate conversion stage
+    let conversionStage: 'AWARENESS' | 'INTEREST' | 'CONSIDERATION' | 'INTENT';
+    if (qualityScore >= 80 && (download.timeOnPage || 0) > 180) {
+      conversionStage = 'INTENT';
+    } else if (qualityScore >= 60) {
+      conversionStage = 'CONSIDERATION';
+    } else if (qualityScore >= 40) {
+      conversionStage = 'INTEREST';
+    } else {
+      conversionStage = 'AWARENESS';
+    }
+
+    // Generate recommendation
+    let recommendation: string;
+    if (conversionStage === 'INTENT') {
+      recommendation = `HIGH-VALUE LEAD: ${download.name || 'Unknown'} from ${download.company || 'Unknown Company'}. Trigger immediate sales follow-up sequence.`;
+    } else if (conversionStage === 'CONSIDERATION') {
+      recommendation = `QUALIFIED LEAD: Add to nurture sequence. Send case study within 48h.`;
+    } else if (conversionStage === 'INTEREST') {
+      recommendation = `EARLY STAGE: Add to email newsletter. Monitor for additional engagement.`;
+    } else {
+      recommendation = `AWARENESS: Track but no immediate action. May not be ICP fit.`;
+    }
+
+    return {
+      type: 'ALERT',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        downloadId,
+        leadMagnetType: download.leadMagnetType,
+        leadMagnetName: download.leadMagnetName,
+        sourceCategory,
+        sourceName,
+        linkedinGroupName: download.linkedinGroupName,
+        linkedinPostId: download.linkedinPostId,
+        lead: {
+          email: download.email,
+          name: download.name,
+          company: download.company,
+          jobTitle: download.jobTitle
+        },
+        qualityScore,
+        conversionStage,
+        engagement: {
+          timeOnPage: download.timeOnPage,
+          scrollDepth: download.scrollDepth,
+          completedForm: download.completedForm
+        },
+        recommendation,
+        attribution: {
+          utm_source: download.utm_source,
+          utm_medium: download.utm_medium,
+          utm_campaign: download.utm_campaign,
+          utm_content: download.utm_content
+        }
+      },
+      requiresL5Approval: false,
+      confidence: 0.85
+    };
+  }
+
+  /**
+   * Generate conversion funnel report for a lead magnet.
+   * Shows which dark social sources are actually converting.
+   */
+  async generateConversionReport(downloads: Omit<LeadMagnetDownload, 'downloadId'>[], leadMagnetName: string): Promise<L6AdvisoryOutput> {
+    const processedDownloads = await Promise.all(
+      downloads.map(d => this.trackDownload(d))
+    );
+
+    // Group by source
+    const sourceMap = new Map<string, {
+      count: number;
+      qualitySum: number;
+      highQualityCount: number;
+      intentCount: number;
+    }>();
+
+    for (const result of processedDownloads) {
+      const source = result.payload.sourceName;
+      const existing = sourceMap.get(source) || { count: 0, qualitySum: 0, highQualityCount: 0, intentCount: 0 };
+      existing.count++;
+      existing.qualitySum += result.payload.qualityScore;
+      if (result.payload.qualityScore >= 70) existing.highQualityCount++;
+      if (result.payload.conversionStage === 'INTENT') existing.intentCount++;
+      sourceMap.set(source, existing);
+    }
+
+    // Convert to ranked list
+    const topSources = Array.from(sourceMap.entries())
+      .map(([source, data]) => ({
+        source,
+        count: data.count,
+        avgQuality: Math.round(data.qualitySum / data.count),
+        highQualityRate: Math.round((data.highQualityCount / data.count) * 100),
+        intentRate: Math.round((data.intentCount / data.count) * 100),
+        roi: Math.round((data.qualitySum / data.count) * data.count / 10) // Simplified ROI
+      }))
+      .sort((a, b) => b.roi - a.roi);
+
+    const overallQuality = processedDownloads.reduce((sum, r) => sum + r.payload.qualityScore, 0) / processedDownloads.length || 0;
+    const intentLeads = processedDownloads.filter(r => r.payload.conversionStage === 'INTENT');
+    const linkedinSources = topSources.filter(s => s.source.toLowerCase().includes('linkedin') || s.source.includes('Group'));
+
+    return {
+      type: 'REPORT',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        leadMagnetName,
+        totalDownloads: downloads.length,
+        uniqueSources: topSources.length,
+        avgQualityScore: Math.round(overallQuality),
+        intentLeadCount: intentLeads.length,
+        intentConversionRate: Math.round((intentLeads.length / downloads.length) * 100),
+        topSources: topSources.slice(0, 10),
+        linkedinAttribution: {
+          totalFromLinkedIn: linkedinSources.reduce((sum, s) => sum + s.count, 0),
+          percentFromLinkedIn: Math.round((linkedinSources.reduce((sum, s) => sum + s.count, 0) / downloads.length) * 100),
+          topLinkedInSource: linkedinSources[0],
+          darkSocialROI: linkedinSources.length > 0 ? 'POSITIVE' : 'NEEDS_TRACKING'
+        },
+        insights: {
+          bestPerformingSource: topSources[0]?.source || 'N/A',
+          bestROISource: topSources.sort((a, b) => b.roi - a.roi)[0]?.source || 'N/A',
+          recommendation: topSources[0] 
+            ? `Double down on ${topSources[0].source} - generating ${topSources[0].highQualityRate}% high-quality leads.`
+            : 'Need more data to identify best source.'
+        },
+        funnelReport: {
+          awareness: processedDownloads.filter(r => r.payload.conversionStage === 'AWARENESS').length,
+          interest: processedDownloads.filter(r => r.payload.conversionStage === 'INTEREST').length,
+          consideration: processedDownloads.filter(r => r.payload.conversionStage === 'CONSIDERATION').length,
+          intent: intentLeads.length
+        }
+      },
+      requiresL5Approval: false,
+      confidence: 0.88
+    };
+  }
+
+  /**
+   * Real-time ROI tracking for dark social campaign.
+   * Answers: "Is LinkedIn dark social actually working?"
+   */
+  async generateDarkSocialROI(downloads: Omit<LeadMagnetDownload, 'downloadId'>[], campaignCost: number = 0): Promise<L6AdvisoryOutput> {
+    const processedDownloads = await Promise.all(
+      downloads.map(d => this.trackDownload(d))
+    );
+
+    // Calculate dark social (LinkedIn) specific metrics
+    const darkSocialDownloads = processedDownloads.filter(r => 
+      r.payload.sourceCategory === 'LINKEDIN_POST' || 
+      r.payload.sourceCategory === 'LINKEDIN_GROUP'
+    );
+
+    const intentFromDarkSocial = darkSocialDownloads.filter(r => r.payload.conversionStage === 'INTENT');
+    const avgQuality = darkSocialDownloads.reduce((sum, r) => sum + r.payload.qualityScore, 0) / darkSocialDownloads.length || 0;
+
+    // Estimate pipeline value (conservative: $5K per intent lead)
+    const estimatedPipelineValue = intentFromDarkSocial.length * 5000;
+    const roi = campaignCost > 0 ? Math.round(((estimatedPipelineValue - campaignCost) / campaignCost) * 100) : 0;
+
+    // Group by LinkedIn group
+    const groupBreakdown = new Map<string, number>();
+    for (const result of darkSocialDownloads) {
+      if (result.payload.linkedinGroupName) {
+        const current = groupBreakdown.get(result.payload.linkedinGroupName) || 0;
+        groupBreakdown.set(result.payload.linkedinGroupName, current + 1);
+      }
+    }
+
+    const topGroups = Array.from(groupBreakdown.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([group, count]) => ({ group, downloads: count }));
+
+    return {
+      type: 'REPORT',
+      module: this.MODULE_NAME,
+      timestamp: new Date().toISOString(),
+      payload: {
+        reportType: 'DARK_SOCIAL_ROI',
+        period: 'CAMPAIGN_TO_DATE',
+        metrics: {
+          totalDownloads: downloads.length,
+          darkSocialDownloads: darkSocialDownloads.length,
+          darkSocialPercentage: Math.round((darkSocialDownloads.length / downloads.length) * 100),
+          intentLeadsFromDarkSocial: intentFromDarkSocial.length,
+          avgQualityScore: Math.round(avgQuality),
+          estimatedPipelineValue: `$${estimatedPipelineValue.toLocaleString()}`,
+          campaignCost: `$${campaignCost.toLocaleString()}`,
+          roi: campaignCost > 0 ? `${roi}%` : 'N/A (no cost data)'
+        },
+        topPerformingGroups: topGroups,
+        verdict: darkSocialDownloads.length > downloads.length * 0.3 
+          ? 'DARK_SOCIAL_WORKING' 
+          : darkSocialDownloads.length > 0 
+            ? 'DARK_SOCIAL_EMERGING' 
+            : 'NEEDS_DARK_SOCIAL_ACTIVATION',
+        recommendation: intentFromDarkSocial.length > 0
+          ? `Dark social is generating ${intentFromDarkSocial.length} high-intent leads. Continue current strategy and scale top-performing groups.`
+          : 'Dark social signals detected but no intent leads yet. Increase post frequency and engagement in top groups.'
+      },
+      requiresL5Approval: false,
+      confidence: 0.82
+    };
+  }
+}
+
+// ============================================================================
 // L6 MASTER ORCHESTRATOR (Read-Only Coordinator)
 // ============================================================================
 
@@ -1478,6 +2065,10 @@ export class L6ShadowModeOrchestrator {
   private timingEngine = new OptimalTimingEngine();
   private objectionPredictor = new ObjectionPredictor();
   private responseRouter = new InboundResponseRouter();
+  
+  // Phase 1.5 Capabilities (Dark Social Force Multipliers)
+  private darkSocialMiner = new DarkSocialIntentMiner();
+  private leadMagnetTracker = new LeadMagnetActivationTracker();
 
   private advisoryQueue: L6AdvisoryOutput[] = [];
 
@@ -1541,6 +2132,10 @@ export class L6ShadowModeOrchestrator {
   get optimalTiming() { return this.timingEngine; }
   get objections() { return this.objectionPredictor; }
   get inboundRouter() { return this.responseRouter; }
+  
+  // Phase 1.5 Capabilities (Dark Social Force Multipliers)
+  get darkSocial() { return this.darkSocialMiner; }
+  get leadMagnet() { return this.leadMagnetTracker; }
 }
 
 // Export singleton instance
