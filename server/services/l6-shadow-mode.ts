@@ -669,24 +669,40 @@ export class LeadQualificationAI {
    */
   async qualifyLead(leadData: {
     leadId?: string;
-    companyName: string;
-    industry: string;
-    companySize: number;
-    jobTitle: string;
-    department: string;
-    emailDomain: string;
-    linkedInEngagement: number;
-    websiteVisits: number;
-    contentDownloads: number;
-    emailOpens: number;
-    emailClicks: number;
-    daysInPipeline: number;
+    companyName?: string;
+    company?: string;
+    industry?: string;
+    companySize?: number;
+    jobTitle?: string;
+    department?: string;
+    emailDomain?: string;
+    email?: string;
+    linkedInEngagement?: number;
+    websiteVisits?: number;
+    contentDownloads?: number;
+    emailOpens?: number;
+    emailClicks?: number;
+    daysInPipeline?: number;
   }): Promise<L6AdvisoryOutput> {
+    
+    // Normalize input with defaults
+    const companyName = leadData.companyName || leadData.company || 'Unknown';
+    const industry = leadData.industry || 'Unknown';
+    const companySize = leadData.companySize || 100;
+    const jobTitle = leadData.jobTitle || '';
+    const department = leadData.department || '';
+    const emailDomain = leadData.emailDomain || (leadData.email?.split('@')[1]) || '';
+    const linkedInEngagement = leadData.linkedInEngagement || 0;
+    const websiteVisits = leadData.websiteVisits || 0;
+    const contentDownloads = leadData.contentDownloads || 0;
+    const emailOpens = leadData.emailOpens || 0;
+    const emailClicks = leadData.emailClicks || 0;
+    const daysInPipeline = leadData.daysInPipeline || 0;
     
     // ICP Match Scoring for Life Sciences
     let icpMatchScore = 0;
-    const lifeSciencesKeywords = ['pharma', 'biotech', 'medical device', 'life sciences', 'cro', 'cmo', 'diagnostics', 'clinical', 'regulatory', 'quality', 'validation', 'compliance'];
-    const industryLower = leadData.industry.toLowerCase();
+    const lifeSciencesKeywords = ['pharma', 'biotech', 'medical device', 'life sciences', 'cro', 'cmo', 'diagnostics', 'clinical', 'regulatory', 'quality', 'validation', 'compliance', 'pharmaceutical', 'biotechnology'];
+    const industryLower = industry.toLowerCase();
     
     if (lifeSciencesKeywords.some(kw => industryLower.includes(kw))) {
       icpMatchScore += 40;
@@ -695,14 +711,14 @@ export class LeadQualificationAI {
     // Job title scoring
     const decisionMakerTitles = ['vp', 'director', 'head of', 'chief', 'cto', 'cio', 'cqo', 'senior'];
     const qualityTitles = ['quality', 'validation', 'compliance', 'regulatory', 'qa', 'qc', 'audit'];
-    const titleLower = leadData.jobTitle.toLowerCase();
+    const titleLower = jobTitle.toLowerCase();
     
     if (decisionMakerTitles.some(t => titleLower.includes(t))) icpMatchScore += 20;
     if (qualityTitles.some(t => titleLower.includes(t))) icpMatchScore += 20;
     
     // Department alignment
     const targetDepts = ['quality', 'validation', 'regulatory', 'compliance', 'it', 'operations'];
-    if (targetDepts.some(d => leadData.department.toLowerCase().includes(d))) icpMatchScore += 20;
+    if (targetDepts.some(d => department.toLowerCase().includes(d))) icpMatchScore += 20;
     
     icpMatchScore = Math.min(100, icpMatchScore);
 
@@ -710,24 +726,24 @@ export class LeadQualificationAI {
     let firmographicScore = 0;
     
     // Company size (sweet spot: 100-5000 employees)
-    if (leadData.companySize >= 100 && leadData.companySize <= 5000) {
+    if (companySize >= 100 && companySize <= 5000) {
       firmographicScore += 40;
-    } else if (leadData.companySize > 5000) {
+    } else if (companySize > 5000) {
       firmographicScore += 30; // Enterprise, slower but bigger deals
-    } else if (leadData.companySize >= 50) {
+    } else if (companySize >= 50) {
       firmographicScore += 20;
     }
     
     // Email domain scoring (corporate vs. generic)
     const genericDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
-    if (!genericDomains.includes(leadData.emailDomain.toLowerCase())) {
+    if (emailDomain && !genericDomains.includes(emailDomain.toLowerCase())) {
       firmographicScore += 30;
     }
     
     // Recency penalty
-    if (leadData.daysInPipeline > 90) {
+    if (daysInPipeline > 90) {
       firmographicScore -= 20;
-    } else if (leadData.daysInPipeline > 30) {
+    } else if (daysInPipeline > 30) {
       firmographicScore -= 10;
     }
     
@@ -735,11 +751,11 @@ export class LeadQualificationAI {
 
     // Behavioral Scoring
     const behavioralScore = Math.min(100, 
-      (leadData.linkedInEngagement * 15) +
-      (leadData.websiteVisits * 5) +
-      (leadData.contentDownloads * 20) +
-      (leadData.emailOpens * 3) +
-      (leadData.emailClicks * 10)
+      (linkedInEngagement * 15) +
+      (websiteVisits * 5) +
+      (contentDownloads * 20) +
+      (emailOpens * 3) +
+      (emailClicks * 10)
     );
 
     // Calculate overall score (weighted)
@@ -777,16 +793,16 @@ export class LeadQualificationAI {
     if (!lifeSciencesKeywords.some(kw => industryLower.includes(kw))) {
       disqualificationFlags.push('NON_LIFE_SCIENCES_INDUSTRY');
     }
-    if (leadData.daysInPipeline > 90) {
+    if (daysInPipeline > 90) {
       disqualificationFlags.push('STALE_LEAD_90_DAYS');
     }
-    if (genericDomains.includes(leadData.emailDomain.toLowerCase())) {
+    if (emailDomain && genericDomains.includes(emailDomain.toLowerCase())) {
       disqualificationFlags.push('PERSONAL_EMAIL_DOMAIN');
     }
 
     const qualificationResult: LeadQualificationScore = {
       leadId: leadData.leadId || `lead_${Date.now()}`,
-      companyName: leadData.companyName,
+      companyName: companyName,
       overallScore,
       icpMatchScore,
       firmographicScore,
@@ -861,20 +877,31 @@ export class OptimalTimingEngine {
    * L5 Constraint: +20-40% open/response rates by hitting optimal windows.
    */
   async predictOptimalTiming(contactData: {
-    contactId: string;
+    contactId?: string;
+    email?: string;
     timezone?: string;
-    pastEmailOpens: { timestamp: string }[];
-    pastClicks: { timestamp: string }[];
-    linkedInActivityTimes: { timestamp: string }[];
-    industry: string;
-    jobTitle: string;
+    pastEmailOpens?: { timestamp: string }[];
+    pastClicks?: { timestamp: string }[];
+    linkedInActivityTimes?: { timestamp: string }[];
+    emailOpenHistory?: { hour: number; dayOfWeek: number; opened: boolean }[];
+    linkedinActiveHours?: number[];
+    industry?: string;
+    jobTitle?: string;
   }): Promise<L6AdvisoryOutput> {
+    
+    // Normalize input
+    const contactId = contactData.contactId || contactData.email || `contact_${Date.now()}`;
+    const pastEmailOpens = contactData.pastEmailOpens || [];
+    const pastClicks = contactData.pastClicks || [];
+    const linkedInActivityTimes = contactData.linkedInActivityTimes || [];
+    const industry = contactData.industry || 'Life Sciences';
+    const jobTitle = contactData.jobTitle || '';
     
     // Aggregate engagement times
     const allEngagements = [
-      ...contactData.pastEmailOpens,
-      ...contactData.pastClicks,
-      ...contactData.linkedInActivityTimes
+      ...pastEmailOpens,
+      ...pastClicks,
+      ...linkedInActivityTimes
     ];
 
     // Default timezone
@@ -916,7 +943,7 @@ export class OptimalTimingEngine {
     });
 
     // Apply industry-specific heuristics
-    const titleLower = contactData.jobTitle.toLowerCase();
+    const titleLower = jobTitle.toLowerCase();
     const isExecutive = ['vp', 'director', 'chief', 'head of'].some(t => titleLower.includes(t));
     
     // Executives: Earlier mornings, avoid Mondays
@@ -943,14 +970,14 @@ export class OptimalTimingEngine {
     const avoidTimes = ['12:00', '17:00', '18:00']; // Lunch, end of day
 
     const recommendation: TimingRecommendation = {
-      contactId: contactData.contactId,
+      contactId: contactId,
       optimalSendTime: optimalTimeStr,
       optimalDayOfWeek: dayNames[optimalDay],
       timezone,
       confidenceScore: Math.round(confidenceScore * 100) / 100,
       rationale: allEngagements.length > 5 
         ? `Based on ${allEngagements.length} historical engagement signals.`
-        : `Limited data. Using industry best practices for ${contactData.industry}.`,
+        : `Limited data. Using industry best practices for ${industry}.`,
       alternativeTimes,
       avoidTimes
     };
@@ -1052,25 +1079,40 @@ export class ObjectionPredictor {
    * L5 Constraint: Higher close rates by preparing counter-arguments.
    */
   async predictObjections(leadData: {
-    leadId: string;
-    companySize: number;
-    industry: string;
-    jobTitle: string;
-    currentSolution: string;
-    pricingTierViewed: string;
-    timeOnPricingPage: number;
-    competitorMentions: string[];
-    stageInPipeline: string;
-    previousObjections: string[];
-    companyRecentNews: string;
+    leadId?: string;
+    persona?: string;
+    company?: string;
+    companySize?: number;
+    industry?: string;
+    jobTitle?: string;
+    currentSolution?: string;
+    pricingTierViewed?: string;
+    timeOnPricingPage?: number;
+    competitorMentions?: string[];
+    stageInPipeline?: string;
+    dealStage?: string;
+    previousObjections?: string[];
+    companyRecentNews?: string;
   }): Promise<L6AdvisoryOutput> {
     
+    // Normalize inputs with defaults
+    const leadId = leadData.leadId || `lead_${Date.now()}`;
+    const jobTitle = leadData.jobTitle || leadData.persona || '';
+    const industry = leadData.industry || 'Life Sciences';
+    const companySize = leadData.companySize || 100;
+    const currentSolution = leadData.currentSolution || '';
+    const timeOnPricingPage = leadData.timeOnPricingPage || 0;
+    const competitorMentions = leadData.competitorMentions || [];
+    const stageInPipeline = leadData.stageInPipeline || leadData.dealStage || 'DISCOVERY';
+    const previousObjections = leadData.previousObjections || [];
+    const companyRecentNews = leadData.companyRecentNews || '';
+    
     const predictedObjections: ObjectionPrediction['predictedObjections'] = [];
-    const titleLower = leadData.jobTitle.toLowerCase();
-    const industryLower = leadData.industry.toLowerCase();
+    const titleLower = jobTitle.toLowerCase();
+    const industryLower = industry.toLowerCase();
 
     // BUDGET objections
-    if (leadData.timeOnPricingPage > 120 || leadData.companySize < 100) {
+    if (timeOnPricingPage > 120 || companySize < 100) {
       predictedObjections.push({
         objection: "It's too expensive for our budget right now",
         probability: 0.75,
@@ -1081,7 +1123,7 @@ export class ObjectionPredictor {
     }
 
     // TIMING objections
-    if (leadData.stageInPipeline === 'EARLY' || leadData.previousObjections.includes('timing')) {
+    if (stageInPipeline === 'EARLY' || previousObjections.includes('timing')) {
       predictedObjections.push({
         objection: "We're not ready to implement this right now",
         probability: 0.65,
@@ -1103,7 +1145,7 @@ export class ObjectionPredictor {
     }
 
     // NEED objections
-    if (leadData.currentSolution && leadData.currentSolution !== 'none') {
+    if (currentSolution && currentSolution !== 'none') {
       predictedObjections.push({
         objection: "We already have a system that works fine",
         probability: 0.60,
@@ -1114,8 +1156,8 @@ export class ObjectionPredictor {
     }
 
     // COMPETITOR objections
-    if (leadData.competitorMentions.length > 0) {
-      const topCompetitor = leadData.competitorMentions[0];
+    if (competitorMentions.length > 0) {
+      const topCompetitor = competitorMentions[0];
       predictedObjections.push({
         objection: `We're also looking at ${topCompetitor}`,
         probability: 0.70,
@@ -1126,8 +1168,8 @@ export class ObjectionPredictor {
     }
 
     // TRUST objections (new vendor hesitation)
-    if (leadData.companyRecentNews.toLowerCase().includes('acquisition') || 
-        leadData.companyRecentNews.toLowerCase().includes('layoff')) {
+    if (companyRecentNews.toLowerCase().includes('acquisition') || 
+        companyRecentNews.toLowerCase().includes('layoff')) {
       predictedObjections.push({
         objection: "We're hesitant to bring on new vendors during this transition",
         probability: 0.55,
@@ -1145,11 +1187,11 @@ export class ObjectionPredictor {
     // Generate briefing notes
     const topObjections = predictedObjections.sort((a, b) => b.probability - a.probability).slice(0, 3);
     const briefingNotes = topObjections.length > 0
-      ? `CALL PREP: Expect ${topObjections.map(o => o.category).join(', ')} objections. Lead has ${leadData.competitorMentions.length > 0 ? 'competitor exposure' : 'no known competitor exposure'}. ${leadData.timeOnPricingPage > 60 ? 'Spent significant time on pricing—be ready to discuss value.' : ''}`
+      ? `CALL PREP: Expect ${topObjections.map(o => o.category).join(', ')} objections. Lead has ${competitorMentions.length > 0 ? 'competitor exposure' : 'no known competitor exposure'}. ${timeOnPricingPage > 60 ? 'Spent significant time on pricing—be ready to discuss value.' : ''}`
       : 'LOW RESISTANCE: Lead shows strong buying signals. Focus on closing.';
 
     const prediction: ObjectionPrediction = {
-      leadId: leadData.leadId,
+      leadId: leadId,
       predictedObjections,
       overallResistanceScore,
       briefingNotes
