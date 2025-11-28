@@ -2809,6 +2809,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Governance Engine, Revenue Engine, Coherence Engine + Chairman Alerts
   app.use("/api/council", (await import("./routes/l6-executive-council")).default);
   
+  // Post-Launch Monitoring Protocol routes (08:00-12:00 EST Window)
+  // Three Pulse Checks: Email Velocity, Checkout Recovery, Revenue Attribution
+  app.use("/api/post-launch", (await import("./routes/post-launch-monitor")).default);
+  
   // CFO Agent routes
   const cfoMonitor = await import("./services/cfo-monitor.js");
   
