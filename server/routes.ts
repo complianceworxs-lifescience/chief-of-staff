@@ -35,6 +35,7 @@ import executionOrderAlphaRouter from "./routes/execution-order-alpha";
 import leadGenerationModeRouter from "./routes/lead-generation-mode";
 import broadcastExtractStrategyRouter from "./routes/broadcast-extract-strategy";
 import l6ShadowModeRouter from "./routes/l6-shadow-mode";
+import stripeRouter from "./routes/stripe";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -149,6 +150,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L6 SHADOW MODE ADVISORS routes
   app.use("/api/l6-shadow", l6ShadowModeRouter);
   console.log('👁️  L6 SHADOW MODE ADVISORS (READ-ONLY) routes mounted at /api/l6-shadow');
+  
+  // Mount Stripe payment routes (via Replit Connector)
+  app.use("/api/stripe", stripeRouter);
+  console.log('💳 STRIPE PAYMENT INTEGRATION routes mounted at /api/stripe');
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {
