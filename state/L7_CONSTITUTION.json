@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "last_enforced": "2025-11-28T16:51:35.710Z",
-  "enforcement_count": 4,
-  "violations_blocked": 3,
+  "last_enforced": "2025-11-28T17:21:31.918Z",
+  "enforcement_count": 7,
+  "violations_blocked": 6,
   "pillars": {
     "prestige_protocol": {
       "id": "PRESTIGE_PROTOCOL",
@@ -227,6 +227,105 @@
       "blocked": true,
       "severity": "HIGH",
       "details": "Gross margin 20% is below minimum 40%"
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.912Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "CV_FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"action_id\":\"test_vocab_002\",\"title\":\"Get our cheap discount deal today\",\"content\":\"Flash sale on compliance services\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden vocabulary detected: \"cheap\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.912Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "CV_FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"action_id\":\"test_vocab_002\",\"title\":\"Get our cheap discount deal today\",\"content\":\"Flash sale on compliance services\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden vocabulary detected: \"discount\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.912Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "CV_FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"action_id\":\"test_vocab_002\",\"title\":\"Get our cheap discount deal today\",\"content\":\"Flash sale on compliance services\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden vocabulary detected: \"flash sale\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.912Z",
+      "pillar": "PRESTIGE_PROTOCOL",
+      "constraint_id": "CV_FORBIDDEN_VOCABULARY",
+      "attempted_action": "{\"action_id\":\"test_vocab_002\",\"title\":\"Get our cheap discount deal today\",\"content\":\"Flash sale on compliance services\"}",
+      "blocked": true,
+      "severity": "MEDIUM",
+      "details": "Forbidden vocabulary detected: \"deal\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.915Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "CV_FORBIDDEN_CLAIM",
+      "attempted_action": "{\"action_id\":\"test_claims_003\",\"title\":\"Guaranteed FDA approval service\",\"content\":\"We promise your audit will pass with 100% success\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Forbidden claim term detected: \"guarantee\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.915Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "CV_FORBIDDEN_CLAIM",
+      "attempted_action": "{\"action_id\":\"test_claims_003\",\"title\":\"Guaranteed FDA approval service\",\"content\":\"We promise your audit will pass with 100% success\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Forbidden claim term detected: \"guaranteed\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.915Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "CV_FORBIDDEN_CLAIM",
+      "attempted_action": "{\"action_id\":\"test_claims_003\",\"title\":\"Guaranteed FDA approval service\",\"content\":\"We promise your audit will pass with 100% success\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Forbidden claim term detected: \"promise\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.915Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "CV_FORBIDDEN_CLAIM",
+      "attempted_action": "{\"action_id\":\"test_claims_003\",\"title\":\"Guaranteed FDA approval service\",\"content\":\"We promise your audit will pass with 100% success\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Forbidden claim term detected: \"100% success\""
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.915Z",
+      "pillar": "LIABILITY_IRON_DOME",
+      "constraint_id": "CV_OUTCOME_CLAIM",
+      "attempted_action": "{\"action_id\":\"test_claims_003\",\"title\":\"Guaranteed FDA approval service\",\"content\":\"We promise your audit will pass with 100% success\"}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Outcome claim detected: /will pass/i"
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.918Z",
+      "pillar": "BURN_RATE_BREAKER",
+      "constraint_id": "CV_HOURLY_SPEND_EXCEEDED",
+      "attempted_action": "{\"action_id\":\"test_spend_004\",\"title\":\"Large marketing campaign\",\"hourly_spend\":500,\"daily_spend\":5000}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Hourly spend $500 exceeds cap of $100"
+    },
+    {
+      "timestamp": "2025-11-28T17:21:31.918Z",
+      "pillar": "BURN_RATE_BREAKER",
+      "constraint_id": "CV_DAILY_SPEND_EXCEEDED",
+      "attempted_action": "{\"action_id\":\"test_spend_004\",\"title\":\"Large marketing campaign\",\"hourly_spend\":500,\"daily_spend\":5000}",
+      "blocked": true,
+      "severity": "CRITICAL",
+      "details": "Daily spend $5000 exceeds cap of $2500"
     }
   ]
 }

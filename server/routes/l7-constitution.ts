@@ -7,6 +7,7 @@
 
 import { Router, Request, Response } from 'express';
 import { l7Constitution } from '../services/l7-constitutional-constraints';
+import { constitutionValidator, validateConstitution, constitutionMiddleware } from '../services/constitution-validator';
 
 const router = Router();
 
@@ -324,6 +325,167 @@ router.get('/immutability-proof', (req: Request, res: Response) => {
       'L7 CANNOT use manipulative tactics'
     ]
   });
+});
+
+// ============================================================================
+// CONSTITUTION VALIDATOR ROUTINE - L5 ACTION LOOP MIDDLEWARE
+// ============================================================================
+
+router.get('/validator/status', (req: Request, res: Response) => {
+  try {
+    const stats = constitutionValidator.getStats();
+    res.json({
+      success: true,
+      protocol: 'CONSTITUTION_VALIDATOR_ROUTINE_v1.0',
+      description: 'L5 Action Loop Middleware: ingest → prioritize → plan → [VALIDATE] → produce',
+      status: 'ACTIVE',
+      integration_point: '[VALIDATE] step in L5 execution loop',
+      stats: {
+        total_validations: stats.total_validations,
+        total_blocked: stats.total_blocked,
+        pass_rate: `${stats.pass_rate.toFixed(1)}%`,
+        constitution_version: stats.constitution_version
+      },
+      checks_performed: [
+        'FORBIDDEN_VOCABULARY (Prestige Protocol)',
+        'MAX_HOURLY_SPEND (Burn Rate Breaker)',
+        'FORBIDDEN_CLAIMS (Liability Iron Dome)',
+        'MANIPULATION_FIREWALL (Additional Constraints)'
+      ],
+      return_codes: {
+        GREEN: 'Allow execution - action passes all constitutional checks',
+        RED: 'Block execution - violation detected, logged to audit'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get validator status',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.post('/validator/check', (req: Request, res: Response) => {
+  try {
+    const result = validateConstitution(req.body);
+    res.json({
+      success: true,
+      status: result.status,
+      enforcement_action: result.enforcement_action,
+      violations: result.violations,
+      audit_logged: result.audit_logged,
+      timestamp: result.timestamp,
+      action_id: result.action_id,
+      message: result.status === 'GREEN' 
+        ? 'ACTION ALLOWED - Constitution Check PASSED'
+        : `ACTION BLOCKED - ${result.violations.length} violation(s) detected`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      status: 'ERROR',
+      error: 'Validation failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.get('/validator/recent-violations', (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    const violations = constitutionValidator.getRecentViolations(limit);
+    res.json({
+      success: true,
+      count: violations.length,
+      violations,
+      note: 'These violations were blocked by the Constitution Validator in the L5 action loop'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get recent violations',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.post('/validator/test', (req: Request, res: Response) => {
+  try {
+    const testCases = [
+      {
+        name: 'Valid Action',
+        payload: { 
+          action_id: 'test_valid_001',
+          title: 'Increase audit readiness score',
+          content: 'Implement quality management improvements for life sciences compliance',
+          hourly_spend: 50
+        }
+      },
+      {
+        name: 'Forbidden Vocabulary (should block)',
+        payload: {
+          action_id: 'test_vocab_002',
+          title: 'Get our cheap discount deal today',
+          content: 'Flash sale on compliance services'
+        }
+      },
+      {
+        name: 'Forbidden Claims (should block)',
+        payload: {
+          action_id: 'test_claims_003',
+          title: 'Guaranteed FDA approval service',
+          content: 'We promise your audit will pass with 100% success'
+        }
+      },
+      {
+        name: 'Overspending (should block)',
+        payload: {
+          action_id: 'test_spend_004',
+          title: 'Large marketing campaign',
+          hourly_spend: 500,
+          daily_spend: 5000
+        }
+      }
+    ];
+
+    const results = testCases.map(tc => ({
+      test_name: tc.name,
+      result: validateConstitution(tc.payload)
+    }));
+
+    res.json({
+      success: true,
+      message: 'Constitution Validator test suite completed',
+      total_tests: testCases.length,
+      passed: results.filter(r => r.result.status === 'GREEN').length,
+      blocked: results.filter(r => r.result.status === 'RED').length,
+      results
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Test suite failed',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+router.post('/validator/refresh', (req: Request, res: Response) => {
+  try {
+    constitutionValidator.refreshConstitution();
+    res.json({
+      success: true,
+      message: 'Constitution reloaded from disk',
+      stats: constitutionValidator.getStats()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to refresh constitution',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;

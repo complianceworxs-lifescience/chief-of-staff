@@ -1,5 +1,6 @@
 import { storage } from '../storage.js';
 import { nanoid } from 'nanoid';
+import { validateConstitution, type ConstitutionValidationResult } from './constitution-validator.js';
 
 /**
  * Action Record Schema - Required for every recommendation
@@ -120,8 +121,53 @@ export class ActionTracker {
   
   /**
    * Check governance and auto-execute if approved
+   * 
+   * L5 ACTION LOOP: ingest → prioritize → plan → [VALIDATE] → produce
+   * The [VALIDATE] step runs Constitution Validator before execution
    */
   async processActionRecord(record: ActionRecord): Promise<void> {
+    // ========================================================================
+    // [VALIDATE] - CONSTITUTION CHECK (L5 Action Loop Step)
+    // ========================================================================
+    console.log(`📜 [VALIDATE] Running Constitution Check for ${record.action_id}...`);
+    
+    const constitutionResult = validateConstitution({
+      action_id: record.action_id,
+      title: record.recommendation_title,
+      content: record.expected.scope,
+      text: `${record.recommendation_title} ${record.expected.target} ${record.expected.pass_fail_rule}`,
+      spend_cents: record.execution.spend_cents,
+      hourly_spend: record.execution.spend_cents / 100, // Convert to dollars
+      agent: record.owner_agent,
+      metadata: {
+        kpi: record.expected.kpi,
+        target: record.expected.target,
+        risk: record.execution.risk
+      }
+    });
+
+    // If Constitution Check fails → BLOCK execution
+    if (constitutionResult.status === 'RED') {
+      record.execution.status = 'queued';
+      record.governance.escalated = true;
+      record.governance.escalation_reason = `CONSTITUTION VIOLATION: ${constitutionResult.violations.map(v => v.code).join(', ')}`;
+      record.outcome.result_code = 'Blocked';
+      
+      console.log(`🚫 [VALIDATE] BLOCKED: ${record.action_id} - Constitution Violation`);
+      constitutionResult.violations.forEach(v => {
+        console.log(`   ⛔ ${v.code} [${v.severity}]: ${v.message}`);
+      });
+      console.log(`   📋 Enforcement: ${constitutionResult.enforcement_action}`);
+      
+      await this.updateActionRecord(record);
+      return; // Stop execution - action blocked by Constitution
+    }
+
+    console.log(`✅ [VALIDATE] PASSED: ${record.action_id} - Constitution Check GREEN`);
+    
+    // ========================================================================
+    // [PRODUCE] - Continue with governance approval and execution
+    // ========================================================================
     const canGovernanceApprove = this.checkGovernanceApproval(record);
     
     if (canGovernanceApprove.approved) {
@@ -149,6 +195,14 @@ export class ActionTracker {
     }
     
     await this.updateActionRecord(record);
+  }
+  
+  /**
+   * Get last constitution validation result for an action
+   */
+  getLastConstitutionValidation(action_id: string): ConstitutionValidationResult | null {
+    // This would be stored with the action record in a production system
+    return null;
   }
   
   /**
