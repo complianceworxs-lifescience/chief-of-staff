@@ -37,6 +37,10 @@ import broadcastExtractStrategyRouter from "./routes/broadcast-extract-strategy"
 import l6ShadowModeRouter from "./routes/l6-shadow-mode";
 import stripeRouter from "./routes/stripe";
 import researchMandateRouter from "./routes/research-mandate";
+import revenueScoreboardRouter from "./routes/revenue-scoreboard";
+import narrativeRouter from "./routes/narrative";
+import unifiedOrchestratorRouter from "./routes/unified-orchestrator";
+import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
 import { AgentDispatchService } from "./services/agent-dispatch";
@@ -159,6 +163,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Research Mandate routes (First Mission - 5 Questions)
   app.use("/api/research", researchMandateRouter);
   console.log('🔬 AUTOMATED RESEARCH MANDATE routes mounted at /api/research');
+  
+  // Mount Revenue Scoreboard routes (Single Source of Truth)
+  app.use("/api/revenue", revenueScoreboardRouter);
+  console.log('📊 REVENUE SCOREBOARD (Single Source of Truth) routes mounted at /api/revenue');
+  
+  // Mount Narrative Enforcer routes (One Narrative Everywhere)
+  app.use("/api/narrative", narrativeRouter);
+  console.log('📢 NARRATIVE ENFORCER (One Narrative Everywhere) routes mounted at /api/narrative');
+  
+  // Mount Unified Orchestrator routes (Fewer Systems, More Cycles)
+  app.use("/api/orchestrator", unifiedOrchestratorRouter);
+  console.log('🔄 UNIFIED ORCHESTRATOR (Fewer Systems, More Cycles) routes mounted at /api/orchestrator');
+  
+  // Start the Unified Orchestrator
+  unifiedOrchestrator.start();
   
   // Initialize Critical Infrastructure Config
   criticalInfrastructureConfig.initialize().catch(err => {

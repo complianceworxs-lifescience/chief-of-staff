@@ -1,12 +1,17 @@
 import { sweepOverdueActions } from './actions.js';
 import { strategyExecutor } from './services/strategic-executor.js';
 import { l7StateUpdater } from './services/l7-state-updater.js';
+import { revenueScoreboard } from './services/revenue-scoreboard.js';
+import { narrativeEnforcer } from './services/narrative-enforcer.js';
 
-const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "7200") * 1000; // 2 hours for L7 state updates
+const INTERVAL = parseInt(process.env.JOB_INTERVAL_SECONDS || "7200") * 1000; // 2 hours - SINGLE CORE CYCLE
 const DRY_RUN = (process.env.DRY_RUN || "false").toLowerCase() === "true"; // REAL EXECUTION - no simulation
 
+const CORE_NARRATIVE = narrativeEnforcer.getNarrative();
+
 function log(message: string, data?: any) {
-  console.log(`[job] ${message}`, data ? JSON.stringify(data) : '');
+  const prefix = `[job] 📢 "${CORE_NARRATIVE.core.substring(0, 40)}..." |`;
+  console.log(`${prefix} ${message}`, data ? JSON.stringify(data) : '');
 }
 
 export async function tick() {
@@ -54,6 +59,21 @@ export async function tick() {
   } catch (error) {
     log("l7_state_updater_error", { error: error instanceof Error ? error.message : String(error) });
   }
+
+  // Revenue Scoreboard: Sync and report (Single Source of Truth)
+  try {
+    await revenueScoreboard.syncResearchInsights();
+    const health = await revenueScoreboard.calculateHealthScore();
+    log("revenue_scoreboard", { 
+      health_score: health.score, 
+      breakdown: health.breakdown,
+      narrative: CORE_NARRATIVE.core.substring(0, 50)
+    });
+  } catch (error) {
+    log("revenue_scoreboard_error", { error: error instanceof Error ? error.message : String(error) });
+  }
+
+  // NOTE: Research Mandate is now handled by Unified Orchestrator (fewer systems, more cycles)
 }
 
 export function startJobRunner() {

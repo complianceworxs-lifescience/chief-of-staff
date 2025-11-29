@@ -1,8 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 import { storage } from '../storage';
+import { revenueScoreboard } from './revenue-scoreboard';
 
 const GEMINI_API_KEY = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 const GEMINI_BASE_URL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+
+const CORE_NARRATIVE = {
+  core: "Compliance is no longer overhead. Compliance is a measurable business asset.",
+  hook: "Why Validation Teams Are Abandoning Traditional CSV",
+  outcomes: ["Time Reclaimed", "Proof of ROI", "Professional Equity"]
+};
 
 function getGeminiClient() {
   if (!GEMINI_API_KEY) {
@@ -17,22 +24,45 @@ function getGeminiClient() {
   });
 }
 
-async function callGemini(prompt: string): Promise<any> {
-  const ai = getGeminiClient();
-  
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: prompt + "\n\nRespond with valid JSON only, no markdown formatting." }]
-      }
-    ]
-  });
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-  const content = response.text?.trim() || '';
-  const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-  return JSON.parse(jsonContent);
+async function callGeminiWithRetry(prompt: string, maxRetries: number = 3): Promise<any> {
+  const ai = getGeminiClient();
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: prompt + `\n\nIMPORTANT: Respond with valid JSON only. No markdown. Core narrative to reinforce: "${CORE_NARRATIVE.core}"` }]
+          }
+        ]
+      });
+
+      const content = response.text?.trim() || '';
+      const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(jsonContent);
+    } catch (error) {
+      lastError = error as Error;
+      console.log(`🔄 RESEARCH MANDATE: Retry ${attempt}/${maxRetries} - ${lastError.message}`);
+      
+      if (attempt < maxRetries) {
+        const backoffMs = Math.pow(2, attempt) * 1000;
+        await sleep(backoffMs);
+      }
+    }
+  }
+  
+  throw lastError || new Error('All retry attempts failed');
+}
+
+async function callGemini(prompt: string): Promise<any> {
+  return callGeminiWithRetry(prompt, 3);
 }
 
 interface ResearchQuestion {
@@ -560,6 +590,14 @@ OUTPUT FORMAT (JSON):
     
     this.log('Research mandate execution complete', `${completedCount}/5 questions completed`);
     await this.saveState();
+
+    // Sync insights to Revenue Scoreboard (single source of truth)
+    try {
+      await revenueScoreboard.syncResearchInsights();
+      console.log('📊 RESEARCH MANDATE: Insights synced to Revenue Scoreboard');
+    } catch (error) {
+      console.error('📊 RESEARCH MANDATE: Failed to sync to Revenue Scoreboard:', error);
+    }
 
     return this.state;
   }
