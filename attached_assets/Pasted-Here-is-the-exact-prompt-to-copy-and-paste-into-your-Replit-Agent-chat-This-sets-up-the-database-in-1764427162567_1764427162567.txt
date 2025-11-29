@@ -1,0 +1,70 @@
+Here is the exact prompt to copy and paste into your Replit Agent chat. This sets up the database infrastructure and the code definitions (Schema + Types) required for L6.
+
+Copy and paste this into Replit:
+
+Task: Initialize L6 Performance Ledger Infrastructure
+
+We are upgrading the system to L6 (Recursive Self-Improvement). We need to create a "Performance Ledger" to track the correlation between email content (hypothesis) and business outcomes (results).
+
+1. Create a new file server/db/schema_performance_ledger.sql with this schema:
+
+SQL
+
+CREATE TABLE performance_ledger (
+    -- ID & Segmentation
+    send_id TEXT PRIMARY KEY,       -- UUID for the specific email sent
+    campaign_id TEXT NOT NULL,
+    variant_id TEXT,
+    persona TEXT NOT NULL,          -- e.g. "Validation Strategist"
+    segment TEXT,
+-- The Hypothesis (Optimization Levers)
+problem_angle TEXT,             -- Enum: 'Cost', 'Speed', 'Risk', 'Recognition'
+metric_focus TEXT,              -- Enum: 'Time', 'Money', 'Percentage'
+tone_style TEXT,                -- Enum: 'Provocative', 'Clinical', 'Empathetic'
+cta_type TEXT,                  -- Enum: 'Soft Ask', 'Hard Audit'
+-- Compliance & Safety (Immutable Constraints)
+doctrine_score NUMERIC,         -- 0-100 score from Validator
+validator_pass BOOLEAN DEFAULT FALSE,
+vqs_band TEXT,                  -- Read-Only: '14-28%', '$18k-$72k', '15-35%'
+forbidden_flag BOOLEAN DEFAULT FALSE,
+-- Content Fingerprints
+subject_line TEXT,
+subject_hash TEXT,              -- For fatigue tracking
+body_hash TEXT,
+-- Outcomes (Updated via Webhook)
+opens INT DEFAULT 0,
+clicks INT DEFAULT 0,
+replies INT DEFAULT 0,
+positive_replies INT DEFAULT 0,
+booked_calls INT DEFAULT 0,
+pipeline_value_est NUMERIC DEFAULT 0.0,
+revenue_attrib_est NUMERIC DEFAULT 0.0,
+-- Metadata
+batch_id TEXT,
+sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+**2. Create a new file `server/types/ledger.ts` to define the interfaces:**
+TypeScript
+
+export interface PerformanceLedgerEntry {
+  // Identity
+  sendId: string;
+  campaignId: string;
+  persona: 'Rising Leader' | 'Validation Strategist' | 'Compliance Architect';
+// Strategy Components (The "Hypothesis") hypothesis: { angle: 'Cost' | 'Speed' | 'Risk' | 'Recognition'; metric: 'Time' | 'Money' | 'Percentage'; tone: string; cta: string; };
+
+// Validation Constraints compliance: { doctrineScore: number; vqsBand: '14-28%' | '$18k-$72k' | '15-35%'; // Immutable validatorPass: boolean; };
+
+// Content content: { subject: string; subjectHash: string; };
+
+// Results (Mutable) outcomes: { opens: number; clicks: number; replies: number; bookedCalls: number; revenueEst: number; }; }
+
+
+**3. Action:** Apply the SQL to the database and save the TypeScript file. Confirm when the table is live.
+What this does:
+Creates the "Scoreboard": It builds the actual database table where results will be stored.
+
+Defines the Rules: The TypeScript file ensures the Agent knows exactly what data fits into that table.

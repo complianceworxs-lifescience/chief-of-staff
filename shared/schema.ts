@@ -728,6 +728,38 @@ export const zeroCostAuditLog = pgTable("zero_cost_audit_log", {
   traceabilityChain: json("traceability_chain").$type<string[]>().notNull(),
 });
 
+// L6 Performance Ledger - Tracks email hypothesis vs business outcomes
+export const performanceLedger = pgTable("performance_ledger", {
+  sendId: text("send_id").primaryKey(),
+  campaignId: text("campaign_id").notNull(),
+  variantId: text("variant_id"),
+  persona: text("persona").notNull(),
+  segment: text("segment"),
+  problemAngle: text("problem_angle"),
+  metricFocus: text("metric_focus"),
+  toneStyle: text("tone_style"),
+  ctaType: text("cta_type"),
+  doctrineScore: integer("doctrine_score"),
+  validatorPass: boolean("validator_pass").default(false),
+  vqsBand: text("vqs_band"),
+  forbiddenFlag: boolean("forbidden_flag").default(false),
+  subjectLine: text("subject_line"),
+  subjectHash: text("subject_hash"),
+  bodyHash: text("body_hash"),
+  opens: integer("opens").default(0),
+  clicks: integer("clicks").default(0),
+  replies: integer("replies").default(0),
+  positiveReplies: integer("positive_replies").default(0),
+  bookedCalls: integer("booked_calls").default(0),
+  pipelineValueEst: integer("pipeline_value_est").default(0),
+  revenueAttribEst: integer("revenue_attrib_est").default(0),
+  batchId: text("batch_id"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPerformanceLedgerSchema = createInsertSchema(performanceLedger).omit({ sentAt: true, updatedAt: true });
+
 // Zero-cost enhancement insert schemas
 export const insertZeroCostProposalSchema = createInsertSchema(zeroCostProposals).omit({ id: true, createdAt: true });
 export const insertZeroCostAdoptionSchema = createInsertSchema(zeroCostAdoptions).omit({ id: true, deployedAt: true });
@@ -833,3 +865,7 @@ export type ZeroCostAdoption = typeof zeroCostAdoptions.$inferSelect;
 export type InsertZeroCostAdoption = z.infer<typeof insertZeroCostAdoptionSchema>;
 export type ZeroCostAuditLog = typeof zeroCostAuditLog.$inferSelect;
 export type InsertZeroCostAuditLog = z.infer<typeof insertZeroCostAuditLogSchema>;
+
+// L6 Performance Ledger Types
+export type PerformanceLedger = typeof performanceLedger.$inferSelect;
+export type InsertPerformanceLedger = z.infer<typeof insertPerformanceLedgerSchema>;
