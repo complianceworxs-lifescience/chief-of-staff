@@ -2,25 +2,157 @@
   "loopId": "oim_81F0qOd9",
   "startedAt": "2025-11-29T15:40:03.877Z",
   "targetFriction": 27,
-  "currentFriction": 28,
+  "currentFriction": 27,
   "iterations": [
     {
       "id": "iter_-diJA7",
       "iterationNumber": 1,
       "startedAt": "2025-11-29T15:40:03.877Z",
-      "status": "active",
-      "objectionsCaptured": 0,
-      "patternsIdentified": [],
+      "status": "completed",
+      "objectionsCaptured": 10,
+      "patternsIdentified": [
+        "clarity_gap",
+        "stakeholder_confidence"
+      ],
       "patchesApplied": [],
       "frictionBefore": 28,
       "campaignsSent": 0,
-      "ledgerEntriesCreated": 1
+      "ledgerEntriesCreated": 30,
+      "completedAt": "2025-11-29T15:47:09.356Z",
+      "frictionAfter": 27,
+      "frictionDelta": 1
     }
   ],
-  "totalObjections": [],
-  "patternFrequency": {},
+  "totalObjections": [
+    {
+      "source": "email_reply",
+      "rawText": "We need to present this to the board first. They want to see clear ROI before we commit to any new validation system.",
+      "persona": "qa_director",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_j8oGDLkt",
+      "capturedAt": "2025-11-29T15:43:58.768Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "sales_call",
+      "rawText": "Our leadership team is skeptical about AI in compliance. Too many failed projects in the past.",
+      "persona": "validation_manager",
+      "category": "stakeholder_confidence",
+      "severity": "medium",
+      "id": "obj_Z01KVg_E",
+      "capturedAt": "2025-11-29T15:44:00.810Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "linkedin_dm",
+      "rawText": "How do you handle 21 CFR Part 11 compliance? Our auditors are very strict about electronic records.",
+      "persona": "regulatory_affairs",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_IiBdA3vn",
+      "capturedAt": "2025-11-29T15:44:03.161Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "email_reply",
+      "rawText": "We already spent $200K on our current CSV system. The executives wont approve another major purchase.",
+      "persona": "coo",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_Xxgwze4s",
+      "capturedAt": "2025-11-29T15:44:05.393Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "form_submission",
+      "rawText": "Can this integrate with our existing LIMS and ERP systems? Our IT team is concerned about data silos.",
+      "persona": "it_director",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_PWICQ43v",
+      "capturedAt": "2025-11-29T15:44:07.289Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "sales_call",
+      "rawText": "The board wants documented evidence that this will reduce our FDA audit findings. We need hard metrics.",
+      "persona": "qa_director",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_HeEVNBo2",
+      "capturedAt": "2025-11-29T15:44:24.531Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "email_reply",
+      "rawText": "We have an FDA inspection coming up in 3 months. We cannot risk any system changes before that.",
+      "persona": "validation_manager",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_5Hc1WZTU",
+      "capturedAt": "2025-11-29T15:44:26.716Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "linkedin_dm",
+      "rawText": "Ive seen too many AI tools promise automation and deliver complexity. What makes yours different?",
+      "persona": "coo",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_dyzgSC0G",
+      "capturedAt": "2025-11-29T15:44:28.791Z",
+      "resolved": false,
+      "vqsValidated": false,
+      "vqsViolations": [
+        "Contains forbidden term: \"promise\""
+      ]
+    },
+    {
+      "source": "sales_call",
+      "rawText": "Our validation team is already overwhelmed. They dont have bandwidth to learn a new system.",
+      "persona": "validation_manager",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_HJaV5fFB",
+      "capturedAt": "2025-11-29T15:44:30.740Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    },
+    {
+      "source": "form_submission",
+      "rawText": "We need executive sponsorship before moving forward. Our VP needs to sign off on any compliance tooling.",
+      "persona": "regulatory_affairs",
+      "category": "clarity_gap",
+      "severity": "medium",
+      "id": "obj_iPn18FwX",
+      "capturedAt": "2025-11-29T15:44:33.790Z",
+      "resolved": false,
+      "vqsValidated": true,
+      "vqsViolations": []
+    }
+  ],
+  "patternFrequency": {
+    "clarity_gap": 9,
+    "stakeholder_confidence": 1
+  },
   "patchesApplied": [],
-  "status": "running",
+  "status": "friction_target_met",
   "dailySchedule": {
     "captureWindow": "09:00-17:00 ET",
     "analysisTime": "18:00 ET",
