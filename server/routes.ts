@@ -43,6 +43,7 @@ import unifiedOrchestratorRouter from "./routes/unified-orchestrator";
 import webhooksMailchimpRouter from "./routes/webhooks-mailchimp";
 import webhooksSendgridRouter from "./routes/webhooks-sendgrid";
 import strategistBrainRouter from "./routes/strategist-brain";
+import objectionIntelligenceRouter from "./routes/objection-intelligence";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -189,6 +190,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount L6 Strategist Brain routes (Performance-Driven Optimization)
   app.use("/api/strategist-brain", strategistBrainRouter);
   console.log('🧠 L6 STRATEGIST BRAIN (Epsilon-Greedy Optimization) routes mounted at /api/strategist-brain');
+  
+  // Mount Objection-Intelligence Micro-Loop routes (L6 Friction Reduction)
+  app.use("/api/objection-intelligence", objectionIntelligenceRouter);
+  console.log('🔄 OBJECTION-INTELLIGENCE MICRO-LOOP (L6 Friction Reduction) routes mounted at /api/objection-intelligence');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
