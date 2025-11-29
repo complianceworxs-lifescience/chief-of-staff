@@ -21,18 +21,24 @@ interface SendGridEvent {
 }
 
 function verifySendGridSignature(req: Request): boolean {
-  const webhookKey = process.env.SENDGRID_WEBHOOK_SIGNING_KEY;
+  const webhookKey = process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY;
   
   if (!webhookKey) {
-    console.warn("⚠️ SENDGRID_WEBHOOK_SIGNING_KEY not configured - using fallback secret verification");
     const fallbackSecret = process.env.SENDGRID_WEBHOOK_SECRET;
     if (!fallbackSecret) {
       console.warn("⚠️ No SendGrid webhook security configured - accepting all requests");
       return true;
     }
     const providedSecret = req.headers["x-sendgrid-webhook-secret"] as string;
-    if (!providedSecret) return false;
-    return crypto.timingSafeEqual(Buffer.from(providedSecret), Buffer.from(fallbackSecret));
+    if (!providedSecret) {
+      console.error("❌ Missing X-SendGrid-Webhook-Secret header");
+      return false;
+    }
+    try {
+      return crypto.timingSafeEqual(Buffer.from(providedSecret), Buffer.from(fallbackSecret));
+    } catch {
+      return false;
+    }
   }
 
   const signature = req.headers["x-twilio-email-event-webhook-signature"] as string;
@@ -44,16 +50,23 @@ function verifySendGridSignature(req: Request): boolean {
   }
 
   try {
-    const payload = timestamp + JSON.stringify(req.body);
-    const expectedSignature = crypto
-      .createHmac("sha256", webhookKey)
-      .update(payload)
-      .digest("base64");
-
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    const rawBody = (req as any).rawBody;
+    if (!rawBody) {
+      console.error("❌ Raw body not available for signature verification");
+      return false;
+    }
+    
+    const payload = timestamp + rawBody;
+    
+    const publicKey = crypto.createPublicKey({
+      key: `-----BEGIN PUBLIC KEY-----\n${webhookKey}\n-----END PUBLIC KEY-----`,
+      format: 'pem'
+    });
+    
+    const verifier = crypto.createVerify('sha256');
+    verifier.update(payload);
+    
+    return verifier.verify(publicKey, signature, 'base64');
   } catch (error) {
     console.error("❌ SendGrid signature verification failed:", error);
     return false;
@@ -79,7 +92,7 @@ router.post("/", async (req: Request, res: Response) => {
       const sendId = event.send_id;
       const eventType = event.event;
 
-      console.log(`   Event: ${eventType} | send_id: ${sendId || 'N/A'} | email: ${event.email}`);
+      console.log(`   Event: ${eventType} | send_id: ${sendId || 'N/A'} | email: ${event.email?.substring(0, 3) || ''}***`);
 
       if (!sendId) {
         console.log(`   ⚠️ No send_id in custom_args - skipping ledger update`);
@@ -129,12 +142,12 @@ router.post("/", async (req: Request, res: Response) => {
         case "bounce":
         case "dropped":
         case "deferred":
-          console.log(`   ⚠️ Email ${eventType} for ${sendId}: ${event.email}`);
+          console.log(`   ⚠️ Email ${eventType} for ${sendId}`);
           break;
 
         case "spamreport":
         case "unsubscribe":
-          console.log(`   🚨 ${eventType} for ${sendId}: ${event.email}`);
+          console.log(`   🚨 ${eventType} for ${sendId}`);
           break;
 
         default:

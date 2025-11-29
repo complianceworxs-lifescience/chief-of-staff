@@ -9,8 +9,10 @@ import { StripeWebhookHandlers } from './services/stripe-webhook-handlers';
 
 const app = express();
 
-// CRITICAL: Register Stripe webhook route BEFORE express.json()
-// Webhook needs raw Buffer, not parsed JSON
+// CRITICAL: Register webhook routes BEFORE express.json()
+// Webhooks need raw Buffer for signature verification
+
+// Stripe webhook
 app.post(
   '/api/stripe/webhook/:uuid',
   express.raw({ type: 'application/json' }),
@@ -37,6 +39,21 @@ app.post(
       console.error('Webhook error:', error.message);
       res.status(400).json({ error: 'Webhook processing error' });
     }
+  }
+);
+
+// SendGrid webhook - needs raw body for signature verification
+app.post(
+  '/webhooks/sendgrid',
+  express.raw({ type: 'application/json' }),
+  (req, res, next) => {
+    (req as any).rawBody = req.body.toString('utf8');
+    try {
+      req.body = JSON.parse((req as any).rawBody);
+    } catch {
+      req.body = [];
+    }
+    next();
   }
 );
 

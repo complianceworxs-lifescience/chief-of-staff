@@ -1,0 +1,176 @@
+L6 Upgrade Requirements
+
+Objective: Add learning without loosening a single governance constraint.
+
+Your system is already stable (100% VQS compliance, 9/9 governance rules enforced, green integrations, 3 active ODAR cycles).
+L6 adds memory + adaptation. Nothing else changes.
+
+1. Add the Performance Ledger (Scoreboard)
+
+L6 requires one new subsystem:
+
+Performance Ledger = the memory of what works.
+It becomes the single place where Gemini records:
+
+Problem angle used
+
+VQS metric band used
+
+Subject line pattern
+
+Doctrine score
+
+Engagement outcome
+
+Booked calls or revenue attribution
+
+This is the “learning substrate.”
+No ledger = no learning = stuck at L5.
+
+Status required for L6: Ledger deployed, reads and writes stable.
+
+2. Add Outcome Ingestion (Mailchimp Webhooks → Ledger)
+
+L5 only validates content.
+
+L6 connects outcomes to content through webhooks:
+
+open
+
+click
+
+reply
+
+positive reply
+
+booked_call
+
+optional: revenue tags from your CRM
+
+Status required for L6:
+Webhook → API endpoint → Ledger writes successful.
+
+This gives the Strategist “eyes.”
+
+3. Add Variant Attribution
+
+Every email must be tagged with:
+
+variant_id
+
+problem_angle
+
+vqs_band
+
+persona
+
+tone_style
+
+cta_type
+
+This allows the Strategist to compare A vs B vs C under identical constraints.
+
+4. Add L6 Optimization Loop
+
+This is the single logic upgrade that distinguishes L6:
+
+If Angles with “Hidden Cost” outperform “ROI Visibility” by X%,
+then bias new generation toward “Hidden Cost” —
+but still within all VQS constraints and Doctrine rules.
+
+This is adaptive optimization, not rule relaxation.
+
+Required:
+
+Weighted scoring function
+
+Bias update rule
+
+Enforcement that all generated outputs still run through the Doctrine Validator (unchanged from L5)
+
+5. Retain Immutable Constraints (Non-Negotiable for VQS Integrity)
+
+To avoid violations, the following stay read-only:
+
+14–28%
+
+$18k–$72k
+
+15–35%
+
+Forbidden vocabulary list
+
+Problem-first lead requirement
+
+Minimum 2/3 Pillars for passing
+
+7-Step Operating Standard
+
+72-hour throttle
+
+L6 cannot change these.
+These form the “wall” around experimentation.
+
+6. Add Safety Escalation (Optional but Recommended)
+
+If any variant drops below a performance floor (e.g., 0 booked calls over N sends):
+
+Auto-freeze that angle
+
+Back off; revert to prior winning pattern
+
+Flag for human review if needed
+
+This keeps optimization safe and contained.
+
+7. Validate End-to-End
+
+Before declaring L6, the system must demonstrate:
+
+10+ sends logged into the Ledger
+
+Outcomes ingested
+
+At least 2 hypothesis families evaluated
+
+Strategist adjusts variant selection using performance data
+
+Zero Validator bypasses
+
+Zero VQS violations
+
+Summary: What It Takes to Reach L6
+
+Required components:
+
+Scoreboard (Performance Ledger)
+
+Outcome ingestion via Mailchimp → Ledger
+
+Variant tagging and metadata
+
+Optimization loop with biasing
+
+Immutable VQS + Doctrine constraints
+
+Fail-safe freeze logic
+
+End-to-end validation with no violations
+
+When these 7 are live, your system has:
+
+Memory
+
+Strategy
+
+Self-adjustment
+
+No drift
+
+No violations
+
+No additional risk
+
+Exactly what L6 is meant to deliver.
+
+If you want the full Performance Ledger schema or the L6 Optimization Loop spec, say so.

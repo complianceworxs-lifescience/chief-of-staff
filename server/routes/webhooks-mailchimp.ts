@@ -34,10 +34,18 @@ function verifyWebhookSecret(req: Request): boolean {
     return false;
   }
   
-  return crypto.timingSafeEqual(
-    Buffer.from(providedSecret),
-    Buffer.from(webhookSecret)
-  );
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(providedSecret),
+      Buffer.from(webhookSecret)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hashEmail(email: string): string {
+  return crypto.createHash('md5').update(email.toLowerCase().trim()).digest('hex');
 }
 
 router.post("/", async (req: Request, res: Response) => {
@@ -53,52 +61,62 @@ router.post("/", async (req: Request, res: Response) => {
 
     console.log(`📬 MAILCHIMP WEBHOOK: Received ${eventType} event`);
     console.log(`   Campaign ID: ${data.campaign_id || 'N/A'}`);
-    console.log(`   Email: ${data.email || 'N/A'}`);
+    console.log(`   Email: ${data.email ? data.email.substring(0, 3) + '***' : 'N/A'}`);
 
     if (!data.campaign_id) {
       console.log("   ⚠️ No campaign_id - skipping ledger update");
       return res.status(200).json({ received: true, updated: false, reason: "no_campaign_id" });
     }
 
-    const ledgerRows = await db
-      .select()
-      .from(performanceLedger)
-      .where(eq(performanceLedger.campaignId, data.campaign_id));
-
-    if (ledgerRows.length === 0) {
-      console.log(`   ⚠️ No ledger rows found for campaign ${data.campaign_id}`);
-      return res.status(200).json({ received: true, updated: false, reason: "campaign_not_in_ledger" });
+    if (!data.email) {
+      console.log("   ⚠️ No email - skipping ledger update");
+      return res.status(200).json({ received: true, updated: false, reason: "no_email" });
     }
 
-    let updatedCount = 0;
+    const emailHash = hashEmail(data.email);
+
+    const ledgerRow = await db
+      .select()
+      .from(performanceLedger)
+      .where(
+        and(
+          eq(performanceLedger.campaignId, data.campaign_id),
+          eq(performanceLedger.recipientEmailHash, emailHash)
+        )
+      )
+      .limit(1);
+
+    if (ledgerRow.length === 0) {
+      console.log(`   ⚠️ No ledger row found for campaign ${data.campaign_id} + email hash ${emailHash.substring(0, 8)}...`);
+      return res.status(200).json({ received: true, updated: false, reason: "send_not_in_ledger" });
+    }
+
+    const targetSendId = ledgerRow[0].sendId;
+    let updated = false;
 
     switch (eventType) {
       case "open":
-        for (const row of ledgerRows) {
-          await db
-            .update(performanceLedger)
-            .set({
-              opens: sql`${performanceLedger.opens} + 1`,
-              updatedAt: new Date()
-            })
-            .where(eq(performanceLedger.sendId, row.sendId));
-          updatedCount++;
-        }
-        console.log(`   ✅ Incremented opens for ${updatedCount} ledger row(s)`);
+        await db
+          .update(performanceLedger)
+          .set({
+            opens: sql`${performanceLedger.opens} + 1`,
+            updatedAt: new Date()
+          })
+          .where(eq(performanceLedger.sendId, targetSendId));
+        updated = true;
+        console.log(`   ✅ Incremented opens for send ${targetSendId}`);
         break;
 
       case "click":
-        for (const row of ledgerRows) {
-          await db
-            .update(performanceLedger)
-            .set({
-              clicks: sql`${performanceLedger.clicks} + 1`,
-              updatedAt: new Date()
-            })
-            .where(eq(performanceLedger.sendId, row.sendId));
-          updatedCount++;
-        }
-        console.log(`   ✅ Incremented clicks for ${updatedCount} ledger row(s)`);
+        await db
+          .update(performanceLedger)
+          .set({
+            clicks: sql`${performanceLedger.clicks} + 1`,
+            updatedAt: new Date()
+          })
+          .where(eq(performanceLedger.sendId, targetSendId));
+        updated = true;
+        console.log(`   ✅ Incremented clicks for send ${targetSendId}`);
         break;
 
       case "subscribe":
@@ -117,8 +135,8 @@ router.post("/", async (req: Request, res: Response) => {
       received: true,
       eventType,
       campaignId: data.campaign_id,
-      updated: updatedCount > 0,
-      rowsAffected: updatedCount
+      updated,
+      sendId: updated ? targetSendId : null
     });
 
   } catch (error) {

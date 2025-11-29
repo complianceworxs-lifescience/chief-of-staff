@@ -733,6 +733,7 @@ export const performanceLedger = pgTable("performance_ledger", {
   sendId: text("send_id").primaryKey(),
   campaignId: text("campaign_id").notNull(),
   variantId: text("variant_id"),
+  recipientEmailHash: text("recipient_email_hash"),
   persona: text("persona").notNull(),
   segment: text("segment"),
   problemAngle: text("problem_angle"),

@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 import { db } from '../db';
 import { performanceLedger } from '@shared/schema';
 
@@ -116,7 +117,8 @@ export class SendGridService {
       }
 
       if (options.campaignId) {
-        await this.recordInLedger(sendId, options);
+        const primaryRecipient = Array.isArray(options.to) ? options.to[0] : options.to;
+        await this.recordInLedger(sendId, options, primaryRecipient);
       }
 
       console.log(`✅ SendGrid: Email sent successfully (send_id: ${sendId})`);
@@ -129,14 +131,18 @@ export class SendGridService {
     }
   }
 
-  private async recordInLedger(sendId: string, options: EmailOptions): Promise<void> {
+  private async recordInLedger(sendId: string, options: EmailOptions, recipientEmail?: string): Promise<void> {
     try {
       const subjectHash = this.hashString(options.subject);
       const bodyHash = this.hashString(options.html);
+      const recipientEmailHash = recipientEmail 
+        ? crypto.createHash('md5').update(recipientEmail.toLowerCase().trim()).digest('hex')
+        : undefined;
 
       await db.insert(performanceLedger).values({
         sendId,
         campaignId: options.campaignId || 'unknown',
+        recipientEmailHash,
         persona: options.persona || 'unknown',
         segment: options.segment,
         problemAngle: options.problemAngle,
