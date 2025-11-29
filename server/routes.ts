@@ -40,6 +40,8 @@ import researchMandateRouter from "./routes/research-mandate";
 import revenueScoreboardRouter from "./routes/revenue-scoreboard";
 import narrativeRouter from "./routes/narrative";
 import unifiedOrchestratorRouter from "./routes/unified-orchestrator";
+import webhooksMailchimpRouter from "./routes/webhooks-mailchimp";
+import webhooksSendgridRouter from "./routes/webhooks-sendgrid";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -175,6 +177,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Unified Orchestrator routes (Fewer Systems, More Cycles)
   app.use("/api/orchestrator", unifiedOrchestratorRouter);
   console.log('🔄 UNIFIED ORCHESTRATOR (Fewer Systems, More Cycles) routes mounted at /api/orchestrator');
+  
+  // Mount L6 Performance Ledger Webhooks (Engagement Feedback Loop)
+  app.use("/webhooks/mailchimp", webhooksMailchimpRouter);
+  console.log('📬 MAILCHIMP WEBHOOK (L6 Performance Ledger) routes mounted at /webhooks/mailchimp');
+  
+  app.use("/webhooks/sendgrid", webhooksSendgridRouter);
+  console.log('📧 SENDGRID WEBHOOK (L6 Performance Ledger) routes mounted at /webhooks/sendgrid');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
