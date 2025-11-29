@@ -92,8 +92,25 @@ interface PerformanceScore {
 // Epsilon value for exploration (20% explore, 80% exploit)
 const EPSILON = 0.20;
 
+// Safety thresholds for auto-freeze
+const SAFETY_THRESHOLDS = {
+  minSampleSize: 10,          // Minimum sends before evaluating
+  minBookedCallRate: 0.01,    // Must have at least 1% booked call rate
+  minOpenRate: 0.10,          // Must have at least 10% open rate
+  maxConsecutiveFailures: 3,  // Freeze after 3 consecutive failures
+} as const;
+
+interface FrozenAngle {
+  angle: string;
+  frozenAt: string;
+  reason: string;
+  sampleSize: number;
+  lastScore: number;
+}
+
 export class StrategistBrain {
   private explorationLog: Array<{ timestamp: string; mode: string; hypothesis: string }> = [];
+  private frozenAngles: Map<string, FrozenAngle> = new Map();
 
   async getNextHypothesis(persona: string): Promise<ContentHypothesis> {
     console.log(`🧠 STRATEGIST BRAIN: Generating hypothesis for persona "${persona}"`);
@@ -202,31 +219,117 @@ export class StrategistBrain {
     persona: string,
     scoredCombinations: PerformanceScore[]
   ): ContentHypothesis {
+    // First, apply safety checks and freeze underperforming angles
+    const safeScored = this.applySafetyChecks(scoredCombinations);
+
     const random = Math.random();
-    const shouldExplore = random < EPSILON || scoredCombinations.length === 0;
+    const shouldExplore = random < EPSILON || safeScored.length === 0;
 
     if (shouldExplore) {
-      // EXPLORE: Random selection from approved dimensions
+      // EXPLORE: Random selection from approved dimensions (excluding frozen angles)
       console.log(`   🔬 Mode: EXPLORE (random=${random.toFixed(3)} < ε=${EPSILON})`);
       return this.generateExplorationHypothesis(persona);
     } else {
       // EXPLOIT: Use best-performing combination
       console.log(`   📈 Mode: EXPLOIT (random=${random.toFixed(3)} >= ε=${EPSILON})`);
-      return this.generateExploitationHypothesis(persona, scoredCombinations[0]);
+      return this.generateExploitationHypothesis(persona, safeScored[0]);
     }
   }
 
+  /**
+   * SAFETY ESCALATION: Freeze underperforming angles
+   * If any variant drops below performance floor, auto-freeze that angle
+   */
+  private applySafetyChecks(scoredCombinations: PerformanceScore[]): PerformanceScore[] {
+    const safeAngles: PerformanceScore[] = [];
+
+    for (const combo of scoredCombinations) {
+      const angleKey = `${combo.problemAngle}:${combo.metricFocus}`;
+
+      // Check if already frozen
+      if (this.frozenAngles.has(angleKey)) {
+        console.log(`   ❄️ FROZEN: Skipping ${angleKey} (previously frozen)`);
+        continue;
+      }
+
+      // Only evaluate if we have enough samples
+      if (combo.sampleSize >= SAFETY_THRESHOLDS.minSampleSize) {
+        const openRate = combo.opens / combo.sampleSize;
+        const bookedCallRate = combo.bookedCalls / combo.sampleSize;
+
+        // Check if below performance floor
+        if (openRate < SAFETY_THRESHOLDS.minOpenRate && bookedCallRate < SAFETY_THRESHOLDS.minBookedCallRate) {
+          // FREEZE this angle
+          this.frozenAngles.set(angleKey, {
+            angle: angleKey,
+            frozenAt: new Date().toISOString(),
+            reason: `Below performance floor: ${(openRate * 100).toFixed(1)}% opens, ${(bookedCallRate * 100).toFixed(1)}% booked`,
+            sampleSize: combo.sampleSize,
+            lastScore: combo.score,
+          });
+
+          console.warn(`   🚨 SAFETY FREEZE: ${angleKey} frozen due to underperformance`);
+          console.warn(`      Open rate: ${(openRate * 100).toFixed(1)}% (min: ${SAFETY_THRESHOLDS.minOpenRate * 100}%)`);
+          console.warn(`      Booked rate: ${(bookedCallRate * 100).toFixed(1)}% (min: ${SAFETY_THRESHOLDS.minBookedCallRate * 100}%)`);
+          continue;
+        }
+      }
+
+      safeAngles.push(combo);
+    }
+
+    return safeAngles;
+  }
+
   private generateExplorationHypothesis(persona: string): ContentHypothesis {
-    const problemAngle = this.randomChoice(APPROVED_PROBLEM_ANGLES);
-    const metricFocus = this.randomChoice(APPROVED_METRIC_FOCUSES);
+    // Build complete list of unfrozen problem_angle:metric_focus pairs
+    const unfrozenPairs: Array<{ problemAngle: string; metricFocus: string }> = [];
+    
+    for (const angle of APPROVED_PROBLEM_ANGLES) {
+      for (const metric of APPROVED_METRIC_FOCUSES) {
+        const comboKey = `${angle}:${metric}`;
+        if (!this.frozenAngles.has(comboKey)) {
+          unfrozenPairs.push({ problemAngle: angle, metricFocus: metric });
+        }
+      }
+    }
+
+    // If no unfrozen pairs, escalate (governance failure)
+    if (unfrozenPairs.length === 0) {
+      console.error(`   🚨 SAFETY ESCALATION: All problem_angle:metric_focus pairs are frozen!`);
+      console.error(`      Frozen count: ${this.frozenAngles.size}`);
+      console.error(`      Manual intervention required to unfreeze angles.`);
+      
+      // Return a governance-blocked hypothesis instead of a frozen one
+      return {
+        id: `hyp_blocked_${nanoid(8)}`,
+        persona,
+        problemAngle: "GOVERNANCE_BLOCKED",
+        metricFocus: "GOVERNANCE_BLOCKED",
+        toneStyle: "authoritative_expert",
+        ctaType: "schedule_consultation",
+        score: -1,
+        confidence: 0,
+        explorationMode: "explore",
+        vqsCompliant: false, // Mark as non-compliant to signal issue
+        doctrine: VQS_CONSTRAINTS.doctrine,
+        rationale: `BLOCKED: All ${APPROVED_PROBLEM_ANGLES.length * APPROVED_METRIC_FOCUSES.length} angle:metric combinations are frozen due to underperformance. Manual intervention required via /api/strategist-brain/unfreeze/:angleKey.`,
+      };
+    }
+
+    // Select random unfrozen pair
+    const selectedPair = this.randomChoice(unfrozenPairs);
     const toneStyle = this.randomChoice(APPROVED_TONE_STYLES);
     const ctaType = this.randomChoice(APPROVED_CTA_TYPES);
+
+    console.log(`   ✅ Selected unfrozen pair: ${selectedPair.problemAngle}:${selectedPair.metricFocus}`);
+    console.log(`      Available unfrozen pairs: ${unfrozenPairs.length}/${APPROVED_PROBLEM_ANGLES.length * APPROVED_METRIC_FOCUSES.length}`);
 
     return {
       id: `hyp_${nanoid(8)}`,
       persona,
-      problemAngle,
-      metricFocus,
+      problemAngle: selectedPair.problemAngle,
+      metricFocus: selectedPair.metricFocus,
       toneStyle,
       ctaType,
       score: 0,
@@ -234,7 +337,7 @@ export class StrategistBrain {
       explorationMode: "explore",
       vqsCompliant: true,
       doctrine: VQS_CONSTRAINTS.doctrine,
-      rationale: `EXPLORATION: Testing new combination [${problemAngle} + ${metricFocus}] to discover potential winning patterns.`,
+      rationale: `EXPLORATION: Testing new combination [${selectedPair.problemAngle} + ${selectedPair.metricFocus}] to discover potential winning patterns.`,
     };
   }
 
@@ -266,6 +369,13 @@ export class StrategistBrain {
   }
 
   private enforceVQSConstraints(hypothesis: ContentHypothesis): ContentHypothesis {
+    // CRITICAL: Skip VQS normalization for governance-blocked hypotheses
+    // This ensures safety escalations are not overwritten with approved values
+    if (hypothesis.problemAngle === "GOVERNANCE_BLOCKED") {
+      console.warn(`   🚨 VQS: Governance-blocked hypothesis - bypassing normalization`);
+      return hypothesis; // Return unchanged to preserve escalation signal
+    }
+
     // Validate problem angle is approved
     if (!APPROVED_PROBLEM_ANGLES.includes(hypothesis.problemAngle as any)) {
       console.warn(`   ⚠️ VQS: Replacing unapproved problem angle "${hypothesis.problemAngle}"`);
@@ -357,6 +467,33 @@ export class StrategistBrain {
       toneStyles: [...APPROVED_TONE_STYLES],
       ctaTypes: [...APPROVED_CTA_TYPES],
     };
+  }
+
+  /**
+   * SAFETY: Get all frozen angles (for human review)
+   */
+  getFrozenAngles(): FrozenAngle[] {
+    return Array.from(this.frozenAngles.values());
+  }
+
+  /**
+   * SAFETY: Manually unfreeze an angle (requires human intervention)
+   */
+  unfreezeAngle(angleKey: string): boolean {
+    if (this.frozenAngles.has(angleKey)) {
+      const frozen = this.frozenAngles.get(angleKey);
+      console.log(`🔓 UNFROZEN: ${angleKey} (was frozen since ${frozen?.frozenAt})`);
+      this.frozenAngles.delete(angleKey);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get safety thresholds (read-only)
+   */
+  getSafetyThresholds() {
+    return { ...SAFETY_THRESHOLDS };
   }
 }
 

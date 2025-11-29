@@ -42,6 +42,7 @@ import narrativeRouter from "./routes/narrative";
 import unifiedOrchestratorRouter from "./routes/unified-orchestrator";
 import webhooksMailchimpRouter from "./routes/webhooks-mailchimp";
 import webhooksSendgridRouter from "./routes/webhooks-sendgrid";
+import strategistBrainRouter from "./routes/strategist-brain";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -184,6 +185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.use("/webhooks/sendgrid", webhooksSendgridRouter);
   console.log('📧 SENDGRID WEBHOOK (L6 Performance Ledger) routes mounted at /webhooks/sendgrid');
+  
+  // Mount L6 Strategist Brain routes (Performance-Driven Optimization)
+  app.use("/api/strategist-brain", strategistBrainRouter);
+  console.log('🧠 L6 STRATEGIST BRAIN (Epsilon-Greedy Optimization) routes mounted at /api/strategist-brain');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();

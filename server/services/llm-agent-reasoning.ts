@@ -1024,6 +1024,195 @@ Respond with JSON:
     }
   }
 
+  /**
+   * L6 HYPOTHESIS-DRIVEN EMAIL GENERATION
+   * Uses strategist-brain hypothesis to generate optimized email content
+   */
+  async generateHypothesisEmail(hypothesis: {
+    persona: string;
+    problemAngle: string;
+    metricFocus: string;
+    toneStyle: string;
+    ctaType: string;
+    doctrine: string;
+    rationale: string;
+  }): Promise<{
+    subject: string;
+    preview: string;
+    body: string;
+    cta: string;
+    ctaUrl: string;
+    hypothesisId: string;
+    tokensUsed: number;
+  }> {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.log(`⚠️ OpenAI API key not configured, using template fallback`);
+      return this.generateFallbackHypothesisEmail(hypothesis);
+    }
+
+    // Check if we're in DEGRADED mode
+    if (this.openaiStatus === 'DEGRADED') {
+      console.log(`⚠️ OpenAI in DEGRADED mode, using template fallback`);
+      return this.generateFallbackHypothesisEmail(hypothesis);
+    }
+
+    const budgetStatus = this.checkAgentBudget('Strategist');
+    if (!budgetStatus.allowed) {
+      console.log(`⚠️ Strategist budget exceeded for email generation, using template fallback`);
+      return this.generateFallbackHypothesisEmail(hypothesis);
+    }
+
+    const prompt = `
+${this.GOVERNANCE_CONTEXT}
+
+TASK: Generate a high-converting email using the data-driven hypothesis below.
+
+HYPOTHESIS (from performance_ledger analysis):
+- Persona: ${hypothesis.persona}
+- Problem Angle: ${hypothesis.problemAngle}
+- Metric Focus: ${hypothesis.metricFocus}
+- Tone Style: ${hypothesis.toneStyle}
+- CTA Type: ${hypothesis.ctaType}
+
+CORE DOCTRINE (MUST be woven into email):
+"${hypothesis.doctrine}"
+
+SELECTION RATIONALE:
+${hypothesis.rationale}
+
+REQUIREMENTS:
+1. Subject line must create curiosity about the problem angle
+2. Body must focus on the metric the persona cares about (${hypothesis.metricFocus})
+3. Use the specified tone style: ${hypothesis.toneStyle}
+4. CTA must align with: ${hypothesis.ctaType}
+5. Absolutely NO forbidden terms: cheap, discount, guarantee, promise, free
+6. Life Sciences industry focus only (pharma, biotech, medical devices, CROs, CMOs, diagnostics)
+
+Respond with JSON:
+{
+  "subject": "compelling subject line under 60 chars",
+  "preview": "preview text under 100 chars",
+  "body": "full email body with personalization tokens like *|FNAME|*",
+  "cta": "button text",
+  "ctaUrl": "/path?utm_params",
+  "reasoning": "why this email will convert based on the hypothesis"
+}
+`;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-5",
+        messages: [
+          { role: "system", content: "You are the Strategist AI generating data-driven email content for ComplianceWorxs. Your emails are optimized based on performance ledger insights." },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
+        max_completion_tokens: 2048
+      });
+
+      const result = JSON.parse(response.choices[0].message.content || '{}');
+      const tokensUsed = response.usage?.total_tokens || 0;
+      this.recordAgentTokenUsage('Strategist', tokensUsed);
+
+      console.log(`📧 Hypothesis-Driven Email Generated`);
+      console.log(`   Subject: ${result.subject}`);
+      console.log(`   Angle: ${hypothesis.problemAngle} | Focus: ${hypothesis.metricFocus}`);
+
+      return {
+        subject: result.subject || '',
+        preview: result.preview || '',
+        body: result.body || '',
+        cta: result.cta || '',
+        ctaUrl: result.ctaUrl || '/',
+        hypothesisId: `hyp_email_${Date.now()}`,
+        tokensUsed
+      };
+    } catch (error: any) {
+      console.error('Hypothesis email generation error:', error.message);
+      console.log('⚠️ Using fallback email generation due to LLM error');
+      return this.generateFallbackHypothesisEmail(hypothesis);
+    }
+  }
+
+  private generateFallbackHypothesisEmail(hypothesis: {
+    persona: string;
+    problemAngle: string;
+    metricFocus: string;
+    toneStyle: string;
+    ctaType: string;
+    doctrine: string;
+  }): {
+    subject: string;
+    preview: string;
+    body: string;
+    cta: string;
+    ctaUrl: string;
+    hypothesisId: string;
+    tokensUsed: number;
+  } {
+    const angleSubjects: Record<string, string> = {
+      audit_readiness_gap: "Your audit readiness score might surprise you",
+      validation_burden: "Why validation teams are changing their approach",
+      regulatory_uncertainty: "Navigate regulatory changes with confidence",
+      compliance_visibility: "Make your compliance impact visible",
+      career_equity_erosion: "Turn compliance work into career growth",
+      roi_invisibility: "The compliance ROI your CFO needs to see",
+      process_fragmentation: "Unify your fragmented compliance processes",
+      risk_blind_spots: "Identify the risks hiding in plain sight",
+    };
+
+    const metricBodies: Record<string, string> = {
+      time_savings: "We've helped compliance teams reclaim 15+ hours per week",
+      cost_reduction: "Our members report average cost reductions of 35%",
+      risk_mitigation: "Reduce compliance risk exposure by up to 60%",
+      revenue_protection: "Protect revenue streams worth millions annually",
+      career_advancement: "Join the compliance leaders who got promoted this year",
+      stakeholder_confidence: "Build the stakeholder confidence that opens doors",
+      audit_success_rate: "Achieve audit success rates above 98%",
+      compliance_velocity: "Accelerate your compliance velocity by 3x",
+    };
+
+    const ctaTexts: Record<string, { text: string; url: string }> = {
+      schedule_consultation: { text: "Schedule Your Consultation", url: "/consultation" },
+      download_assessment: { text: "Download Free Assessment", url: "/assessment" },
+      calculate_roi: { text: "Calculate Your ROI", url: "/roi-calculator" },
+      join_webinar: { text: "Reserve Your Seat", url: "/webinar" },
+      request_demo: { text: "Request Demo", url: "/demo" },
+      start_trial: { text: "Start Your Trial", url: "/trial" },
+    };
+
+    const subject = angleSubjects[hypothesis.problemAngle] || "Your compliance strategy needs this";
+    const metricMessage = metricBodies[hypothesis.metricFocus] || "Transform your compliance operations";
+    const cta = ctaTexts[hypothesis.ctaType] || { text: "Learn More", url: "/learn-more" };
+
+    return {
+      subject,
+      preview: `${hypothesis.doctrine.split('.')[0]}...`,
+      body: `Hi *|FNAME|*,
+
+${metricMessage}.
+
+${hypothesis.doctrine}
+
+The compliance teams achieving the best results understand one thing: visibility drives value. Your work matters, but only if the right people can see its impact.
+
+Here's what that means for ${hypothesis.persona}s like you:
+- Clear metrics that demonstrate business value
+- Frameworks that align with stakeholder expectations
+- Systems that make your expertise visible
+
+Ready to see the difference?
+
+Best,
+The ComplianceWorxs Team`,
+      cta: cta.text,
+      ctaUrl: `${cta.url}?utm_source=email&utm_medium=hypothesis&utm_campaign=${hypothesis.problemAngle}`,
+      hypothesisId: `hyp_fallback_${Date.now()}`,
+      tokensUsed: 0
+    };
+  }
+
   getDecisionLog(limit: number = 50): ReasoningDecision[] {
     return this.decisionLog.slice(-limit);
   }
