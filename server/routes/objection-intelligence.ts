@@ -5,7 +5,7 @@
  */
 
 import { Router } from "express";
-import { objectionIntelligence } from "../services/optimization/objection-intelligence";
+import { objectionIntelligence, microLoopScheduler } from "../services/optimization/objection-intelligence";
 
 const router = Router();
 
@@ -189,6 +189,53 @@ router.post("/record-campaign", async (req, res) => {
 });
 
 /**
+ * POST /api/objection-intelligence/record-ledger-entry
+ * Record a ledger entry for L6 tracking
+ */
+router.post("/record-ledger-entry", async (req, res) => {
+  try {
+    const { sendId, campaignId, persona, problemAngle, metricFocus, toneStyle, ctaType } = req.body;
+
+    if (!sendId || !campaignId || !persona || !problemAngle || !metricFocus) {
+      return res.status(400).json({
+        success: false,
+        error: "Required fields: sendId, campaignId, persona, problemAngle, metricFocus",
+      });
+    }
+
+    const result = await objectionIntelligence.recordLedgerEntry(
+      sendId,
+      campaignId,
+      persona,
+      problemAngle,
+      metricFocus,
+      toneStyle,
+      ctaType
+    );
+
+    if (result.success) {
+      return res.json({
+        success: true,
+        data: { entryId: result.entryId },
+        message: "Ledger entry created",
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: result.error,
+      });
+    }
+  } catch (error: any) {
+    console.error("Error recording ledger entry:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * POST /api/objection-intelligence/complete-iteration
  * Complete the current iteration with friction measurement
  */
@@ -304,6 +351,97 @@ router.get("/vqs-constraints", async (_req, res) => {
     });
   } catch (error: any) {
     console.error("Error getting VQS constraints:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/objection-intelligence/scheduler/start
+ * Start the automated daily micro-loop scheduler
+ */
+router.post("/scheduler/start", async (_req, res) => {
+  try {
+    console.log("📅 API: Starting Micro-Loop Scheduler");
+    
+    await microLoopScheduler.start();
+    const status = microLoopScheduler.getStatus();
+    
+    return res.json({
+      success: true,
+      data: {
+        ...status,
+        message: "Daily micro-loop scheduler activated. Will run 5 iterations over 5 days.",
+        schedule: {
+          interval: "24 hours",
+          targetIterations: 5,
+          purpose: "Close friction gap (28 → 27) for L6 readiness",
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Error starting scheduler:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/objection-intelligence/scheduler/stop
+ * Stop the automated daily micro-loop scheduler
+ */
+router.post("/scheduler/stop", async (_req, res) => {
+  try {
+    console.log("⏹️ API: Stopping Micro-Loop Scheduler");
+    
+    microLoopScheduler.stop();
+    const status = microLoopScheduler.getStatus();
+    
+    return res.json({
+      success: true,
+      data: {
+        ...status,
+        message: "Micro-loop scheduler stopped.",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Error stopping scheduler:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/objection-intelligence/scheduler/status
+ * Get scheduler status
+ */
+router.get("/scheduler/status", async (_req, res) => {
+  try {
+    const schedulerStatus = microLoopScheduler.getStatus();
+    const loopStatus = await objectionIntelligence.getStatus();
+    
+    return res.json({
+      success: true,
+      data: {
+        scheduler: schedulerStatus,
+        loop: loopStatus,
+        l6Ready: loopStatus.readyForL6,
+        nextAction: loopStatus.readyForL6
+          ? "Friction target met! Request L6 Acceleration Protocol activation."
+          : `Continue capturing objections. Gap: ${loopStatus.gap} point(s).`,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error("Error getting scheduler status:", error);
     return res.status(500).json({
       success: false,
       error: error.message,
