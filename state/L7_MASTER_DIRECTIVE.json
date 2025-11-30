@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "name": "COS MASTER DIRECTIVE – L7 REVENUE-FIRST OPERATING SYSTEM",
+  "lastUpdated": null,
+  "status": "ACTIVE",
+  "authority": {
+    "owner": "ChiefOfStaff",
+    "level": "SUPREME",
+    "override": "NONE"
+  },
+  "corePrinciple": "If an action cannot be traced to revenue, probability of revenue, or ARR stability → it is vetoed.",
+  "guardrails": {
+    "minimumRevenueProbability7Day": 0.15,
+    "requiredAttributionLogging": true,
+    "spendCapDaily": 25,
+    "spendCapWeekly": 150,
+    "forbiddenActions": [
+      "noise_content",
+      "vanity_metrics",
+      "non_revenue_activities",
+      "engagement_only_optimization"
+    ],
+    "valuationRules": {
+      "rejectPredictabilityDecrease": true,
+      "rejectLTVDecrease": true,
+      "rejectARRInstability": true
+    }
+  },
+  "engines": {
+    "predictiveRevenue": {
+      "enabled": true,
+      "scoringFactors": ["probability_of_checkout_7d", "expected_revenue", "persona_fit_score"],
+      "publishThreshold": 0.20
+    },
+    "dynamicOffer": {
+      "enabled": true,
+      "behaviorTiers": {
+        "cold": { "offer": "low_ticket", "priceRange": [0, 29] },
+        "warm": { "offer": "mid_tier", "priceRange": [99, 149] },
+        "hot": { "offer": "high_tier", "priceRange": [299, 499] },
+        "enterprise": { "offer": "custom_proposal", "priceRange": null }
+      }
+    },
+    "pricingExperimentation": {
+      "enabled": true,
+      "activeTests": [],
+      "maxConcurrentTests": 3
+    },
+    "attribution": {
+      "enabled": true,
+      "trackingPoints": ["content", "click", "checkout", "revenue"],
+      "dimensions": ["persona", "asset", "channel"]
+    }
+  },
+  "subDirectives": {
+    "CMO": {
+      "mandate": "Execute high-yield content deployment chosen by the CoS. Publish only assets with the highest expected revenue.",
+      "requirements": [
+        "Accept CoS-scored content with revenue probability",
+        "Route each asset to the highest-yield channel + persona",
+        "Deny any content without revenue scoring metadata",
+        "Log results: impressions, clicks, CTR, dwell time"
+      ],
+      "deploymentRules": {
+        "publishTop20Percent": true,
+        "amplifyThreshold": 0.01,
+        "deprecateThreshold": 0.0025
+      }
+    },
+    "CRO": {
+      "mandate": "Convert traffic into revenue by dynamically adjusting offer levels and pricing tests.",
+      "behaviorOfferMap": {
+        "cold": { "offer": "Free tool or $9 asset", "trigger": "first_visit" },
+        "warm": { "offer": "$99/$149 tier", "trigger": "return_visit_or_engagement" },
+        "hot": { "offer": "$499 Architect", "trigger": "high_intent_signals" },
+        "enterprise": { "offer": "Enterprise pathway", "trigger": "enterprise_behavior" }
+      },
+      "pricingTests": ["micro_product_pricing", "membership_tiers", "bundles_vs_alacarte", "time_limited_bumps"],
+      "checkoutRecovery": {
+        "enabled": true,
+        "triggerOnAbandonment": true,
+        "channel": "mailchimp"
+      }
+    }
+  },
+  "weeklyLoop": {
+    "day1": { "phase": "Predict", "action": "Score all assets → approve top 20%" },
+    "day2": { "phase": "Deploy", "action": "CMO publishes CoS-approved assets" },
+    "day3": { "phase": "Detect", "action": "CRO switches offers based on user intent" },
+    "day4": { "phase": "Test", "action": "CRO runs CoS-defined price experiments" },
+    "day5": { "phase": "Optimize", "action": "Remove low-yield assets; amplify winners" },
+    "day6": { "phase": "Recover", "action": "CRO triggers checkout recovery flows" },
+    "day7": { "phase": "Report", "action": "CoS compiles KPIs → updates next cycle" }
+  },
+  "kpis": [
+    "revenue_per_asset",
+    "revenue_per_persona",
+    "revenue_per_impression",
+    "checkout_starts_completions",
+    "purchase_velocity_index",
+    "price_test_winners",
+    "abandonment_recovery_revenue",
+    "arr_probability",
+    "ltv_cac_shift",
+    "attribution_completeness"
+  ],
+  "selfOptimization": {
+    "enabled": true,
+    "weeklyUpdates": [
+      "revenue_thresholds",
+      "persona_targeting_rules",
+      "channel_allocation",
+      "offer_hierarchy",
+      "pricing_experiments",
+      "guardrail_restrictions"
+    ]
+  },
+  "metrics": {
+    "totalAssetsScored": 0,
+    "totalAssetsPublished": 0,
+    "totalOffersServed": 0,
+    "totalRecoveriesTriggered": 0,
+    "weeklyRevenue": 0,
+    "weeklyConversions": 0,
+    "currentCycleDay": 1,
+    "cycleStartDate": null
+  }
+}
