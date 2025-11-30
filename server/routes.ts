@@ -45,6 +45,7 @@ import webhooksSendgridRouter from "./routes/webhooks-sendgrid";
 import strategistBrainRouter from "./routes/strategist-brain";
 import objectionIntelligenceRouter from "./routes/objection-intelligence";
 import cosOrchestratorMandateRouter from "./routes/cos-orchestrator-mandate";
+import l7MasterDirectiveRouter, { initL7MasterDirective } from "./routes/l7-master-directive";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -199,6 +200,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount CoS Orchestrator Mandate routes (Enhanced v1.1)
   app.use("/api/cos-mandate", cosOrchestratorMandateRouter);
   console.log('🎯 COS ORCHESTRATOR MANDATE (Enhanced v1.1) routes mounted at /api/cos-mandate');
+  
+  // Mount L7 MASTER DIRECTIVE - Revenue-First Operating System
+  app.use("/api/l7-directive", l7MasterDirectiveRouter);
+  initL7MasterDirective();
+  console.log('💰 L7 MASTER DIRECTIVE (Revenue-First Operating System) routes mounted at /api/l7-directive');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
