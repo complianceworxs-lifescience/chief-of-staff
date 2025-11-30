@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "name": "COS MASTER DIRECTIVE – L7 REVENUE-FIRST OPERATING SYSTEM",
-  "lastUpdated": null,
+  "lastUpdated": "2025-11-30T15:50:44.675Z",
   "status": "ACTIVE",
   "authority": {
     "owner": "ChiefOfStaff",
@@ -29,16 +29,41 @@
   "engines": {
     "predictiveRevenue": {
       "enabled": true,
-      "scoringFactors": ["probability_of_checkout_7d", "expected_revenue", "persona_fit_score"],
-      "publishThreshold": 0.20
+      "scoringFactors": [
+        "probability_of_checkout_7d",
+        "expected_revenue",
+        "persona_fit_score"
+      ],
+      "publishThreshold": 0.2
     },
     "dynamicOffer": {
       "enabled": true,
       "behaviorTiers": {
-        "cold": { "offer": "low_ticket", "priceRange": [0, 29] },
-        "warm": { "offer": "mid_tier", "priceRange": [99, 149] },
-        "hot": { "offer": "high_tier", "priceRange": [299, 499] },
-        "enterprise": { "offer": "custom_proposal", "priceRange": null }
+        "cold": {
+          "offer": "low_ticket",
+          "priceRange": [
+            0,
+            29
+          ]
+        },
+        "warm": {
+          "offer": "mid_tier",
+          "priceRange": [
+            99,
+            149
+          ]
+        },
+        "hot": {
+          "offer": "high_tier",
+          "priceRange": [
+            299,
+            499
+          ]
+        },
+        "enterprise": {
+          "offer": "custom_proposal",
+          "priceRange": null
+        }
       }
     },
     "pricingExperimentation": {
@@ -48,8 +73,17 @@
     },
     "attribution": {
       "enabled": true,
-      "trackingPoints": ["content", "click", "checkout", "revenue"],
-      "dimensions": ["persona", "asset", "channel"]
+      "trackingPoints": [
+        "content",
+        "click",
+        "checkout",
+        "revenue"
+      ],
+      "dimensions": [
+        "persona",
+        "asset",
+        "channel"
+      ]
     }
   },
   "subDirectives": {
@@ -70,12 +104,29 @@
     "CRO": {
       "mandate": "Convert traffic into revenue by dynamically adjusting offer levels and pricing tests.",
       "behaviorOfferMap": {
-        "cold": { "offer": "Free tool or $9 asset", "trigger": "first_visit" },
-        "warm": { "offer": "$99/$149 tier", "trigger": "return_visit_or_engagement" },
-        "hot": { "offer": "$499 Architect", "trigger": "high_intent_signals" },
-        "enterprise": { "offer": "Enterprise pathway", "trigger": "enterprise_behavior" }
+        "cold": {
+          "offer": "Free tool or $9 asset",
+          "trigger": "first_visit"
+        },
+        "warm": {
+          "offer": "$99/$149 tier",
+          "trigger": "return_visit_or_engagement"
+        },
+        "hot": {
+          "offer": "$499 Architect",
+          "trigger": "high_intent_signals"
+        },
+        "enterprise": {
+          "offer": "Enterprise pathway",
+          "trigger": "enterprise_behavior"
+        }
       },
-      "pricingTests": ["micro_product_pricing", "membership_tiers", "bundles_vs_alacarte", "time_limited_bumps"],
+      "pricingTests": [
+        "micro_product_pricing",
+        "membership_tiers",
+        "bundles_vs_alacarte",
+        "time_limited_bumps"
+      ],
       "checkoutRecovery": {
         "enabled": true,
         "triggerOnAbandonment": true,
@@ -84,13 +135,34 @@
     }
   },
   "weeklyLoop": {
-    "day1": { "phase": "Predict", "action": "Score all assets → approve top 20%" },
-    "day2": { "phase": "Deploy", "action": "CMO publishes CoS-approved assets" },
-    "day3": { "phase": "Detect", "action": "CRO switches offers based on user intent" },
-    "day4": { "phase": "Test", "action": "CRO runs CoS-defined price experiments" },
-    "day5": { "phase": "Optimize", "action": "Remove low-yield assets; amplify winners" },
-    "day6": { "phase": "Recover", "action": "CRO triggers checkout recovery flows" },
-    "day7": { "phase": "Report", "action": "CoS compiles KPIs → updates next cycle" }
+    "day1": {
+      "phase": "Predict",
+      "action": "Score all assets → approve top 20%"
+    },
+    "day2": {
+      "phase": "Deploy",
+      "action": "CMO publishes CoS-approved assets"
+    },
+    "day3": {
+      "phase": "Detect",
+      "action": "CRO switches offers based on user intent"
+    },
+    "day4": {
+      "phase": "Test",
+      "action": "CRO runs CoS-defined price experiments"
+    },
+    "day5": {
+      "phase": "Optimize",
+      "action": "Remove low-yield assets; amplify winners"
+    },
+    "day6": {
+      "phase": "Recover",
+      "action": "CRO triggers checkout recovery flows"
+    },
+    "day7": {
+      "phase": "Report",
+      "action": "CoS compiles KPIs → updates next cycle"
+    }
   },
   "kpis": [
     "revenue_per_asset",
@@ -123,6 +195,6 @@
     "weeklyRevenue": 0,
     "weeklyConversions": 0,
     "currentCycleDay": 1,
-    "cycleStartDate": null
+    "cycleStartDate": "2025-11-30T15:50:44.675Z"
   }
 }

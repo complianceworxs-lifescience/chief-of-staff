@@ -26,6 +26,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ============================================
+// L7 MASTER DIRECTIVE GUARDRAILS
+// System-Level Immutable Rules from L7 Revenue-First Operating System
+// ============================================
+export const L7_GUARDRAILS = {
+  minimumRevenueProbability7Day: 0.15,
+  requiredAttributionLogging: true,
+  spendCapDaily: 25,
+  spendCapWeekly: 150,
+  forbiddenActions: [
+    'noise_content',
+    'vanity_metrics',
+    'non_revenue_activities',
+    'engagement_only_optimization'
+  ],
+  valuationRules: {
+    rejectPredictabilityDecrease: true,
+    rejectLTVDecrease: true,
+    rejectARRInstability: true
+  },
+  corePrinciple: 'If an action cannot be traced to revenue, probability of revenue, or ARR stability → it is vetoed.'
+} as const;
+
+// ============================================
 // IMMUTABLE GOVERNANCE RULES (Enhanced Clarity)
 // ============================================
 export const STRATEGIC_CONSTRAINTS = {
@@ -210,6 +233,11 @@ class CoSOrchestatorMandateService {
     const constraint4Result = this.checkConstraint4(action);
     constraintsChecked.push(STRATEGIC_CONSTRAINTS.CONSTRAINT_4.id);
     if (constraint4Result) violations.push(constraint4Result);
+
+    // Check L7 Master Directive guardrails
+    const l7Violations = this.checkL7Guardrails(action);
+    constraintsChecked.push('L7-GUARDRAILS');
+    violations.push(...l7Violations);
 
     // Determine final status
     const hasVeto = violations.some(v => v.severity === 'veto');
@@ -436,6 +464,88 @@ class CoSOrchestatorMandateService {
     }
 
     return null;
+  }
+
+  // ============================================
+  // L7 GUARDRAILS CHECK
+  // System-Level Immutable Rules from L7 Revenue-First Operating System
+  // ============================================
+  private checkL7Guardrails(action: AgentAction): ConstraintViolation[] {
+    const violations: ConstraintViolation[] = [];
+    const actionText = `${action.action} ${action.description} ${action.expectedOutcome}`.toLowerCase();
+
+    // Check for forbidden actions
+    const forbiddenPatterns: Record<string, string[]> = {
+      'noise_content': ['noise', 'filler', 'generic content', 'placeholder'],
+      'vanity_metrics': ['likes', 'followers', 'impressions only', 'reach only'],
+      'non_revenue_activities': ['brand building', 'awareness only', 'visibility'],
+      'engagement_only_optimization': ['engagement rate', 'open rate only', 'click rate only']
+    };
+
+    for (const [forbiddenType, patterns] of Object.entries(forbiddenPatterns)) {
+      for (const pattern of patterns) {
+        if (actionText.includes(pattern)) {
+          violations.push({
+            id: nanoid(),
+            actionId: action.id,
+            agentId: action.agentId,
+            constraintId: 'L7-FORBIDDEN',
+            constraintName: `L7_FORBIDDEN_ACTION_${forbiddenType.toUpperCase()}`,
+            violationReason: `L7 Guardrail: Forbidden action type detected - ${forbiddenType}`,
+            violationDetails: `L7 Master Directive prohibits "${forbiddenType}" actions. Pattern detected: "${pattern}". Core principle: ${L7_GUARDRAILS.corePrinciple}`,
+            severity: 'veto',
+            timestamp: new Date().toISOString(),
+            feedbackDelivered: false
+          });
+          break;
+        }
+      }
+    }
+
+    // Check spend caps (if action has spend component)
+    const spendMatch = actionText.match(/\$(\d+)/);
+    if (spendMatch) {
+      const spendAmount = parseInt(spendMatch[1]);
+      if (spendAmount > L7_GUARDRAILS.spendCapDaily) {
+        violations.push({
+          id: nanoid(),
+          actionId: action.id,
+          agentId: action.agentId,
+          constraintId: 'L7-SPEND-CAP',
+          constraintName: 'L7_DAILY_SPEND_CAP_EXCEEDED',
+          violationReason: `L7 Guardrail: Daily spend cap exceeded ($${spendAmount} > $${L7_GUARDRAILS.spendCapDaily})`,
+          violationDetails: `L7 Master Directive enforces a $${L7_GUARDRAILS.spendCapDaily}/day spend cap. Requested spend: $${spendAmount}. Reduce spend or break into multiple days.`,
+          severity: 'veto',
+          timestamp: new Date().toISOString(),
+          feedbackDelivered: false
+        });
+      }
+    }
+
+    // Check for revenue probability (actions must have clear revenue path)
+    const hasRevenuePath = action.revenueImpact && 
+                          action.revenueImpact.type !== 'none' &&
+                          (action.revenueImpact.confidence || 0) >= L7_GUARDRAILS.minimumRevenueProbability7Day;
+
+    const hasRevenueKeywords = ['arr', 'mrr', 'revenue', 'conversion', 'checkout', 'purchase', 'deal', 'pipeline']
+      .some(kw => actionText.includes(kw));
+
+    if (!hasRevenuePath && !hasRevenueKeywords) {
+      violations.push({
+        id: nanoid(),
+        actionId: action.id,
+        agentId: action.agentId,
+        constraintId: 'L7-REVENUE-PROB',
+        constraintName: 'L7_MINIMUM_REVENUE_PROBABILITY',
+        violationReason: `L7 Guardrail: Action lacks minimum revenue probability (${L7_GUARDRAILS.minimumRevenueProbability7Day * 100}% threshold)`,
+        violationDetails: `L7 Master Directive requires all actions to have a minimum 7-day revenue probability of ${L7_GUARDRAILS.minimumRevenueProbability7Day * 100}%. Add revenueImpact with confidence >= ${L7_GUARDRAILS.minimumRevenueProbability7Day}.`,
+        severity: 'warning',
+        timestamp: new Date().toISOString(),
+        feedbackDelivered: false
+      });
+    }
+
+    return violations;
   }
 
   // ============================================
