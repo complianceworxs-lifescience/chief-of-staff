@@ -1,16 +1,23 @@
 {
   "version": "1.1.0",
-  "lastUpdated": "2025-11-30T01:51:48.016Z",
-  "totalActionsAudited": 22,
-  "totalVetoes": 5,
+  "lastUpdated": "2025-11-30T01:51:55.161Z",
+  "totalActionsAudited": 24,
+  "totalVetoes": 6,
   "totalWarnings": 0,
   "constraintViolationCounts": {
     "SC-001": 0,
     "SC-002": 0,
-    "SC-003": 5,
-    "SC-004": 5
+    "SC-003": 6,
+    "SC-004": 6
   },
   "agentFeedbackHistory": [
+    {
+      "id": "DeOO3cFLSrhbVr1yJbKnF",
+      "agentId": "cmo",
+      "violatedConstraint": "SC-003, SC-004",
+      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_b-qX9CoT1mIl\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n\nGUIDANCE:\nAll actions must:\n1. Produce measurable revenue impact (ARR/MRR/pipeline)\n2. Support the 3-layer revenue engine (Strategic → CMO → CRO)\n3. Optimize for conversion, not engagement\n4. Reject noise-producing tactics\n\nPlease adjust your action to meet these constraints and resubmit.",
+      "deliveredAt": "2025-11-30T01:51:55.099Z"
+    },
     {
       "id": "v_CzsZl0uup_YQhqKNEzy",
       "agentId": "cmo",
@@ -48,6 +55,58 @@
     }
   ],
   "recentAudits": [
+    {
+      "actionId": "action_HU5I83Ec4Ou7",
+      "agentId": "cco",
+      "status": "APPROVED",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004"
+      ],
+      "violations": [],
+      "timestamp": "2025-11-30T01:51:55.161Z"
+    },
+    {
+      "actionId": "action_b-qX9CoT1mIl",
+      "agentId": "cmo",
+      "status": "VETOED",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004"
+      ],
+      "violations": [
+        {
+          "id": "HQLO_dJDWnE9wMvGQzTQO",
+          "actionId": "action_b-qX9CoT1mIl",
+          "agentId": "cmo",
+          "constraintId": "SC-003",
+          "constraintName": "OPTIMIZE_FOR_CONVERSION",
+          "violationReason": "Action optimizes for engagement metrics without conversion tie",
+          "violationDetails": "Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.",
+          "severity": "warning",
+          "timestamp": "2025-11-30T01:51:55.099Z",
+          "feedbackDelivered": false
+        },
+        {
+          "id": "h7lP_XJVmqNd4q70CUxw2",
+          "actionId": "action_b-qX9CoT1mIl",
+          "agentId": "cmo",
+          "constraintId": "SC-004",
+          "constraintName": "TIE_TO_REVENUE",
+          "violationReason": "Action does not tie to ARR, MRR, or pipeline value",
+          "violationDetails": "All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.",
+          "severity": "veto",
+          "timestamp": "2025-11-30T01:51:55.099Z",
+          "feedbackDelivered": false
+        }
+      ],
+      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_b-qX9CoT1mIl\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n\nGUIDANCE:\nAll actions must:\n1. Produce measurable revenue impact (ARR/MRR/pipeline)\n2. Support the 3-layer revenue engine (Strategic → CMO → CRO)\n3. Optimize for conversion, not engagement\n4. Reject noise-producing tactics\n\nPlease adjust your action to meet these constraints and resubmit.",
+      "timestamp": "2025-11-30T01:51:55.159Z"
+    },
     {
       "actionId": "action_iBEhc3Sj-Iit",
       "agentId": "cco",
