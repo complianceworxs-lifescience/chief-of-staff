@@ -1,6 +1,7 @@
 import { storage } from '../storage.js';
 import { nanoid } from 'nanoid';
 import { validateConstitution, type ConstitutionValidationResult } from './constitution-validator.js';
+import { cosExecutionGate, type CoSGateResult } from './cos-orchestrator-mandate.js';
 
 /**
  * Action Record Schema - Required for every recommendation
@@ -123,11 +124,13 @@ export class ActionTracker {
    * Check governance and auto-execute if approved
    * 
    * L5 ACTION LOOP: ingest → prioritize → plan → [VALIDATE] → produce
-   * The [VALIDATE] step runs Constitution Validator before execution
+   * The [VALIDATE] step runs:
+   * 1. Constitution Validator (legal/policy compliance)
+   * 2. CoS Mandate Gate (revenue alignment enforcement)
    */
   async processActionRecord(record: ActionRecord): Promise<void> {
     // ========================================================================
-    // [VALIDATE] - CONSTITUTION CHECK (L5 Action Loop Step)
+    // [VALIDATE] STEP 1 - CONSTITUTION CHECK (L5 Action Loop)
     // ========================================================================
     console.log(`📜 [VALIDATE] Running Constitution Check for ${record.action_id}...`);
     
@@ -164,6 +167,44 @@ export class ActionTracker {
     }
 
     console.log(`✅ [VALIDATE] PASSED: ${record.action_id} - Constitution Check GREEN`);
+
+    // ========================================================================
+    // [VALIDATE] STEP 2 - COS MANDATE GATE (Revenue Alignment Enforcement)
+    // ========================================================================
+    console.log(`🚦 [VALIDATE] Running CoS Mandate Gate for ${record.action_id}...`);
+    
+    const cosGateResult = await cosExecutionGate(
+      record.action_id,
+      record.owner_agent,
+      this.mapAgentToType(record.owner_agent),
+      record.recommendation_title,
+      record.expected.scope,
+      record.expected.target
+    );
+
+    // If CoS Gate blocks → STOP execution
+    if (!cosGateResult.allowed) {
+      record.execution.status = 'queued';
+      record.governance.escalated = true;
+      record.governance.escalation_reason = `COS MANDATE BLOCK: ${cosGateResult.blockReason || 'Revenue alignment failure'}`;
+      record.outcome.result_code = 'Blocked';
+      
+      console.log(`🚫 [VALIDATE] BLOCKED: ${record.action_id} - CoS Mandate Violation`);
+      console.log(`   🚦 Status: ${cosGateResult.status}`);
+      console.log(`   📊 Valuation Score: ${cosGateResult.valuationCheck.valuationScore}/100`);
+      if (cosGateResult.constraintAudit.violations.length > 0) {
+        cosGateResult.constraintAudit.violations.forEach(v => {
+          console.log(`   ⛔ ${v.constraintName}: ${v.violationReason}`);
+        });
+      }
+      
+      await this.updateActionRecord(record);
+      return; // Stop execution - action blocked by CoS Mandate
+    }
+
+    console.log(`✅ [VALIDATE] PASSED: ${record.action_id} - CoS Mandate Gate APPROVED`);
+    console.log(`   📊 Valuation Score: ${cosGateResult.valuationCheck.valuationScore}/100`);
+    console.log(`   💰 ARR Impact: $${cosGateResult.valuationCheck.arrPredictabilityImpact.toLocaleString()}`);
     
     // ========================================================================
     // [PRODUCE] - Continue with governance approval and execution
@@ -239,6 +280,23 @@ export class ActionTracker {
     console.log(`📊 SAMPLE: n=${sample_size_n} | NEXT: ${next_action}`);
   }
   
+  /**
+   * Map agent ID to agent type for CoS Mandate
+   */
+  private mapAgentToType(agentId: string): string {
+    const mapping: Record<string, string> = {
+      'cmo': 'CMO',
+      'cro': 'CRO',
+      'cco': 'ContentManager',
+      'coo': 'Strategic',
+      'strategist': 'Strategic',
+      'content-manager': 'ContentManager',
+      'chief-of-staff': 'Strategic',
+      'cos': 'Strategic'
+    };
+    return mapping[agentId.toLowerCase()] || 'CMO';
+  }
+
   /**
    * Check governance approval rules
    */
