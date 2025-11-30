@@ -28,7 +28,6 @@ export function Layout({ children }: LayoutProps) {
   const navigationItems = [
     { path: "/", label: "Command Center", icon: Zap },
     { path: "/dashboard", label: "Strategic Cockpit", icon: BarChart3 },
-    { path: "/coo", label: "COO Agent", icon: Settings },
     { 
       path: "/goals", 
       label: "Strategic Objectives", 
