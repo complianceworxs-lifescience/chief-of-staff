@@ -44,6 +44,7 @@ import webhooksMailchimpRouter from "./routes/webhooks-mailchimp";
 import webhooksSendgridRouter from "./routes/webhooks-sendgrid";
 import strategistBrainRouter from "./routes/strategist-brain";
 import objectionIntelligenceRouter from "./routes/objection-intelligence";
+import cosOrchestratorMandateRouter from "./routes/cos-orchestrator-mandate";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -194,6 +195,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Objection-Intelligence Micro-Loop routes (L6 Friction Reduction)
   app.use("/api/objection-intelligence", objectionIntelligenceRouter);
   console.log('🔄 OBJECTION-INTELLIGENCE MICRO-LOOP (L6 Friction Reduction) routes mounted at /api/objection-intelligence');
+  
+  // Mount CoS Orchestrator Mandate routes (Enhanced v1.1)
+  app.use("/api/cos-mandate", cosOrchestratorMandateRouter);
+  console.log('🎯 COS ORCHESTRATOR MANDATE (Enhanced v1.1) routes mounted at /api/cos-mandate');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
