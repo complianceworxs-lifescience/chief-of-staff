@@ -59,6 +59,8 @@ The system is designed with a clear separation of concerns, a service layer for 
   - **Governance Rules**: REJECT_UNMEASURABLE_TACTICS, REJECT_ENGINE_VIOLATIONS, REJECT_VANITY_OPTIMIZATION, REQUIRE_REVENUE_MAPPING
   - **Control Plane**: Enterprise-wide arbitration layer that validates outputs, monitors performance deltas, and routes all actions through valuation logic before execution
   - **Autonomy & Learning**: Specialized agents submit outputs for validation; CoS logs vetoes, updates feedback vectors, and triggers iterative refinement cycles
+  - **Execution Gate Integration**: CoS Mandate now actively intercepts all agent actions in the execution pipeline (after Constitution check, before execution). VETOED actions are blocked from execution entirely.
+  - **Revenue-Aligned Coaching**: When blocking an action, CoS provides constructive feedback with a specific revenue-focused reword suggestion. Includes reworded ACTION, DESCRIPTION, EXPECTED OUTCOME, and REVENUE IMPACT with explanation of why the new version works.
 
 ## Recent Changes (2025-11-29)
 - **L6 ACTIVATION ACHIEVED**: Friction reduced to 27 (target met), ledger populated with 30/30 unique persona/angle/metric combinations

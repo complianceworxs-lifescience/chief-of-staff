@@ -447,6 +447,9 @@ class CoSOrchestatorMandateService {
       `- ${v.constraintName}: ${v.violationReason}`
     ).join('\n');
 
+    // Generate a revenue-focused reworded suggestion
+    const suggestedReword = this.generateRevenueAlignedSuggestion(action, violations);
+
     return `
 CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT
 ==============================================
@@ -460,15 +463,139 @@ ${violationSummaries}
 REQUIRED CORRECTION:
 ${violations.map(v => `• ${v.violationDetails}`).join('\n')}
 
-GUIDANCE:
-All actions must:
-1. Produce measurable revenue impact (ARR/MRR/pipeline)
-2. Support the 3-layer revenue engine (Strategic → CMO → CRO)
-3. Optimize for conversion, not engagement
-4. Reject noise-producing tactics
+═══════════════════════════════════════════════
+SUGGESTED REVENUE-ALIGNED REWORD
+═══════════════════════════════════════════════
+${suggestedReword}
 
-Please adjust your action to meet these constraints and resubmit.
+RESUBMISSION INSTRUCTIONS:
+1. Use the suggested reword above as your new action
+2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)
+3. Focus on conversion outcomes, not engagement metrics
+4. Resubmit through the standard action flow
+
+The CoS will automatically approve revenue-aligned actions.
     `.trim();
+  }
+
+  /**
+   * Generate a revenue-aligned suggestion for a vetoed action
+   */
+  private generateRevenueAlignedSuggestion(action: AgentAction, violations: ConstraintViolation[]): string {
+    const actionLower = action.action.toLowerCase();
+    const descLower = action.description.toLowerCase();
+    
+    // Detect the type of action and generate appropriate suggestion
+    if (actionLower.includes('content') || actionLower.includes('marketing') || descLower.includes('reach')) {
+      return `
+ORIGINAL: "${action.action}"
+REWORD TO:
+
+ACTION: "Convert content audience to pipeline opportunities"
+DESCRIPTION: "Deploy targeted content sequence to convert ${this.extractAudienceSize(action)} engaged readers into qualified demo requests, targeting 5% conversion rate"
+EXPECTED OUTCOME: "Generate $15,000 in new pipeline value through content-driven lead qualification"
+REVENUE IMPACT: { type: "pipeline", estimatedValue: 15000, confidence: 0.7 }
+
+WHY THIS WORKS:
+• Focuses on conversion (readers → demo requests) not reach
+• Ties directly to pipeline value ($15,000)
+• Measurable outcome with specific conversion target (5%)
+      `.trim();
+    }
+    
+    if (actionLower.includes('social') || descLower.includes('followers') || descLower.includes('likes')) {
+      return `
+ORIGINAL: "${action.action}"
+REWORD TO:
+
+ACTION: "Drive qualified leads through social proof campaigns"
+DESCRIPTION: "Use social channels to amplify customer success stories, targeting decision-makers in Life Sciences with direct CTA to schedule consultation"
+EXPECTED OUTCOME: "Generate 10 qualified leads from social campaigns, targeting $50,000 pipeline value"
+REVENUE IMPACT: { type: "pipeline", estimatedValue: 50000, confidence: 0.6 }
+
+WHY THIS WORKS:
+• Targets decision-makers (buyers) not general audience
+• Includes direct CTA to revenue action (schedule consultation)
+• Measurable pipeline value ($50,000)
+      `.trim();
+    }
+    
+    if (actionLower.includes('engagement') || actionLower.includes('awareness')) {
+      return `
+ORIGINAL: "${action.action}"
+REWORD TO:
+
+ACTION: "Accelerate prospect-to-MQL conversion"
+DESCRIPTION: "Implement intent-based nurture sequence to move ${this.extractAudienceSize(action)} prospects to Marketing Qualified Lead status through targeted value messaging"
+EXPECTED OUTCOME: "Convert 20% of engaged prospects to MQLs, generating $25,000 in qualified pipeline"
+REVENUE IMPACT: { type: "pipeline", estimatedValue: 25000, confidence: 0.65 }
+
+WHY THIS WORKS:
+• Focuses on pipeline stage progression (prospect → MQL)
+• Includes specific conversion target (20%)
+• Clear revenue attribution ($25,000 pipeline)
+      `.trim();
+    }
+    
+    if (actionLower.includes('email') || actionLower.includes('newsletter')) {
+      return `
+ORIGINAL: "${action.action}"
+REWORD TO:
+
+ACTION: "Execute revenue-focused email sequence"
+DESCRIPTION: "Deploy 3-email conversion sequence to ${this.extractAudienceSize(action)} subscribers with progressive CTAs leading to paid trial signup"
+EXPECTED OUTCOME: "Achieve 3% subscriber-to-trial conversion, generating $5,000 in new MRR"
+REVENUE IMPACT: { type: "MRR", estimatedValue: 5000, confidence: 0.7 }
+
+WHY THIS WORKS:
+• Conversion-focused (subscriber → paid trial)
+• Specific MRR target ($5,000)
+• Measurable conversion rate (3%)
+      `.trim();
+    }
+    
+    // Default suggestion for other action types
+    return `
+ORIGINAL: "${action.action}"
+REWORD TO:
+
+ACTION: "Drive measurable revenue through ${this.extractActionType(action)}"
+DESCRIPTION: "Execute ${action.action.toLowerCase()} with explicit focus on converting engaged prospects to revenue-generating customers"
+EXPECTED OUTCOME: "Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]"
+REVENUE IMPACT: { type: "[ARR/MRR/pipeline]", estimatedValue: [amount], confidence: [0.5-0.9] }
+
+REQUIRED ELEMENTS:
+• Specific conversion metric (% or count)
+• Dollar value tied to ARR, MRR, or pipeline
+• Confidence level based on historical data
+• Clear path from action to revenue
+
+EXAMPLE FOR ${action.agentType}:
+"Convert [audience] to [revenue action] generating $[X] in [revenue type]"
+    `.trim();
+  }
+
+  /**
+   * Extract audience size hint from action description
+   */
+  private extractAudienceSize(action: AgentAction): string {
+    const text = `${action.description} ${action.expectedOutcome}`;
+    const numbers = text.match(/\d+/g);
+    if (numbers && numbers.length > 0) {
+      return numbers[0];
+    }
+    return 'targeted';
+  }
+
+  /**
+   * Extract action type for generic suggestion
+   */
+  private extractActionType(action: AgentAction): string {
+    const actionWords = action.action.toLowerCase().split(' ');
+    const meaningfulWords = actionWords.filter(w => 
+      !['the', 'a', 'an', 'to', 'for', 'and', 'or', 'of', 'in', 'on'].includes(w)
+    );
+    return meaningfulWords.slice(0, 3).join(' ') || 'strategic initiative';
   }
 
   private async deliverFeedbackToAgent(
