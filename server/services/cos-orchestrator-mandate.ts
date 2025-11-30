@@ -22,6 +22,8 @@
 
 import { storage } from '../storage.js';
 import { nanoid } from 'nanoid';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // ============================================
 // IMMUTABLE GOVERNANCE RULES (Enhanced Clarity)
@@ -147,11 +149,10 @@ class CoSOrchestatorMandateService {
 
   private loadState(): MandateState {
     try {
-      const fs = require('fs');
       if (fs.existsSync(this.stateFilePath)) {
         return JSON.parse(fs.readFileSync(this.stateFilePath, 'utf-8'));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log('📋 CoS Mandate: Initializing fresh state');
     }
     
@@ -174,8 +175,6 @@ class CoSOrchestatorMandateService {
 
   private saveState(): void {
     try {
-      const fs = require('fs');
-      const path = require('path');
       const dir = path.dirname(this.stateFilePath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });

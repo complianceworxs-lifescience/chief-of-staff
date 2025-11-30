@@ -127,8 +127,10 @@ export class ActionTracker {
    * The [VALIDATE] step runs:
    * 1. Constitution Validator (legal/policy compliance)
    * 2. CoS Mandate Gate (revenue alignment enforcement)
+   * 
+   * @returns { executionAllowed: boolean, blockReason?: string } - Whether the action can proceed to execution
    */
-  async processActionRecord(record: ActionRecord): Promise<void> {
+  async processActionRecord(record: ActionRecord): Promise<{ executionAllowed: boolean; blockReason?: string }> {
     // ========================================================================
     // [VALIDATE] STEP 1 - CONSTITUTION CHECK (L5 Action Loop)
     // ========================================================================
@@ -163,7 +165,10 @@ export class ActionTracker {
       console.log(`   📋 Enforcement: ${constitutionResult.enforcement_action}`);
       
       await this.updateActionRecord(record);
-      return; // Stop execution - action blocked by Constitution
+      return { 
+        executionAllowed: false, 
+        blockReason: `CONSTITUTION VIOLATION: ${constitutionResult.violations.map(v => v.code).join(', ')}`
+      };
     }
 
     console.log(`✅ [VALIDATE] PASSED: ${record.action_id} - Constitution Check GREEN`);
@@ -199,7 +204,10 @@ export class ActionTracker {
       }
       
       await this.updateActionRecord(record);
-      return; // Stop execution - action blocked by CoS Mandate
+      return { 
+        executionAllowed: false, 
+        blockReason: cosGateResult.blockReason || 'Revenue alignment failure'
+      };
     }
 
     console.log(`✅ [VALIDATE] PASSED: ${record.action_id} - CoS Mandate Gate APPROVED`);
@@ -236,6 +244,9 @@ export class ActionTracker {
     }
     
     await this.updateActionRecord(record);
+    
+    // Return execution allowed - action passed all validation gates
+    return { executionAllowed: true };
   }
   
   /**

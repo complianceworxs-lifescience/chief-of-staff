@@ -129,7 +129,16 @@ export class StrategyExecutor {
     );
     
     // Process through governance for auto-execution
-    await actionTracker.processActionRecord(actionRecord);
+    const gateResult = await actionTracker.processActionRecord(actionRecord);
+    
+    // CHECK: If CoS Mandate or Constitution blocked the action, DO NOT execute
+    if (!gateResult.executionAllowed) {
+      console.log(`🚫 EXECUTION BLOCKED: ${action.goalTitle}`);
+      console.log(`   ⛔ Reason: ${gateResult.blockReason}`);
+      console.log(`   📋 Action Record ${actionRecord.action_id} marked as blocked`);
+      console.log(`   🔄 Agent ${action.assignedAgent.toUpperCase()} must revise action with revenue alignment`);
+      return; // Stop here - do not call actOnRecommendation
+    }
     
     console.log(`🚀 ACT: ${action.assignedAgent.toUpperCase()} executing ${action.actionType}`);
     console.log(`📅 DUE: ${dueDate.toLocaleDateString()} | Expected: ${actionRecord.expected.target}`);
