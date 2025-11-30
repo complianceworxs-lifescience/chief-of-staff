@@ -54,6 +54,12 @@ The system is designed with a clear separation of concerns, a service layer for 
 - **MailChimp**: For email campaign execution.
 - **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
 
+## Recent Changes (2025-11-30)
+- **COS ORCHESTRATOR MANDATE (Enhanced v1.1)**: Implemented formal governance system for the Chief of Staff agent with 4 immutable constraints, valuation logic gate, and agent feedback loop. API: `/api/cos-mandate/*`
+  - **Governance Rules**: REJECT_UNMEASURABLE_TACTICS, REJECT_ENGINE_VIOLATIONS, REJECT_VANITY_OPTIMIZATION, REQUIRE_REVENUE_MAPPING
+  - **Control Plane**: Enterprise-wide arbitration layer that validates outputs, monitors performance deltas, and routes all actions through valuation logic before execution
+  - **Autonomy & Learning**: Specialized agents submit outputs for validation; CoS logs vetoes, updates feedback vectors, and triggers iterative refinement cycles
+
 ## Recent Changes (2025-11-29)
 - **L6 ACTIVATION ACHIEVED**: Friction reduced to 27 (target met), ledger populated with 30/30 unique persona/angle/metric combinations
 - **Research Mandate Updated**: Added `operationalValidation` section with field-validated findings from objection-intelligence micro-loop
