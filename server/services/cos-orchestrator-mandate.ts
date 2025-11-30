@@ -750,3 +750,133 @@ export const cosOrchestratorMandate = new CoSOrchestatorMandateService();
 
 // Export for direct API use
 export default cosOrchestratorMandate;
+
+// ============================================
+// EXECUTION GATE - Called from Action Tracker
+// This is the mandatory gate all agent actions must pass
+// ============================================
+export interface CoSGateResult {
+  allowed: boolean;
+  status: 'APPROVED' | 'VETOED' | 'WARNING';
+  constraintAudit: AuditResult;
+  valuationCheck: ValuationCheckResult;
+  blockReason?: string;
+  feedbackToAgent?: string;
+}
+
+/**
+ * CoS Execution Gate - MANDATORY for all agent actions
+ * 
+ * This function combines:
+ * 1. Constraint audit (4 immutable rules)
+ * 2. Valuation logic check (ARR/MRR impact scoring)
+ * 
+ * Returns whether the action can proceed to execution
+ */
+export async function cosExecutionGate(
+  actionId: string,
+  agentId: string,
+  agentType: string,
+  actionTitle: string,
+  actionDescription: string,
+  expectedOutcome: string,
+  revenueImpact?: {
+    type: 'ARR' | 'MRR' | 'pipeline' | 'none';
+    estimatedValue?: number;
+    confidence?: number;
+  }
+): Promise<CoSGateResult> {
+  console.log(`🚦 CoS EXECUTION GATE: Processing action from ${agentType}`);
+  
+  // Build action object
+  const action: AgentAction = {
+    id: actionId,
+    agentId,
+    agentType: agentType as any,
+    action: actionTitle,
+    description: actionDescription,
+    expectedOutcome,
+    revenueImpact: revenueImpact || { type: 'none' },
+    timestamp: new Date().toISOString()
+  };
+
+  // Step 1: Constraint Audit
+  const constraintAudit = await cosOrchestratorMandate.auditAgentAction(action);
+  
+  // Step 2: Valuation Logic Check
+  const valuationCheck = cosOrchestratorMandate.routeThroughValuationLogic(action);
+
+  // Determine if action is allowed
+  let allowed = true;
+  let blockReason: string | undefined;
+
+  // Block if VETOED by constraints
+  if (constraintAudit.status === 'VETOED') {
+    allowed = false;
+    blockReason = `CoS MANDATE VETOED: ${constraintAudit.violations.map(v => v.constraintName).join(', ')}`;
+  }
+  
+  // Block if valuation score too low (< 30 is definite block)
+  if (valuationCheck.valuationScore < 30) {
+    allowed = false;
+    blockReason = blockReason 
+      ? `${blockReason} | Valuation Score: ${valuationCheck.valuationScore}/100 (minimum 30)`
+      : `Valuation Score too low: ${valuationCheck.valuationScore}/100 (minimum 30 required)`;
+  }
+
+  // Log gate decision
+  if (allowed) {
+    console.log(`✅ CoS GATE PASSED: ${agentType} action approved (Valuation: ${valuationCheck.valuationScore}/100)`);
+  } else {
+    console.log(`🚫 CoS GATE BLOCKED: ${agentType} action rejected`);
+    console.log(`   Reason: ${blockReason}`);
+  }
+
+  return {
+    allowed,
+    status: constraintAudit.status,
+    constraintAudit,
+    valuationCheck,
+    blockReason,
+    feedbackToAgent: constraintAudit.feedbackToAgent
+  };
+}
+
+/**
+ * Quick check for action-tracker integration
+ * Returns simple pass/fail without full audit trail
+ */
+export function quickCoSCheck(
+  actionTitle: string,
+  actionDescription: string,
+  agentType: string
+): { pass: boolean; reason: string } {
+  const actionText = `${actionTitle} ${actionDescription}`.toLowerCase();
+  
+  // Quick check for revenue keywords
+  const hasRevenueTie = STRATEGIC_CONSTRAINTS.CONSTRAINT_4.revenueKeywords.some(
+    kw => actionText.includes(kw.toLowerCase())
+  );
+  
+  // Quick check for vanity metrics
+  const vanityKeywords = STRATEGIC_CONSTRAINTS.CONSTRAINT_3.keywords;
+  const hasVanityFocus = vanityKeywords.some(kw => actionText.includes(kw.toLowerCase()));
+  
+  // Quick check for noise indicators
+  const noiseIndicators = ['brand awareness', 'social presence', 'engagement only', 'followers'];
+  const isNoise = noiseIndicators.some(n => actionText.includes(n));
+  
+  if (isNoise && !hasRevenueTie) {
+    return { pass: false, reason: 'Action appears to be noise without revenue tie' };
+  }
+  
+  if (hasVanityFocus && !hasRevenueTie) {
+    return { pass: false, reason: 'Action focuses on vanity metrics without conversion goal' };
+  }
+  
+  if (!hasRevenueTie) {
+    return { pass: false, reason: 'No clear revenue connection (ARR/MRR/pipeline)' };
+  }
+  
+  return { pass: true, reason: 'Revenue-aligned action' };
+}
