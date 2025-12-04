@@ -55,14 +55,20 @@ The system is designed with a clear separation of concerns, a service layer for 
 - **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
 
 ## Recent Changes (2025-12-04)
-- **EDITORIAL & PERSONA GOVERNANCE FIREWALL v1.0**: Implemented 8-point content validation system for the Blog Publish Pipeline. Ensures only life-sciences validation content publishes.
-  - **Audience Lock**: Requires 2+ life sciences domain anchors (FDA, GxP, CSV, Validation, QMS, Annex 11, 21 CFR Part 11, etc.)
-  - **Prohibited Domain Filter**: Zero tolerance for corporate compliance terms (SOX, DOJ ECCP, Sarbanes-Oxley, AML, KYC, SEC enforcement, GDPR fines, Corporate governance)
-  - **Persona-Lock**: Maps briefs to Rising Leader, Validation Strategist, or Compliance Architect with topic alignment checks
-  - **Editorial Style Enforcement**: Rejects consultant speak (best practices, synergy, paradigm shift), corporate governance language, and generalist content
-  - **Revenue Alignment**: Content must reinforce Time Reclaimed, Proof of ROI, or Professional Equity pillars
-  - **CoS GO/NO-GO Final Audit**: ANY failed check results in immediate veto
-  - **Result**: The article that triggered this update would now be auto-rejected at 6 different checkpoints
+- **EDITORIAL FIREWALL + MESSAGE BUS v1.0**: Single enforcement brain for content governance with inter-agent communication system.
+  - **Editorial Firewall** (`/utils/editorialFirewall.ts`): Validates at idea, brief, and draft stages
+    - **Domain Anchors**: Requires ≥2 life sciences terms (FDA, GxP, CSV, 21 CFR Part 11, Annex 11, CAPA, etc.)
+    - **Prohibited Terms**: Zero tolerance for corporate compliance (SOX, DOJ, AML, KYC, GDPR fines, corporate governance)
+    - **Pillar Alignment**: Must reinforce Time Reclaimed, Proof of ROI, or Professional Equity
+    - **Persona Lock**: Only Rising Leader, Validation Strategist, or Compliance Architect
+  - **Message Bus** (`/utils/messageBus.ts`): Agent-to-agent routing with staged validation
+    - CMO → TOPIC_IDEA_QUEUE → CMA (idea validation)
+    - CMA → BRIEF_FOR_REVIEW → CoS (brief validation)
+    - CoS → CPA_WORK_QUEUE → CPA (content generation)
+    - CPA → DRAFT_FOR_PUBLISH_REVIEW → CoS (final validation)
+    - CoS → PUBLISH_QUEUE → WordPress (CPA NEVER publishes directly)
+  - **Test Suite**: 11 test cases covering domain, persona, pillar, and end-to-end scenarios
+  - **API**: `/api/firewall/*` - analyze, check/idea, check/brief, check/draft, submit/idea, test, config
 - **Blog Cadence Scheduler**: Automated blog publishing every Monday and Thursday at 15:00 UTC
   - Workflow: CMO brief selection → 8-point governance validation → CPA-L7 content generation → WordPress publish
   - API: `/api/blog-pipeline/*`
