@@ -45,12 +45,17 @@ export interface ContentBrief {
 export interface GovernanceValidation {
   valid: boolean;
   checks: {
-    personaLock: { passed: boolean; reason?: string };
+    audienceLock: { passed: boolean; reason?: string; anchorsFound?: string[] };
+    prohibitedDomainFilter: { passed: boolean; reason?: string; violations?: string[] };
+    personaLock: { passed: boolean; reason?: string; persona?: string; topicAlignment?: boolean };
+    editorialStyle: { passed: boolean; reason?: string; violations?: string[] };
+    revenueAlignment: { passed: boolean; reason?: string; pillar?: string };
     clarity: { passed: boolean; reason?: string };
     proof: { passed: boolean; reason?: string };
-    revenueAlignment: { passed: boolean; reason?: string };
+    cosGoNoGo: { passed: boolean; reason?: string; failedChecks?: string[] };
   };
   overallScore: number;
+  firewallVersion: string;
 }
 
 export interface BlogPublishResult {
@@ -262,40 +267,296 @@ class BlogPublishPipelineService {
     }
   }
 
+  /**
+   * ================================================================
+   * COMPLIANCEWORXS EDITORIAL & PERSONA GOVERNANCE FIREWALL
+   * (For CoS + CMA — Unified Directive)
+   * ================================================================
+   */
+
+  private readonly REQUIRED_DOMAIN_ANCHORS = [
+    'FDA', 'GxP', 'CSV', 'Computer System Validation', 'Validation',
+    'QMS', 'Quality Management System', 'SOPs', 'Annex 11',
+    '21 CFR Part 820', 'QSR', '21 CFR Part 11', 'ICH Q7', 'ICH Q8',
+    'ICH Q9', 'ICH Q10', 'PQ', 'PPQ', 'Quality Assurance',
+    'Regulatory Affairs', 'Audit Readiness', 'Deviation', 'CAPA',
+    'Batch records', 'Manufacturing Quality', 'EU MDR', 'IVDR'
+  ];
+
+  private readonly PROHIBITED_DOMAINS = [
+    'SOX', 'DOJ ECCP', 'Sarbanes-Oxley', 'FCA SYSC', 'AML', 'KYC',
+    'SEC enforcement', 'GDPR fines', 'Corporate governance',
+    'Bribery', 'corruption frameworks', 'PCAOB', 'SMCR', 'OFAC',
+    'sanctions', 'GRC general', 'model risk', 'DEI', 'ESG',
+    'HR compliance', 'finance compliance'
+  ];
+
+  private readonly VALID_PERSONAS = {
+    'Rising Leader': [
+      'understanding validation', 'QA career growth', 'audit basics',
+      'foundational clarity', 'learning validation', 'quality fundamentals'
+    ],
+    'Validation Strategist': [
+      'risk-based validation', 'audit readiness', 'CSV', 'Annex 11',
+      'efficiency', 'remediation cycles', 'validation optimization',
+      'compliance efficiency', 'validation strategy'
+    ],
+    'Compliance Architect': [
+      'system-level strategy', 'Quality System design', 'control environment',
+      'EU MDR', 'IVDR', 'PQ', 'PPQ', 'ICH Q-series', 'end-to-end',
+      'quality architecture', 'regulatory strategy'
+    ]
+  };
+
+  private readonly REVENUE_PILLARS = {
+    'Time Reclaimed': [
+      'faster validation', 'reduced documentation', 'reduced deviation cycle',
+      'faster audit prep', 'time savings', 'efficiency', 'automation',
+      'accelerate', 'speed', 'streamline'
+    ],
+    'Proof of ROI': [
+      'quantifiable impact', 'validation cycle efficiency', 'audit readiness delta',
+      'CAPA closure', 'measurable', 'ROI', 'cost reduction', 'savings',
+      'performance improvement', 'metrics'
+    ],
+    'Professional Equity': [
+      'quality career growth', 'recognition', 'inspection outcomes',
+      'professional development', 'career advancement', 'leadership',
+      'expertise', 'credibility', 'authority'
+    ]
+  };
+
   validateBriefGovernance(brief: ContentBrief): GovernanceValidation {
+    console.log('\n🔒 EDITORIAL & PERSONA GOVERNANCE FIREWALL v1.0');
+    console.log('   Running 8-point validation...\n');
+
+    // CoS Final GO/NO-GO Rule (Section 6)
+    const audienceLock = this.checkAudienceLock(brief);
+    const prohibitedDomainFilter = this.checkProhibitedDomains(brief);
+    const personaLock = this.checkPersonaLock(brief);
+    const editorialStyle = this.checkEditorialStyle(brief);
+    const revenueAlignment = this.checkRevenueAlignment(brief);
+    const clarity = this.checkClarity(brief);
+    const proof = this.checkProof(brief);
+
+    const failedChecks: string[] = [];
+    if (!audienceLock.passed) failedChecks.push('AUDIENCE_LOCK');
+    if (!prohibitedDomainFilter.passed) failedChecks.push('PROHIBITED_DOMAIN');
+    if (!personaLock.passed) failedChecks.push('PERSONA_LOCK');
+    if (!editorialStyle.passed) failedChecks.push('EDITORIAL_STYLE');
+    if (!revenueAlignment.passed) failedChecks.push('REVENUE_ALIGNMENT');
+    if (!clarity.passed) failedChecks.push('CLARITY');
+    if (!proof.passed) failedChecks.push('PROOF');
+
+    const cosGoNoGo = {
+      passed: failedChecks.length === 0,
+      reason: failedChecks.length === 0 
+        ? undefined 
+        : `CoS VETO: Failed ${failedChecks.length} governance checks`,
+      failedChecks
+    };
+
     const checks = {
-      personaLock: this.checkPersonaLock(brief),
-      clarity: this.checkClarity(brief),
-      proof: this.checkProof(brief),
-      revenueAlignment: this.checkRevenueAlignment(brief)
+      audienceLock,
+      prohibitedDomainFilter,
+      personaLock,
+      editorialStyle,
+      revenueAlignment,
+      clarity,
+      proof,
+      cosGoNoGo
     };
 
     const passedCount = Object.values(checks).filter(c => c.passed).length;
-    const overallScore = Math.round((passedCount / 4) * 100);
-    const valid = passedCount === 4;
+    const overallScore = Math.round((passedCount / 8) * 100);
+    const valid = checks.cosGoNoGo.passed;
 
-    return { valid, checks, overallScore };
+    // Log results
+    console.log('   📋 Validation Results:');
+    console.log(`      ${audienceLock.passed ? '✅' : '❌'} Audience Lock (Life Sciences anchors)`);
+    console.log(`      ${prohibitedDomainFilter.passed ? '✅' : '❌'} Prohibited Domain Filter`);
+    console.log(`      ${personaLock.passed ? '✅' : '❌'} Persona Lock + Topic Alignment`);
+    console.log(`      ${editorialStyle.passed ? '✅' : '❌'} Editorial Style Enforcement`);
+    console.log(`      ${revenueAlignment.passed ? '✅' : '❌'} Revenue Alignment (3 Pillars)`);
+    console.log(`      ${clarity.passed ? '✅' : '❌'} Clarity Check`);
+    console.log(`      ${proof.passed ? '✅' : '❌'} Proof Points`);
+    console.log(`      ${cosGoNoGo.passed ? '✅' : '❌'} CoS GO/NO-GO Final Audit`);
+    console.log(`   📊 Overall Score: ${overallScore}%`);
+    console.log(`   🚦 Final Decision: ${valid ? 'APPROVED' : 'REJECTED'}\n`);
+
+    return { valid, checks, overallScore, firewallVersion: '1.0' };
   }
 
-  private checkPersonaLock(brief: ContentBrief): { passed: boolean; reason?: string } {
-    const validPersonas = [
-      'VP Quality',
-      'Director QA',
-      'Head of Compliance',
-      'Quality Manager',
-      'Validation Lead',
-      'Regulatory Affairs',
-      'CSV Specialist',
-      'Quality Engineer'
+  /**
+   * SECTION 1: AUDIENCE LOCK (MANDATORY)
+   * Any topic that does not explicitly reference LIFE SCIENCES must be rejected.
+   * Requires at least 2 domain anchors.
+   */
+  private checkAudienceLock(brief: ContentBrief): { passed: boolean; reason?: string; anchorsFound?: string[] } {
+    const content = `${brief.title} ${brief.coreMessage} ${brief.valueProposition} ${brief.painPoints.join(' ')} ${brief.proofPoints.join(' ')}`.toLowerCase();
+    
+    const anchorsFound: string[] = [];
+    for (const anchor of this.REQUIRED_DOMAIN_ANCHORS) {
+      if (content.includes(anchor.toLowerCase())) {
+        anchorsFound.push(anchor);
+      }
+    }
+
+    const passed = anchorsFound.length >= 2;
+    return {
+      passed,
+      reason: passed 
+        ? undefined 
+        : `AUDIENCE LOCK FAILED: Only ${anchorsFound.length} life sciences anchor(s) found (need 2+). Add FDA, GxP, CSV, QMS, Annex 11, or other life sciences terms.`,
+      anchorsFound
+    };
+  }
+
+  /**
+   * SECTION 2: PROHIBITED DOMAIN FILTER (MANDATORY)
+   * Zero tolerance. One keyword is enough to force a veto.
+   */
+  private checkProhibitedDomains(brief: ContentBrief): { passed: boolean; reason?: string; violations?: string[] } {
+    const content = `${brief.title} ${brief.coreMessage} ${brief.valueProposition} ${brief.painPoints.join(' ')} ${brief.proofPoints.join(' ')}`.toLowerCase();
+    
+    const violations: string[] = [];
+    for (const prohibited of this.PROHIBITED_DOMAINS) {
+      if (content.includes(prohibited.toLowerCase())) {
+        violations.push(prohibited);
+      }
+    }
+
+    const passed = violations.length === 0;
+    return {
+      passed,
+      reason: passed 
+        ? undefined 
+        : `PROHIBITED DOMAIN FILTER FAILED: Contains "${violations.join(', ')}" - corporate compliance terms not allowed.`,
+      violations
+    };
+  }
+
+  /**
+   * SECTION 3: PERSONA-LOCK (MANDATORY)
+   * Every brief must be mapped to: Rising Leader, Validation Strategist, or Compliance Architect
+   * Topic must align with persona's required angles.
+   */
+  private checkPersonaLock(brief: ContentBrief): { passed: boolean; reason?: string; persona?: string; topicAlignment?: boolean } {
+    const personaInput = brief.targetPersona.toLowerCase();
+    const content = `${brief.title} ${brief.coreMessage} ${brief.valueProposition}`.toLowerCase();
+    
+    let matchedPersona: string | null = null;
+    let topicAlignment = false;
+
+    // Match persona
+    if (personaInput.includes('rising') || personaInput.includes('leader') || personaInput.includes('junior') || personaInput.includes('new')) {
+      matchedPersona = 'Rising Leader';
+    } else if (personaInput.includes('strategist') || personaInput.includes('validation') || personaInput.includes('csv') || personaInput.includes('lead')) {
+      matchedPersona = 'Validation Strategist';
+    } else if (personaInput.includes('architect') || personaInput.includes('director') || personaInput.includes('vp') || personaInput.includes('head') || personaInput.includes('senior')) {
+      matchedPersona = 'Compliance Architect';
+    }
+
+    // Check topic alignment
+    if (matchedPersona) {
+      const requiredAngles = this.VALID_PERSONAS[matchedPersona as keyof typeof this.VALID_PERSONAS];
+      topicAlignment = requiredAngles.some(angle => content.includes(angle.toLowerCase()));
+    }
+
+    const passed = matchedPersona !== null && topicAlignment;
+    return {
+      passed,
+      reason: passed 
+        ? undefined 
+        : matchedPersona 
+          ? `PERSONA-LOCK FAILED: Topic does not align with ${matchedPersona} required angles. Add relevant topics for this persona.`
+          : `PERSONA-LOCK FAILED: "${brief.targetPersona}" must map to Rising Leader, Validation Strategist, or Compliance Architect.`,
+      persona: matchedPersona || undefined,
+      topicAlignment
+    };
+  }
+
+  /**
+   * SECTION 4: EDITORIAL STYLE ENFORCEMENT
+   * Must be: GxP-specific, data-driven, clear, direct, concise
+   * No: jargon outside life sciences, enterprise compliance language, consultant speak, generalist content
+   */
+  private checkEditorialStyle(brief: ContentBrief): { passed: boolean; reason?: string; violations?: string[] } {
+    const content = `${brief.title} ${brief.coreMessage} ${brief.valueProposition}`.toLowerCase();
+    const violations: string[] = [];
+
+    // Check for banned generalist/consultant language
+    const bannedPatterns = [
+      'best practices', 'synergy', 'paradigm shift', 'holistic approach',
+      'leverage our', 'streamline your journey', 'unlock potential',
+      'thought leadership', 'innovative solutions', 'game-changer',
+      'next-generation', 'cutting-edge', 'world-class', 'industry-leading'
     ];
 
-    const isValid = validPersonas.some(p => 
-      brief.targetPersona.toLowerCase().includes(p.toLowerCase())
-    );
+    for (const pattern of bannedPatterns) {
+      if (content.includes(pattern)) {
+        violations.push(`Consultant speak: "${pattern}"`);
+      }
+    }
 
+    // Check for prohibited corporate compliance language
+    const corporatePatterns = [
+      'corporate governance', 'board oversight', 'enterprise risk',
+      'financial compliance', 'internal audit committee', 'shareholder'
+    ];
+
+    for (const pattern of corporatePatterns) {
+      if (content.includes(pattern)) {
+        violations.push(`Corporate compliance: "${pattern}"`);
+      }
+    }
+
+    // Check if content is too generic (no GxP specifics)
+    const gxpTerms = ['fda', 'gxp', 'validation', 'qms', 'quality', 'compliance', 'audit', 'regulatory'];
+    const hasGxpContext = gxpTerms.some(term => content.includes(term));
+    if (!hasGxpContext) {
+      violations.push('Content too generic - missing GxP/regulatory context');
+    }
+
+    const passed = violations.length === 0;
     return {
-      passed: isValid,
-      reason: isValid ? undefined : `Persona "${brief.targetPersona}" not in approved Life Sciences personas`
+      passed,
+      reason: passed 
+        ? undefined 
+        : `EDITORIAL STYLE FAILED: ${violations.join('; ')}`,
+      violations
+    };
+  }
+
+  /**
+   * SECTION 5: REVENUE ALIGNMENT (MANDATORY)
+   * Content must reinforce one of: Time Reclaimed, Proof of ROI, or Professional Equity
+   */
+  private checkRevenueAlignment(brief: ContentBrief): { passed: boolean; reason?: string; pillar?: string } {
+    const content = `${brief.title} ${brief.coreMessage} ${brief.valueProposition} ${brief.proofPoints.join(' ')}`.toLowerCase();
+    
+    let matchedPillar: string | null = null;
+
+    for (const [pillar, keywords] of Object.entries(this.REVENUE_PILLARS)) {
+      const hasMatch = keywords.some(keyword => content.includes(keyword.toLowerCase()));
+      if (hasMatch) {
+        matchedPillar = pillar;
+        break;
+      }
+    }
+
+    // Also check minimum revenue score
+    const meetsScoreThreshold = brief.revenueScore >= 60;
+
+    const passed = matchedPillar !== null && meetsScoreThreshold;
+    return {
+      passed,
+      reason: passed 
+        ? undefined 
+        : !matchedPillar 
+          ? 'REVENUE ALIGNMENT FAILED: Content must reinforce Time Reclaimed, Proof of ROI, or Professional Equity.'
+          : `REVENUE ALIGNMENT FAILED: Revenue score ${brief.revenueScore} below minimum threshold of 60.`,
+      pillar: matchedPillar || undefined
     };
   }
 
@@ -307,7 +568,7 @@ class BlogPublishPipelineService {
     const passed = Boolean(hasTitle && hasCore && hasValue);
     return {
       passed,
-      reason: passed ? undefined : 'Brief missing clear title, core message, or value proposition'
+      reason: passed ? undefined : 'CLARITY FAILED: Brief missing clear title, core message, or value proposition'
     };
   }
 
@@ -319,17 +580,7 @@ class BlogPublishPipelineService {
 
     return {
       passed: validProof,
-      reason: validProof ? undefined : 'Brief needs quantifiable proof points (percentages, dollar values, or metrics)'
-    };
-  }
-
-  private checkRevenueAlignment(brief: ContentBrief): { passed: boolean; reason?: string } {
-    const minRevenueScore = 60;
-    const passed = brief.revenueScore >= minRevenueScore;
-
-    return {
-      passed,
-      reason: passed ? undefined : `Revenue score ${brief.revenueScore} below minimum threshold of ${minRevenueScore}`
+      reason: validProof ? undefined : 'PROOF FAILED: Brief needs quantifiable proof points (percentages, dollar values, or metrics)'
     };
   }
 

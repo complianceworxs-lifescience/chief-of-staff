@@ -1,0 +1,203 @@
+Agent-to-agent wiring (where the firewall runs)
+1.1 Message shape (required fields)
+
+All content flows must carry these fields:
+
+{
+  "topic": "BLOG_ARTICLE",
+  "persona": "Validation Strategist",
+  "title": "…",
+  "rawIdea": "…",
+  "draft": "…",
+  "metadata": {
+    "domainAnchors": [],
+    "prohibitedTerms": [],
+    "pillars": [],
+    "lifecycleStage": "idea|brief|draft|final"
+  }
+}
+
+1.2 CMO → CMA (idea stage)
+
+CMO publishes to TOPIC_IDEA_QUEUE:
+
+lifecycleStage = "idea", no draft yet.
+
+CMA subscribes to TOPIC_IDEA_QUEUE, immediately runs firewallCheck.idea():
+
+if (!passesAudienceLock(rawIdea) ||
+    !passesDomainAnchors(rawIdea) ||
+    hitsProhibitedTerms(rawIdea)) {
+  messageBus.publish("IDEA_REJECTED", {...reason});
+} else {
+  messageBus.publish("BRIEF_READY", {..., lifecycleStage:"brief"});
+}
+
+
+Only messages on BRIEF_READY can move forward.
+
+1.3 CMA → CoS (brief stage)
+
+CMA enriches with:
+
+persona
+
+metadata.domainAnchors
+
+metadata.pillars
+
+Publishes to BRIEF_FOR_REVIEW.
+
+CoS subscribes to BRIEF_FOR_REVIEW, runs firewallCheck.brief():
+
+Re-check anchors, persona-lock, pillars, prohibited terms.
+
+If fail → BRIEF_REJECTED.
+
+If pass → BRIEF_APPROVED.
+
+Only BRIEF_APPROVED messages may be sent to CPA.
+
+1.4 CoS → CPA (draft/content stage)
+
+CPA never runs without a CoS-approved brief.
+
+CoS publishes to CPA_WORK_QUEUE:
+
+{
+  "topic": "BLOG_ARTICLE",
+  "persona": "Validation Strategist",
+  "title": "Why Validation Documentation Fails FDA Inspections",
+  "approvedBrief": "…",
+  "metadata": {..., "lifecycleStage": "brief-validated"}
+}
+
+
+CPA generates draftContent.
+
+Before publish, CoS runs firewall again on the draft:
+
+CPA → DRAFT_FOR_PUBLISH_REVIEW
+
+CoS subscribes, runs firewallCheck.draft(draftContent):
+
+If fail → DRAFT_REJECTED.
+
+If pass → PUBLISH_QUEUE → WordPress.
+
+CPA must never call WordPress directly. Only CoS publishes.
+
+2. Firewall hooks (where to call what)
+
+Implement one shared module, e.g. /utils/editorialFirewall.js:
+
+analyzeText(text) → { domainAnchors, prohibitedTerms, pillarsDetected }
+
+passesAudienceLock(analysis)
+
+passesDomainAnchors(analysis)
+
+passesPersonaLock(message)
+
+passesPillars(analysis)
+
+hitsProhibitedTerms(analysis)
+
+Wire-in:
+
+CMA:
+
+On TOPIC_IDEA_QUEUE: analyzeText(rawIdea) + idea-level checks.
+
+On brief construction: assert persona + anchors + pillars.
+
+CoS:
+
+On BRIEF_FOR_REVIEW: full firewall.
+
+On DRAFT_FOR_PUBLISH_REVIEW: run firewall on draftContent (final gate).
+
+3. Test cases to validate the firewall
+
+Each test is:
+Input → expected bus event + which agent must reject/accept.
+
+3.1 Domain & persona tests
+
+Generic corporate compliance (BAD)
+
+Input: idea with SOX, DOJ, SEC, GDPR, no FDA/validation terms.
+
+Expected: IDEA_REJECTED by CMA (audience lock + prohibited terms).
+
+Financial AML/KYC (BAD)
+
+Input: “Reducing AML/KYC risk with better controls”
+
+Expected: IDEA_REJECTED by CMA (prohibited domain).
+
+Life sciences, weak anchors (BAD)
+
+Input: “Why quality programs fail in pharma” (no FDA, CSV, QMS).
+
+Expected: IDEA_REJECTED (fails “≥2 domain anchors”).
+
+Life sciences, strong anchors (GOOD)
+
+Input: “Why CSV efforts fail FDA inspections under 21 CFR Part 11 and Annex 11.”
+
+Expected: BRIEF_READY from CMA, BRIEF_APPROVED from CoS.
+
+3.2 Draft content tests
+
+Brief is good, draft drifts to corporate compliance (BAD)
+
+Brief: FDA-centric.
+
+Draft: mentions SOX, DOJ, GDPR, no longer mentions FDA/CSV.
+
+Expected: DRAFT_REJECTED by CoS; nothing hits PUBLISH_QUEUE.
+
+Brief is good, draft stays GxP-specific (GOOD)
+
+Draft includes: validation, PQ/PPQ, 21 CFR, Annex 11, CAPA.
+
+Expected: PUBLISH_QUEUE event containing WordPress payload.
+
+3.3 Pillar tests
+
+No pillar present (BAD)
+
+Draft explains regulations but no mention of time saved, ROI impact, or professional equity.
+
+Expected: DRAFT_REJECTED (fails pillars check).
+
+Time Reclaimed pillar (GOOD)
+
+Draft emphasizes cycle time reduction for validation, reduction in deviation closure time.
+
+Expected: pass.
+
+Proof of ROI pillar (GOOD)
+
+Draft quantifies reduction in rework, fewer failed inspections, cost savings.
+
+Expected: pass.
+
+Professional Equity pillar (GOOD)
+
+Draft ties dashboards/clarity to better inspection outcomes and career progression.
+
+Expected: pass.
+
+3.4 End-to-end scenario test
+
+“Why Compliance Programs Fail” (current bad article)
+
+Feed the exact text as:
+
+Idea → expect IDEA_REJECTED.
+
+If forced as draft → CoS must reject at DRAFT_FOR_PUBLISH_REVIEW.
+
+This verifies that the exact failure you saw is now impossible.
