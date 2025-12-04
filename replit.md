@@ -54,6 +54,20 @@ The system is designed with a clear separation of concerns, a service layer for 
 - **MailChimp**: For email campaign execution.
 - **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
 
+## Recent Changes (2025-12-04)
+- **EDITORIAL & PERSONA GOVERNANCE FIREWALL v1.0**: Implemented 8-point content validation system for the Blog Publish Pipeline. Ensures only life-sciences validation content publishes.
+  - **Audience Lock**: Requires 2+ life sciences domain anchors (FDA, GxP, CSV, Validation, QMS, Annex 11, 21 CFR Part 11, etc.)
+  - **Prohibited Domain Filter**: Zero tolerance for corporate compliance terms (SOX, DOJ ECCP, Sarbanes-Oxley, AML, KYC, SEC enforcement, GDPR fines, Corporate governance)
+  - **Persona-Lock**: Maps briefs to Rising Leader, Validation Strategist, or Compliance Architect with topic alignment checks
+  - **Editorial Style Enforcement**: Rejects consultant speak (best practices, synergy, paradigm shift), corporate governance language, and generalist content
+  - **Revenue Alignment**: Content must reinforce Time Reclaimed, Proof of ROI, or Professional Equity pillars
+  - **CoS GO/NO-GO Final Audit**: ANY failed check results in immediate veto
+  - **Result**: The article that triggered this update would now be auto-rejected at 6 different checkpoints
+- **Blog Cadence Scheduler**: Automated blog publishing every Monday and Thursday at 15:00 UTC
+  - Workflow: CMO brief selection → 8-point governance validation → CPA-L7 content generation → WordPress publish
+  - API: `/api/blog-pipeline/*`
+  - Scheduler state persisted to `state/blog_scheduler_state.json`
+
 ## Recent Changes (2025-11-30)
 - **COS ORCHESTRATOR MANDATE (Enhanced v1.1)**: Implemented formal governance system for the Chief of Staff agent with 4 immutable constraints, valuation logic gate, and agent feedback loop. API: `/api/cos-mandate/*`
   - **Governance Rules**: REJECT_UNMEASURABLE_TACTICS, REJECT_ENGINE_VIOLATIONS, REJECT_VANITY_OPTIMIZATION, REQUIRE_REVENUE_MAPPING
