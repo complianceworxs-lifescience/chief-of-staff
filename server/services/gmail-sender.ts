@@ -1,59 +1,57 @@
 /**
  * Gmail Email Sender Service
- * Integration: Gmail (google-mail connector)
+ * Integration: Gmail via Google Service Account
  * 
- * Uses the Gmail API to send emails from the connected account.
+ * Uses the Gmail API with service account authentication to send emails.
+ * Requires GOOGLE_SERVICE_ACCOUNT_KEY secret and domain-wide delegation.
  */
 
 import { google } from 'googleapis';
 
-let connectionSettings: any;
+let cachedClient: any = null;
+let cachedExpiry: number = 0;
 
-async function getAccessToken() {
-  if (connectionSettings && connectionSettings.settings.expires_at && new Date(connectionSettings.settings.expires_at).getTime() > Date.now()) {
-    return connectionSettings.settings.access_token;
-  }
-  
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+async function getGmailClient() {
+  // Return cached client if still valid (cache for 50 minutes)
+  if (cachedClient && Date.now() < cachedExpiry) {
+    return cachedClient;
   }
 
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=google-mail',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  const accessToken = connectionSettings?.settings?.access_token || connectionSettings.settings?.oauth?.credentials?.access_token;
-
-  if (!connectionSettings || !accessToken) {
-    throw new Error('Gmail not connected');
+  const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) {
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not configured');
   }
-  return accessToken;
-}
 
-// WARNING: Never cache this client.
-// Access tokens expire, so a new client must be created each time.
-async function getUncachableGmailClient() {
-  const accessToken = await getAccessToken();
+  let credentials;
+  try {
+    credentials = JSON.parse(serviceAccountKey);
+  } catch (e) {
+    throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY format - must be valid JSON');
+  }
 
-  const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({
-    access_token: accessToken
+  // Validate required fields
+  if (!credentials.client_email) {
+    throw new Error('Service account key missing client_email');
+  }
+  if (!credentials.private_key) {
+    throw new Error('Service account key missing private_key');
+  }
+
+  console.log(`📧 Gmail: Using service account ${credentials.client_email}`);
+
+  // Create JWT auth client with service account
+  const auth = new google.auth.JWT({
+    email: credentials.client_email,
+    key: credentials.private_key,
+    scopes: ['https://www.googleapis.com/auth/gmail.send'],
+    // Subject is the email address to impersonate (must have domain-wide delegation)
+    subject: 'complianceworxs@gmail.com'
   });
 
-  return google.gmail({ version: 'v1', auth: oauth2Client });
+  cachedClient = google.gmail({ version: 'v1', auth });
+  cachedExpiry = Date.now() + (50 * 60 * 1000); // Cache for 50 minutes
+  
+  return cachedClient;
 }
 
 /**
@@ -80,7 +78,7 @@ function createMessage(to: string, subject: string, body: string): string {
 }
 
 /**
- * Send an email using Gmail API
+ * Send an email using Gmail API with Service Account
  */
 export async function sendEmail(
   to: string,
@@ -88,7 +86,7 @@ export async function sendEmail(
   htmlBody: string
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const gmail = await getUncachableGmailClient();
+    const gmail = await getGmailClient();
     
     const encodedMessage = createMessage(to, subject, htmlBody);
     
@@ -99,12 +97,23 @@ export async function sendEmail(
       }
     });
     
+    console.log(`📧 Email sent successfully to ${to}. Message ID: ${response.data.id}`);
+    
     return {
       success: true,
       messageId: response.data.id || undefined
     };
-  } catch (error) {
-    console.error('Failed to send email:', error);
+  } catch (error: any) {
+    console.error('Failed to send email:', error.message || error);
+    
+    // Check if this is a delegation error (common for personal Gmail accounts)
+    if (error.message?.includes('Delegation denied') || error.message?.includes('Not Authorized')) {
+      return {
+        success: false,
+        error: 'Service account cannot send as this Gmail account. Domain-wide delegation is required for Google Workspace, or use MailChimp for personal Gmail.'
+      };
+    }
+    
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error sending email'

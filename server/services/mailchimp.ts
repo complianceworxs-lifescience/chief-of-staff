@@ -1,4 +1,5 @@
 import fetch from 'node-fetch';
+import { createHash } from 'crypto';
 
 interface MailChimpConfig {
   apiKey: string;
@@ -153,8 +154,7 @@ export class MailChimpService {
   }
 
   private getSubscriberHash(email: string): string {
-    const crypto = require('crypto');
-    return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
+    return createHash('md5').update(email.toLowerCase()).digest('hex');
   }
 }
 
