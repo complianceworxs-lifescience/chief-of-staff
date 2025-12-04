@@ -17,6 +17,7 @@ import {
   ContentMessage
 } from '../utils/editorialFirewall.js';
 import { messageBus, TOPICS } from '../utils/messageBus.js';
+import { sendEmail } from '../services/gmail-sender.js';
 
 const router = Router();
 
@@ -355,6 +356,112 @@ router.get('/config', async (_req: Request, res: Response) => {
       pillars: 'Must reinforce: Time Reclaimed, Proof of ROI, or Professional Equity'
     }
   });
+});
+
+/**
+ * Send a validated article via Gmail
+ * First validates through firewall, then sends if passed
+ */
+router.post('/send-article', async (req: Request, res: Response) => {
+  const { to, title, draftContent, persona } = req.body;
+  
+  if (!to || !title || !draftContent || !persona) {
+    return res.status(400).json({ 
+      error: 'Missing required fields: to, title, draftContent, persona' 
+    });
+  }
+
+  // Validate through firewall first
+  const firewallResult = firewallCheckDraft(draftContent, persona);
+  
+  if (!firewallResult.passed) {
+    return res.status(403).json({
+      error: 'Article failed Editorial Firewall validation',
+      firewallResult,
+      message: 'Article cannot be sent - it does not meet content governance requirements'
+    });
+  }
+
+  // Format as HTML email
+  const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 700px; margin: 0 auto; padding: 20px; }
+    h1 { color: #1e3a8a; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }
+    h2 { color: #1e40af; margin-top: 24px; }
+    p { margin: 16px 0; }
+    .governance-badge { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 8px 16px; border-radius: 4px; font-size: 12px; display: inline-block; margin-bottom: 20px; }
+    .anchors { background: #f0fdf4; padding: 12px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0; font-size: 12px; }
+    .pillars { background: #eff6ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; margin: 20px 0; font-size: 12px; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="governance-badge">✅ EDITORIAL FIREWALL APPROVED | Persona: ${persona}</div>
+  
+  ${draftContent.split('\n\n').map((para: string) => {
+    if (para.startsWith('Why ') || para.startsWith('The ')) {
+      if (para.length < 80) {
+        return `<h1>${para}</h1>`;
+      }
+    }
+    if (/^\d+\./.test(para)) {
+      return `<h2>${para}</h2>`;
+    }
+    if (para.startsWith('First,') || para.startsWith('Second,') || para.startsWith('Third,')) {
+      return `<p><strong>${para}</strong></p>`;
+    }
+    return `<p>${para}</p>`;
+  }).join('\n')}
+  
+  <div class="anchors">
+    <strong>🔬 Domain Anchors Detected:</strong> ${firewallResult.analysis.domainAnchors.join(', ')}
+  </div>
+  
+  <div class="pillars">
+    <strong>📊 Pillars Reinforced:</strong> ${firewallResult.analysis.pillarsDetected.join(', ')}
+  </div>
+  
+  <div class="footer">
+    <p>This article was validated by the ComplianceWorxs Editorial Firewall v1.0</p>
+    <p>All content is reviewed for life-sciences focus, regulatory alignment, and revenue pillar reinforcement before distribution.</p>
+  </div>
+</body>
+</html>
+  `;
+
+  try {
+    const emailResult = await sendEmail(to, `📝 ${title}`, htmlBody);
+    
+    if (emailResult.success) {
+      res.json({
+        success: true,
+        message: `Article sent successfully to ${to}`,
+        messageId: emailResult.messageId,
+        firewallResult: {
+          passed: true,
+          domainAnchors: firewallResult.analysis.domainAnchors.length,
+          pillarsDetected: firewallResult.analysis.pillarsDetected.length
+        }
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: emailResult.error,
+        message: 'Failed to send email'
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Failed to send email'
+    });
+  }
 });
 
 export default router;
