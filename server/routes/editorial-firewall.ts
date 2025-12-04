@@ -564,13 +564,22 @@ router.post('/send-article-mailchimp', async (req: Request, res: Response) => {
       console.log('MailChimp member update note:', memberError.message);
     }
 
-    // Create and send campaign
+    // Create and send campaign targeted to specific recipient only
     const campaign = await mailchimp.createCampaign({
       subject: `📝 ${title}`,
       previewText: 'Editorial Firewall Approved - Life Sciences Content',
       fromName: 'ComplianceWorxs',
       replyTo: 'complianceworxs@gmail.com',
-      htmlContent: htmlBody
+      htmlContent: htmlBody,
+      segmentCriteria: {
+        match: 'all',
+        conditions: [{
+          condition_type: 'EmailAddress',
+          field: 'EMAIL',
+          op: 'is',
+          value: to
+        }]
+      }
     });
 
     await mailchimp.sendCampaign(campaign.id);
