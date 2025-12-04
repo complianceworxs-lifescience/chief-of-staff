@@ -1,0 +1,149 @@
+// /utils/editorialFirewall.js
+
+// Life sciences anchors (must hit >= 2)
+const REQUIRED_ANCHORS = [
+  "fda",
+  "gxp",
+  "gmp",
+  "glp",
+  "csv",
+  "computer system validation",
+  "validation",
+  "qms",
+  "quality management system",
+  "sop",
+  "sops",
+  "annex 11",
+  "21 cfr part 11",
+  "21 cfr part 210",
+  "21 cfr part 211",
+  "21 cfr part 820",
+  "eu mdr",
+  "ivdr",
+  "ich q7",
+  "ich q8",
+  "ich q9",
+  "ich q10",
+  "pq",
+  "ppq",
+  "deviation",
+  "capa",
+  "batch record",
+  "manufacturing quality",
+  "regulatory affairs",
+  "regulatory assurance",
+  "audit readiness",
+  "inspection readiness"
+];
+
+// Domains we *never* allow
+const PROHIBITED_TERMS = [
+  "sox",
+  "sarbanes-oxley",
+  "doj eccp",
+  "department of justice",
+  "sec enforcement",
+  "sec action",
+  "pcaob",
+  "fcasy sc",
+  "smcr",
+  "aml",
+  "a.m.l.",
+  "kyc",
+  "k.y.c.",
+  "sanctions",
+  "ofac",
+  "gdpr fine",
+  "ecb",
+  "prudential regulation",
+  "corporate governance",
+  "bribery act",
+  "anti-corruption",
+  "aml/kyc",
+  "financial crime"
+];
+
+// Three pillars – content must hit at least one
+const PILLAR_PATTERNS = [
+  // Time Reclaimed
+  "save time",
+  "reduce rework",
+  "less manual work",
+  "faster validation",
+  "shorter cycle time",
+  "faster audit prep",
+  "reduce documentation burden",
+  // Proof of ROI
+  "return on investment",
+  "roi",
+  "cost savings",
+  "business impact",
+  "value proof",
+  "quantify impact",
+  "reduced deviations",
+  "reduced failures",
+  // Professional Equity
+  "career",
+  "promotion",
+  "recognition",
+  "visibility",
+  "trusted advisor",
+  "executive visibility",
+  "board confidence"
+];
+
+// Personas – we just enforce valid values here;
+// deeper persona/topic matching can be extended later.
+const VALID_PERSONAS = [
+  "Rising Leader",
+  "Validation Strategist",
+  "Compliance Architect"
+];
+
+// Basic text analysis
+export function analyzeText(text = "") {
+  const lower = text.toLowerCase();
+
+  const domainAnchors = REQUIRED_ANCHORS.filter(a =>
+    lower.includes(a)
+  );
+
+  const prohibitedTerms = PROHIBITED_TERMS.filter(p =>
+    lower.includes(p)
+  );
+
+  const pillarsDetected = PILLAR_PATTERNS.filter(p =>
+    lower.includes(p)
+  );
+
+  return {
+    domainAnchors,
+    prohibitedTerms,
+    pillarsDetected
+  };
+}
+
+// Must clearly be life-sciences validation/compliance
+export function passesAudienceLock(analysis) {
+  return analysis.domainAnchors.length >= 2;
+}
+
+// Same as above, explicit
+export function passesDomainAnchors(analysis) {
+  return analysis.domainAnchors.length >= 2;
+}
+
+// Any hit is an automatic block
+export function hitsProhibitedTerms(analysis) {
+  return analysis.prohibitedTerms.length > 0;
+}
+
+// Must hit at least one pillar (time, ROI, professional equity)
+export function passesPillars(analysis) {
+  return analysis.pillarsDetected.length >= 1;
+}
+
+// Persona must be one of the three; can be extended later
+export function passesPersonaLock(persona) {
+  return VALID_PERSONAS.includes(persona);
+}

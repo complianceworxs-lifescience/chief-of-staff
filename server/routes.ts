@@ -47,6 +47,7 @@ import objectionIntelligenceRouter from "./routes/objection-intelligence";
 import cosOrchestratorMandateRouter from "./routes/cos-orchestrator-mandate";
 import l7MasterDirectiveRouter, { initL7MasterDirective } from "./routes/l7-master-directive";
 import blogPublishPipelineRouter from "./routes/blog-publish-pipeline";
+import editorialFirewallRouter from "./routes/editorial-firewall";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
@@ -212,6 +213,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/blog-pipeline", blogPublishPipelineRouter);
   blogCadenceScheduler.start();
   console.log('📝 BLOG PUBLISH PIPELINE (CoS Blog Cadence) routes mounted at /api/blog-pipeline');
+  
+  // Mount Editorial Firewall routes (Agent-to-Agent Wiring)
+  app.use("/api/firewall", editorialFirewallRouter);
+  console.log('🔒 EDITORIAL FIREWALL (Agent-to-Agent Wiring) routes mounted at /api/firewall');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
