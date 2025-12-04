@@ -51,8 +51,11 @@ const REQUIRED_ANCHORS = [
 ];
 
 // Domains we *never* allow
+// NOTE: Use word boundaries or specific phrases to avoid false positives
+// e.g., " aml " to avoid matching "streamlined"
 const PROHIBITED_TERMS = [
-  "sox",
+  "sox ",
+  " sox",
   "sarbanes-oxley",
   "doj eccp",
   "department of justice",
@@ -61,19 +64,26 @@ const PROHIBITED_TERMS = [
   "pcaob",
   "fca sysc",
   "smcr",
-  "aml",
+  " aml ",
+  " aml/",
+  "/aml ",
   "a.m.l.",
-  "kyc",
+  " kyc ",
+  " kyc/",
+  "/kyc ",
   "k.y.c.",
-  "sanctions",
+  " sanctions ",
+  "sanctions screening",
   "ofac",
   "gdpr fine",
-  "ecb",
+  " ecb ",
   "prudential regulation",
   "corporate governance",
   "bribery act",
   "anti-corruption",
   "aml/kyc",
+  "aml compliance",
+  "kyc compliance",
   "financial crime"
 ];
 
