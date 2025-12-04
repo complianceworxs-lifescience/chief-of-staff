@@ -46,6 +46,8 @@ import strategistBrainRouter from "./routes/strategist-brain";
 import objectionIntelligenceRouter from "./routes/objection-intelligence";
 import cosOrchestratorMandateRouter from "./routes/cos-orchestrator-mandate";
 import l7MasterDirectiveRouter, { initL7MasterDirective } from "./routes/l7-master-directive";
+import blogPublishPipelineRouter from "./routes/blog-publish-pipeline";
+import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
 import { LLMDirectiveEngine } from "./services/llm-directive-engine";
@@ -205,6 +207,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/l7-directive", l7MasterDirectiveRouter);
   initL7MasterDirective();
   console.log('💰 L7 MASTER DIRECTIVE (Revenue-First Operating System) routes mounted at /api/l7-directive');
+  
+  // Mount Blog Publish Pipeline routes (RUN_BLOG_PUBLISH_PIPELINE)
+  app.use("/api/blog-pipeline", blogPublishPipelineRouter);
+  blogCadenceScheduler.start();
+  console.log('📝 BLOG PUBLISH PIPELINE (CoS Blog Cadence) routes mounted at /api/blog-pipeline');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();

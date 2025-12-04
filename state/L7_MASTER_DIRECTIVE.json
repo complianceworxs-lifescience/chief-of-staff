@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "name": "COS MASTER DIRECTIVE – L7 REVENUE-FIRST OPERATING SYSTEM",
-  "lastUpdated": "2025-11-30T15:50:44.675Z",
+  "lastUpdated": "2025-12-04T23:04:25.816Z",
   "status": "ACTIVE",
   "authority": {
     "owner": "ChiefOfStaff",
@@ -176,6 +176,24 @@
     "ltv_cac_shift",
     "attribution_completeness"
   ],
+  "SCHEDULER": {
+    "BLOG_CADENCE": {
+      "enabled": true,
+      "days": [
+        "MON",
+        "THU"
+      ],
+      "time_utc": "15:00",
+      "task": "RUN_BLOG_PUBLISH_PIPELINE",
+      "workflow": [
+        "Request 1 approved brief from CMO (highest revenue/authority score not yet used)",
+        "Validate brief against governance rules (persona-lock, clarity, proof, revenue alignment)",
+        "If valid, call CPA-L7 to generate final HTML content",
+        "Publish via wordpress.publishPost() (status=publish)",
+        "Log result to governance_logs.json and decision_lineage.json"
+      ]
+    }
+  },
   "selfOptimization": {
     "enabled": true,
     "weeklyUpdates": [
@@ -194,7 +212,7 @@
     "totalRecoveriesTriggered": 0,
     "weeklyRevenue": 0,
     "weeklyConversions": 0,
-    "currentCycleDay": 1,
+    "currentCycleDay": 5,
     "cycleStartDate": "2025-11-30T15:50:44.675Z"
   }
 }
