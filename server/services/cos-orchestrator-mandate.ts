@@ -304,12 +304,103 @@ export interface AgentFeedback {
 // ============================================
 // COS ORCHESTRATOR MANDATE SERVICE
 // ============================================
+// 2026 Master Directive Type
+interface MasterDirective2026 {
+  directive_id: string;
+  primary_objective: {
+    target: string;
+    deadline: string;
+  };
+  core_protocol: {
+    name: string;
+    rule: string;
+    spear_tip_narrative: {
+      non_negotiable: boolean;
+      pillars: Array<{ id: string; label: string; message: string }>;
+    };
+  };
+  strategic_upgrades: Record<string, any>;
+  agent_mandates: Record<string, { role: string; responsibilities: string[] }>;
+  validation_rules: {
+    all_actions_require: string;
+    auto_veto_conditions: string[];
+  };
+  organic_growth_model: {
+    channels: string[];
+    no_paid_media: boolean;
+    rules: string[];
+  };
+}
+
 class CoSOrchestatorMandateService {
   private state: MandateState;
   private stateFilePath = 'state/cos-orchestrator-mandate.json';
+  private masterDirective2026: MasterDirective2026 | null = null;
 
   constructor() {
     this.state = this.loadState();
+    this.loadMasterDirective2026();
+  }
+
+  private loadMasterDirective2026(): void {
+    try {
+      const directivePath = 'state/2026_MASTER_DIRECTIVE.json';
+      if (fs.existsSync(directivePath)) {
+        this.masterDirective2026 = JSON.parse(fs.readFileSync(directivePath, 'utf-8'));
+        console.log('📋 CoS: 2026 Master Directive loaded - Target: ' + this.masterDirective2026?.primary_objective.target);
+      }
+    } catch (error) {
+      console.warn('⚠️ CoS: Could not load 2026 Master Directive');
+    }
+  }
+
+  getMasterDirective2026(): MasterDirective2026 | null {
+    return this.masterDirective2026;
+  }
+
+  validateAgainstSpearTip(content: string): { valid: boolean; reason?: string } {
+    if (!this.masterDirective2026) return { valid: true };
+    
+    const pillars = this.masterDirective2026.core_protocol.spear_tip_narrative.pillars;
+    const lowerContent = content.toLowerCase();
+    
+    // Check if content aligns with at least one pillar
+    const alignedPillars = pillars.filter(p => {
+      const keywords = p.message.toLowerCase().split(' ');
+      return keywords.some(k => lowerContent.includes(k));
+    });
+
+    if (alignedPillars.length === 0) {
+      return { 
+        valid: false, 
+        reason: 'Content does not align with Spear-Tip Narrative (Audit Risk, Economic Consequence, or System Fix)'
+      };
+    }
+
+    return { valid: true };
+  }
+
+  checkAutoVetoConditions(action: { description?: string; revenueLink?: string }): { 
+    shouldVeto: boolean; 
+    reason?: string 
+  } {
+    if (!this.masterDirective2026) return { shouldVeto: false };
+
+    const conditions = this.masterDirective2026.validation_rules.auto_veto_conditions;
+    
+    // Check: No demonstrable revenue link
+    if (!action.revenueLink && conditions.includes('No demonstrable revenue link')) {
+      return { shouldVeto: true, reason: '2026 DIRECTIVE: No demonstrable revenue link' };
+    }
+
+    // Check: Fluff content
+    const fluffIndicators = ['engaging', 'trending', 'viral', 'awareness', 'impressions'];
+    const description = (action.description || '').toLowerCase();
+    if (fluffIndicators.some(f => description.includes(f)) && !description.includes('conversion')) {
+      return { shouldVeto: true, reason: '2026 DIRECTIVE: Fluff content without conversion focus' };
+    }
+
+    return { shouldVeto: false };
   }
 
   private loadState(): MandateState {
