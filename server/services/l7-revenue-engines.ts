@@ -416,9 +416,18 @@ export class L7WeeklyExecutionLoop {
   
   getCurrentCycleDay(): number {
     const state = loadState();
+    
+    // Check if using new 3-day sprint cycle or legacy 7-day weekly loop
+    const sprintCycle = (state as any).sprintCycle;
+    const cycleDuration = sprintCycle?.durationDays || 7;
+    
     if (!state.metrics.cycleStartDate) {
       state.metrics.cycleStartDate = new Date().toISOString();
       state.metrics.currentCycleDay = 1;
+      if ((state.metrics as any).currentSprintCycle === undefined) {
+        (state.metrics as any).currentSprintCycle = 1;
+        (state.metrics as any).currentSprintDay = 1;
+      }
       saveState(state);
       return 1;
     }
@@ -426,9 +435,17 @@ export class L7WeeklyExecutionLoop {
     const start = new Date(state.metrics.cycleStartDate);
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    const cycleDay = (daysDiff % 7) + 1;
+    
+    // Ensure cycleDay is always at least 1 (valid range: 1 to cycleDuration)
+    let cycleDay = (daysDiff % cycleDuration) + 1;
+    if (cycleDay <= 0 || cycleDay > cycleDuration) {
+      cycleDay = 1;
+    }
     
     state.metrics.currentCycleDay = cycleDay;
+    if (sprintCycle) {
+      (state.metrics as any).currentSprintDay = ((cycleDay - 1) % 3) + 1;
+    }
     saveState(state);
     
     return cycleDay;
@@ -442,75 +459,147 @@ export class L7WeeklyExecutionLoop {
   }> {
     const day = this.getCurrentCycleDay();
     const state = loadState();
-    const weeklyLoop = (state as any).weeklyLoop;
-    const dayKey = `day${day}` as keyof typeof weeklyLoop;
-    const phaseInfo = weeklyLoop[dayKey];
+    
+    // Support both new 3-day sprint cycle and legacy 7-day weekly loop
+    const sprintCycle = (state as any).sprintCycle;
+    let phaseInfo: { phase: string; action?: string; actions?: string[] } | undefined;
+    let isSprintCycle = false;
+    
+    if (sprintCycle && sprintCycle.phases) {
+      // New 3-day sprint cycle
+      isSprintCycle = true;
+      // Ensure day is at least 1 and properly cycles through 1-3
+      const cycleDays = sprintCycle.durationDays || 3;
+      const normalizedDay = day <= 0 ? 1 : day;
+      const sprintDay = ((normalizedDay - 1) % cycleDays) + 1;
+      const dayKey = `day${sprintDay}`;
+      phaseInfo = sprintCycle.phases[dayKey];
+    } else {
+      // Legacy 7-day weekly loop
+      const weeklyLoop = (state as any).weeklyLoop;
+      if (weeklyLoop) {
+        const dayKey = `day${day}`;
+        phaseInfo = weeklyLoop[dayKey];
+      }
+    }
+    
+    // Fallback if no phase info found
+    if (!phaseInfo) {
+      phaseInfo = {
+        phase: day <= 3 ? 'Deploy' : (day <= 5 ? 'Measure' : 'Optimize'),
+        action: 'Executing daily tasks'
+      };
+    }
     
     const actions: string[] = [];
     let results: any = {};
     
+    const cycleName = isSprintCycle ? '3-DAY SPRINT' : 'WEEKLY';
+    const displayDay = isSprintCycle ? ((day - 1) % 3) + 1 : day;
+    
     console.log(`\n╔══════════════════════════════════════════════════════════════════╗`);
-    console.log(`║     L7 WEEKLY EXECUTION LOOP - DAY ${day}: ${phaseInfo.phase.toUpperCase()}                    ║`);
+    console.log(`║     L7 ${cycleName} EXECUTION - DAY ${displayDay}: ${phaseInfo.phase.toUpperCase()}                    ║`);
     console.log(`╚══════════════════════════════════════════════════════════════════╝`);
     
-    switch (day) {
-      case 1:
-        actions.push('Scoring all content assets');
-        actions.push('Identifying top 20% for publication');
-        results = { phase: 'PREDICT', assetsScored: state.metrics.totalAssetsScored };
-        break;
-        
-      case 2:
-        actions.push('CMO publishing CoS-approved assets');
-        actions.push('Routing to highest-yield channels');
-        results = { phase: 'DEPLOY', assetsPublished: state.metrics.totalAssetsPublished };
-        break;
-        
-      case 3:
-        actions.push('CRO detecting user intent signals');
-        actions.push('Switching offers based on behavior tier');
-        results = { phase: 'DETECT', offersServed: state.metrics.totalOffersServed };
-        break;
-        
-      case 4:
-        actions.push('Running CoS-defined price experiments');
-        const activeTests = this.engines.pricingExperimentation.getActiveTests();
-        results = { phase: 'TEST', activeTests: activeTests.length };
-        break;
-        
-      case 5:
-        actions.push('Removing low-yield assets');
-        actions.push('Amplifying winners');
-        results = { phase: 'OPTIMIZE', weeklyRevenue: state.metrics.weeklyRevenue };
-        break;
-        
-      case 6:
-        actions.push('Triggering checkout recovery flows');
-        results = { phase: 'RECOVER', recoveriesTriggered: state.metrics.totalRecoveriesTriggered };
-        break;
-        
-      case 7:
-        actions.push('Compiling weekly KPIs');
-        actions.push('Updating next cycle parameters');
-        results = {
-          phase: 'REPORT',
-          weeklyMetrics: {
-            revenue: state.metrics.weeklyRevenue,
-            conversions: state.metrics.weeklyConversions,
-            assetsScored: state.metrics.totalAssetsScored,
-            assetsPublished: state.metrics.totalAssetsPublished,
-            offersServed: state.metrics.totalOffersServed,
-            recoveries: state.metrics.totalRecoveriesTriggered
-          }
-        };
-        break;
+    if (isSprintCycle) {
+      // 3-day sprint cycle phases
+      switch (displayDay) {
+        case 1:
+          actions.push('Scoring all content assets → approve top 20%');
+          actions.push('CMO publishing CoS-approved assets immediately');
+          actions.push('CRO activating offer switching based on user intent');
+          results = { phase: 'DEPLOY', assetsScored: state.metrics.totalAssetsScored, assetsPublished: state.metrics.totalAssetsPublished };
+          break;
+          
+        case 2:
+          actions.push('Tracking conversion metrics across all deployed assets');
+          actions.push('CRO running price experiments on high-intent visitors');
+          actions.push('Triggering checkout recovery for abandoned carts');
+          const activeTests = this.engines.pricingExperimentation.getActiveTests();
+          results = { phase: 'MEASURE', offersServed: state.metrics.totalOffersServed, activeTests: activeTests.length };
+          break;
+          
+        case 3:
+          actions.push('Removing low-yield assets; amplifying winners 2x');
+          actions.push('Updating persona targeting based on performance');
+          actions.push('Compiling KPIs → starting next cycle');
+          results = {
+            phase: 'OPTIMIZE',
+            sprintMetrics: {
+              revenue: state.metrics.weeklyRevenue,
+              conversions: state.metrics.weeklyConversions,
+              assetsPublished: state.metrics.totalAssetsPublished,
+              recoveries: state.metrics.totalRecoveriesTriggered
+            }
+          };
+          break;
+      }
+    } else {
+      // Legacy 7-day weekly loop phases
+      switch (day) {
+        case 1:
+          actions.push('Scoring all content assets');
+          actions.push('Identifying top 20% for publication');
+          results = { phase: 'PREDICT', assetsScored: state.metrics.totalAssetsScored };
+          break;
+          
+        case 2:
+          actions.push('CMO publishing CoS-approved assets');
+          actions.push('Routing to highest-yield channels');
+          results = { phase: 'DEPLOY', assetsPublished: state.metrics.totalAssetsPublished };
+          break;
+          
+        case 3:
+          actions.push('CRO detecting user intent signals');
+          actions.push('Switching offers based on behavior tier');
+          results = { phase: 'DETECT', offersServed: state.metrics.totalOffersServed };
+          break;
+          
+        case 4:
+          actions.push('Running CoS-defined price experiments');
+          const legacyTests = this.engines.pricingExperimentation.getActiveTests();
+          results = { phase: 'TEST', activeTests: legacyTests.length };
+          break;
+          
+        case 5:
+          actions.push('Removing low-yield assets');
+          actions.push('Amplifying winners');
+          results = { phase: 'OPTIMIZE', weeklyRevenue: state.metrics.weeklyRevenue };
+          break;
+          
+        case 6:
+          actions.push('Triggering checkout recovery flows');
+          results = { phase: 'RECOVER', recoveriesTriggered: state.metrics.totalRecoveriesTriggered };
+          break;
+          
+        case 7:
+          actions.push('Compiling weekly KPIs');
+          actions.push('Updating next cycle parameters');
+          results = {
+            phase: 'REPORT',
+            weeklyMetrics: {
+              revenue: state.metrics.weeklyRevenue,
+              conversions: state.metrics.weeklyConversions,
+              assetsScored: state.metrics.totalAssetsScored,
+              assetsPublished: state.metrics.totalAssetsPublished,
+              offersServed: state.metrics.totalOffersServed,
+              recoveries: state.metrics.totalRecoveriesTriggered
+            }
+          };
+          break;
+      }
     }
     
     console.log(`   📋 Phase: ${phaseInfo.phase}`);
-    console.log(`   🎯 Action: ${phaseInfo.action}`);
+    if (phaseInfo.action) {
+      console.log(`   🎯 Action: ${phaseInfo.action}`);
+    }
+    if (phaseInfo.actions) {
+      phaseInfo.actions.forEach((a: string) => console.log(`   🎯 ${a}`));
+    }
     actions.forEach(a => console.log(`   ✅ ${a}`));
     
-    return { day, phase: phaseInfo.phase, actions, results };
+    return { day: displayDay, phase: phaseInfo.phase, actions, results };
   }
   
   getWeeklyReport(): any {

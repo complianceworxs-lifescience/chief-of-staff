@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "name": "COS MASTER DIRECTIVE – L7 REVENUE-FIRST OPERATING SYSTEM (Enhanced)",
-  "lastUpdated": "2025-12-05T12:00:00.000Z",
+  "lastUpdated": "2025-12-05T00:24:10.324Z",
   "status": "ACTIVE",
   "authority": {
     "owner": "ChiefOfStaff",
@@ -9,7 +9,6 @@
     "override": "NONE"
   },
   "corePrinciple": "If an action cannot be traced to revenue, probability of revenue, or ARR stability → it is vetoed.",
-  
   "guardrails": {
     "minimumRevenueProbability7Day": 0.15,
     "requiredAttributionLogging": true,
@@ -28,27 +27,43 @@
     },
     "roiBasedExceptions": {
       "enabled": true,
-      "roiThreshold": 3.0,
+      "roiThreshold": 3,
       "maxDailyOverride": 75,
       "requiresProof": true,
       "approvalLevels": {
-        "roi3x": { "maxSpend": 50, "autoApprove": true },
-        "roi5x": { "maxSpend": 75, "autoApprove": true },
-        "roi10x": { "maxSpend": 100, "autoApprove": true }
+        "roi3x": {
+          "maxSpend": 50,
+          "autoApprove": true
+        },
+        "roi5x": {
+          "maxSpend": 75,
+          "autoApprove": true
+        },
+        "roi10x": {
+          "maxSpend": 100,
+          "autoApprove": true
+        }
       }
     },
     "twoLayerSystem": {
       "layer1": {
         "name": "PRE_FLIGHT",
-        "checks": ["syntax", "forbiddenTerms", "domainFence"]
+        "checks": [
+          "syntax",
+          "forbiddenTerms",
+          "domainFence"
+        ]
       },
       "layer2": {
         "name": "REVENUE_GATE",
-        "checks": ["cosMandateAudit", "valuationLogic", "l7Guardrails"]
+        "checks": [
+          "cosMandateAudit",
+          "valuationLogic",
+          "l7Guardrails"
+        ]
       }
     }
   },
-
   "engines": {
     "predictiveRevenue": {
       "enabled": true,
@@ -62,10 +77,31 @@
     "dynamicOffer": {
       "enabled": true,
       "behaviorTiers": {
-        "cold": { "offer": "low_ticket", "priceRange": [0, 29] },
-        "warm": { "offer": "mid_tier", "priceRange": [99, 149] },
-        "hot": { "offer": "high_tier", "priceRange": [299, 499] },
-        "enterprise": { "offer": "custom_proposal", "priceRange": null }
+        "cold": {
+          "offer": "low_ticket",
+          "priceRange": [
+            0,
+            29
+          ]
+        },
+        "warm": {
+          "offer": "mid_tier",
+          "priceRange": [
+            99,
+            149
+          ]
+        },
+        "hot": {
+          "offer": "high_tier",
+          "priceRange": [
+            299,
+            499
+          ]
+        },
+        "enterprise": {
+          "offer": "custom_proposal",
+          "priceRange": null
+        }
       }
     },
     "pricingExperimentation": {
@@ -75,21 +111,36 @@
     },
     "attribution": {
       "enabled": true,
-      "trackingPoints": ["content", "click", "engagement", "checkout", "revenue"],
-      "dimensions": ["persona", "asset", "channel"],
+      "trackingPoints": [
+        "content",
+        "click",
+        "engagement",
+        "checkout",
+        "revenue"
+      ],
+      "dimensions": [
+        "persona",
+        "asset",
+        "channel"
+      ],
       "healthCheck": {
         "enabled": true,
         "frequency": "weekly",
         "chainCompletionTarget": 0.8,
         "orphanAlertThreshold": 0.1,
         "alerts": {
-          "warning": { "chainCompletion": 0.7, "orphanRate": 0.15 },
-          "critical": { "chainCompletion": 0.5, "orphanRate": 0.3 }
+          "warning": {
+            "chainCompletion": 0.7,
+            "orphanRate": 0.15
+          },
+          "critical": {
+            "chainCompletion": 0.5,
+            "orphanRate": 0.3
+          }
         }
       }
     }
   },
-
   "subDirectives": {
     "CMO": {
       "mandate": "Execute high-yield content deployment chosen by the CoS. Publish only assets with the highest expected revenue.",
@@ -108,10 +159,22 @@
     "CRO": {
       "mandate": "Convert traffic into revenue by dynamically adjusting offer levels and pricing tests.",
       "behaviorOfferMap": {
-        "cold": { "offer": "Free tool or $9 asset", "trigger": "first_visit" },
-        "warm": { "offer": "$99/$149 tier", "trigger": "return_visit_or_engagement" },
-        "hot": { "offer": "$499 Architect", "trigger": "high_intent_signals" },
-        "enterprise": { "offer": "Enterprise pathway", "trigger": "enterprise_behavior" }
+        "cold": {
+          "offer": "Free tool or $9 asset",
+          "trigger": "first_visit"
+        },
+        "warm": {
+          "offer": "$99/$149 tier",
+          "trigger": "return_visit_or_engagement"
+        },
+        "hot": {
+          "offer": "$499 Architect",
+          "trigger": "high_intent_signals"
+        },
+        "enterprise": {
+          "offer": "Enterprise pathway",
+          "trigger": "enterprise_behavior"
+        }
       },
       "pricingTests": [
         "micro_product_pricing",
@@ -126,7 +189,6 @@
       }
     }
   },
-
   "sprintCycle": {
     "durationDays": 3,
     "phases": {
@@ -137,7 +199,11 @@
           "CMO publishes CoS-approved assets immediately",
           "CRO activates offer switching based on user intent"
         ],
-        "kpis": ["assets_scored", "assets_published", "initial_engagement"]
+        "kpis": [
+          "assets_scored",
+          "assets_published",
+          "initial_engagement"
+        ]
       },
       "day2": {
         "phase": "Measure",
@@ -146,7 +212,11 @@
           "CRO runs price experiments on high-intent visitors",
           "Trigger checkout recovery for abandoned carts"
         ],
-        "kpis": ["conversion_rate", "checkout_recovery", "revenue_velocity"]
+        "kpis": [
+          "conversion_rate",
+          "checkout_recovery",
+          "revenue_velocity"
+        ]
       },
       "day3": {
         "phase": "Optimize",
@@ -155,24 +225,47 @@
           "Update persona targeting based on performance",
           "CoS compiles KPIs → starts next cycle"
         ],
-        "kpis": ["revenue_per_asset", "winners_amplified", "losers_removed"]
+        "kpis": [
+          "revenue_per_asset",
+          "winners_amplified",
+          "losers_removed"
+        ]
       }
     },
     "autoAdvance": true,
     "rollbackOnFailure": true
   },
-
   "weeklyLoop": {
     "_deprecated": "Replaced by 3-day sprintCycle for faster iteration",
-    "day1": { "phase": "Predict", "action": "Score all assets → approve top 20%" },
-    "day2": { "phase": "Deploy", "action": "CMO publishes CoS-approved assets" },
-    "day3": { "phase": "Detect", "action": "CRO switches offers based on user intent" },
-    "day4": { "phase": "Test", "action": "CRO runs CoS-defined price experiments" },
-    "day5": { "phase": "Optimize", "action": "Remove low-yield assets; amplify winners" },
-    "day6": { "phase": "Recover", "action": "CRO triggers checkout recovery flows" },
-    "day7": { "phase": "Report", "action": "CoS compiles KPIs → updates next cycle" }
+    "day1": {
+      "phase": "Predict",
+      "action": "Score all assets → approve top 20%"
+    },
+    "day2": {
+      "phase": "Deploy",
+      "action": "CMO publishes CoS-approved assets"
+    },
+    "day3": {
+      "phase": "Detect",
+      "action": "CRO switches offers based on user intent"
+    },
+    "day4": {
+      "phase": "Test",
+      "action": "CRO runs CoS-defined price experiments"
+    },
+    "day5": {
+      "phase": "Optimize",
+      "action": "Remove low-yield assets; amplify winners"
+    },
+    "day6": {
+      "phase": "Recover",
+      "action": "CRO triggers checkout recovery flows"
+    },
+    "day7": {
+      "phase": "Report",
+      "action": "CoS compiles KPIs → updates next cycle"
+    }
   },
-
   "kpis": [
     "revenue_per_asset",
     "revenue_per_persona",
@@ -185,11 +278,13 @@
     "ltv_cac_shift",
     "attribution_completeness"
   ],
-
   "SCHEDULER": {
     "BLOG_CADENCE": {
       "enabled": true,
-      "days": ["MON", "THU"],
+      "days": [
+        "MON",
+        "THU"
+      ],
       "time_utc": "15:00",
       "task": "RUN_BLOG_PUBLISH_PIPELINE",
       "workflow": [
@@ -209,13 +304,19 @@
       }
     }
   },
-
   "positiveFeedbackLoops": {
     "enabled": true,
     "rewardSignals": {
-      "revenueGenerated": { "weight": 1.0, "minAmount": 100 },
-      "conversionContribution": { "weight": 0.8 },
-      "pipelineInfluence": { "weight": 0.6 }
+      "revenueGenerated": {
+        "weight": 1,
+        "minAmount": 100
+      },
+      "conversionContribution": {
+        "weight": 0.8
+      },
+      "pipelineInfluence": {
+        "weight": 0.6
+      }
     },
     "autoPromoteThreshold": {
       "consecutiveSuccesses": 3,
@@ -223,41 +324,57 @@
       "performanceScore": 75
     },
     "autonomyBoosts": {
-      "level1to2": { "successesRequired": 5, "revenueRequired": 2500 },
-      "level2to3": { "successesRequired": 10, "revenueRequired": 10000 }
+      "level1to2": {
+        "successesRequired": 5,
+        "revenueRequired": 2500
+      },
+      "level2to3": {
+        "successesRequired": 10,
+        "revenueRequired": 10000
+      }
     },
     "alwaysApproveList": {
       "enabled": true,
       "maxPatterns": 20
     }
   },
-
   "conflictResolution": {
     "revenueWeighting": {
       "enabled": true,
       "multipliers": {
-        "directRevenue": 3.0,
-        "pipelineRevenue": 2.0,
+        "directRevenue": 3,
+        "pipelineRevenue": 2,
         "conversionOptimization": 2.5,
-        "brandBuilding": 1.0
+        "brandBuilding": 1
       },
       "agentBoosts": {
         "cro": 1.5,
         "cmo": 1.2,
         "content-manager": 1.1,
-        "coo": 1.0,
-        "ceo": 1.0,
+        "coo": 1,
+        "ceo": 1,
         "cos": 1.3
       },
       "tiebreakers": [
-        { "rule": "conversion_closeness", "weight": 0.3 },
-        { "rule": "strategic_alignment", "weight": 0.25 },
-        { "rule": "execution_speed", "weight": 0.25 },
-        { "rule": "risk_mitigation", "weight": 0.2 }
+        {
+          "rule": "conversion_closeness",
+          "weight": 0.3
+        },
+        {
+          "rule": "strategic_alignment",
+          "weight": 0.25
+        },
+        {
+          "rule": "execution_speed",
+          "weight": 0.25
+        },
+        {
+          "rule": "risk_mitigation",
+          "weight": 0.2
+        }
       ]
     }
   },
-
   "selfOptimization": {
     "enabled": true,
     "weeklyUpdates": [
@@ -274,7 +391,6 @@
       "amplification_targets"
     ]
   },
-
   "metrics": {
     "totalAssetsScored": 0,
     "totalAssetsPublished": 0,
@@ -286,6 +402,7 @@
     "currentSprintDay": 1,
     "cycleStartDate": "2025-12-05T12:00:00.000Z",
     "positiveFeedbackCount": 0,
-    "autonomyPromotions": 0
+    "autonomyPromotions": 0,
+    "currentCycleDay": 1
   }
 }

@@ -357,10 +357,20 @@ export function initL7MasterDirective(): void {
   console.log(`      ✅ Pricing Experimentation: ${directive.engines.pricingExperimentation.enabled ? 'ACTIVE' : 'INACTIVE'}`);
   console.log(`      ✅ Attribution: ${directive.engines.attribution.enabled ? 'ACTIVE' : 'INACTIVE'}`);
   console.log(`   📋 Sub-Directives: CMO, CRO`);
-  console.log(`   🔄 Weekly Loop: 7-day cycle`);
+  
+  // Check if using new 3-day sprint cycle or legacy 7-day loop
+  const sprintCycle = (directive as any).sprintCycle;
+  if (sprintCycle && sprintCycle.durationDays === 3) {
+    console.log(`   🚀 Sprint Cycle: 3-day (Deploy → Measure → Optimize)`);
+    console.log(`   💡 ROI Exceptions: ${(directive.guardrails as any)?.roiBasedExceptions?.enabled ? 'ENABLED' : 'DISABLED'}`);
+  } else {
+    console.log(`   🔄 Weekly Loop: 7-day cycle`);
+  }
   
   l7WeeklyLoop.executeDailyPhase().then(result => {
     console.log(`   📆 Current Phase: Day ${result.day} - ${result.phase}`);
+  }).catch(err => {
+    console.log(`   ⚠️ Phase initialization: ${err.message || 'Starting fresh cycle'}`);
   });
 }
 
