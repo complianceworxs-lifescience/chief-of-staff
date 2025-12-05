@@ -1,4 +1,4 @@
-import { mailchimp } from './mailchimp.js';
+import { sendgrid } from './sendgrid.js';
 import OpenAI from 'openai';
 
 interface ActionPayload {
@@ -109,39 +109,42 @@ export class ActionExecutor {
   }
 
   private async executeEmailCampaign(action: ActionPayload): Promise<ExecutionResult> {
-    console.log(`📧 EXECUTING: Email Marketing Campaign`);
+    console.log(`📧 EXECUTING: Email Marketing Campaign via SendGrid`);
 
     try {
       const campaignTitle = action.title || 'Strategic Marketing Push';
       const targetSegment = action.payload?.targetSegment || 'all_subscribers';
+      const recipientEmail = action.payload?.recipientEmail || process.env.COMPANY_EMAIL || 'info@complianceworxs.com';
 
       const emailContent = await this.generateEmailContent(campaignTitle);
 
-      const campaign = await mailchimp.createCampaign({
+      const result = await sendgrid.sendEmail({
+        to: recipientEmail,
         subject: campaignTitle,
-        previewText: `Strategic initiative from ComplianceWorxs AI`,
-        fromName: 'ComplianceWorxs',
-        replyTo: process.env.COMPANY_EMAIL || 'info@complianceworxs.com',
-        htmlContent: emailContent
+        html: emailContent,
+        campaignId: `campaign_${action.action_id}`,
+        segment: targetSegment
       });
 
-      console.log(`✅ Campaign created: ${campaign.id}`);
-      console.log(`📨 Sending campaign to audience...`);
+      if (!result.success) {
+        throw new Error(result.error || 'SendGrid send failed');
+      }
 
-      await mailchimp.sendCampaign(campaign.id);
+      console.log(`✅ Campaign sent via SendGrid: ${result.sendId}`);
 
       return {
         success: true,
         action_taken: 'email_campaign_sent',
         details: {
-          campaign_id: campaign.id,
+          send_id: result.sendId,
           subject: campaignTitle,
           sent_at: new Date().toISOString(),
-          segment: targetSegment
+          segment: targetSegment,
+          provider: 'sendgrid'
         },
         outcome_data: {
           campaign_sent: true,
-          campaign_id: campaign.id,
+          send_id: result.sendId,
           estimated_reach: 'full_audience'
         }
       };
@@ -157,29 +160,35 @@ export class ActionExecutor {
   }
 
   private async executeRevenueCampaign(action: ActionPayload): Promise<ExecutionResult> {
-    console.log(`💰 EXECUTING: Revenue Optimization Campaign`);
+    console.log(`💰 EXECUTING: Revenue Optimization Campaign via SendGrid`);
 
     try {
       const campaignDetails = await this.generateRevenueCampaignContent(action.title);
+      const recipientEmail = action.payload?.recipientEmail || process.env.COMPANY_EMAIL || 'sales@complianceworxs.com';
 
-      const campaign = await mailchimp.createCampaign({
+      const result = await sendgrid.sendEmail({
+        to: recipientEmail,
         subject: `⚡ Urgent: ${action.title.replace('STRATEGIC RECOVERY:', '').trim()}`,
-        previewText: 'Special offer - Limited time opportunity',
-        fromName: 'ComplianceWorxs Revenue Team',
-        replyTo: process.env.COMPANY_EMAIL || 'sales@complianceworxs.com',
-        htmlContent: campaignDetails.html
+        html: campaignDetails.html,
+        campaignId: `revenue_${action.action_id}`,
+        segment: 'high_value_prospects'
       });
 
-      await mailchimp.sendCampaign(campaign.id);
+      if (!result.success) {
+        throw new Error(result.error || 'SendGrid send failed');
+      }
+
+      console.log(`✅ Revenue campaign sent via SendGrid: ${result.sendId}`);
 
       return {
         success: true,
         action_taken: 'revenue_campaign_sent',
         details: {
-          campaign_id: campaign.id,
+          send_id: result.sendId,
           target: action.title,
           sent_at: new Date().toISOString(),
-          focus: 'high_value_prospects'
+          focus: 'high_value_prospects',
+          provider: 'sendgrid'
         },
         outcome_data: {
           revenue_campaign_deployed: true,
@@ -213,28 +222,34 @@ export class ActionExecutor {
   }
 
   private async executeCustomerEngagement(action: ActionPayload): Promise<ExecutionResult> {
-    console.log(`👥 EXECUTING: Customer Engagement Campaign`);
+    console.log(`👥 EXECUTING: Customer Engagement Campaign via SendGrid`);
 
     try {
       const engagementEmail = await this.generateCustomerEngagementEmail(action.title);
+      const recipientEmail = action.payload?.recipientEmail || process.env.COMPANY_EMAIL || 'success@complianceworxs.com';
 
-      const campaign = await mailchimp.createCampaign({
+      const result = await sendgrid.sendEmail({
+        to: recipientEmail,
         subject: 'We value your partnership',
-        previewText: 'Your success is our priority',
-        fromName: 'ComplianceWorxs Customer Success',
-        replyTo: process.env.COMPANY_EMAIL || 'success@complianceworxs.com',
-        htmlContent: engagementEmail
+        html: engagementEmail,
+        campaignId: `engagement_${action.action_id}`,
+        segment: 'customer_retention'
       });
 
-      await mailchimp.sendCampaign(campaign.id);
+      if (!result.success) {
+        throw new Error(result.error || 'SendGrid send failed');
+      }
+
+      console.log(`✅ Engagement campaign sent via SendGrid: ${result.sendId}`);
 
       return {
         success: true,
         action_taken: 'engagement_campaign_sent',
         details: {
-          campaign_id: campaign.id,
+          send_id: result.sendId,
           focus: 'customer_retention',
-          sent_at: new Date().toISOString()
+          sent_at: new Date().toISOString(),
+          provider: 'sendgrid'
         },
         outcome_data: {
           engagement_increased: true,

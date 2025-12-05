@@ -329,7 +329,7 @@ class BlogCadenceScheduler {
   // ============================================
 
   /**
-   * Get current buffer status
+   * Get current buffer status - checks both scheduler buffer AND content_briefs.json
    */
   getBufferStatus(): {
     currentSize: number;
@@ -340,22 +340,63 @@ class BlogCadenceScheduler {
     needsRefill: boolean;
   } {
     const pendingBriefs = this.state.briefBuffer.filter(b => b.status === 'pending');
-    const currentSize = pendingBriefs.length;
-    const isLow = currentSize <= BRIEF_BUFFER_CONFIG.lowInventoryThreshold;
-    const needsRefill = currentSize < BRIEF_BUFFER_CONFIG.minBufferSize;
+    
+    // Also check content_briefs.json for Life Sciences briefs ready for publishing
+    const contentBriefsCount = this.getLifeSciencesBriefsCount();
+    const totalAvailable = pendingBriefs.length + contentBriefsCount;
+    
+    const isLow = totalAvailable <= BRIEF_BUFFER_CONFIG.lowInventoryThreshold;
+    const needsRefill = totalAvailable < BRIEF_BUFFER_CONFIG.minBufferSize;
 
-    if (isLow) {
-      console.log(`⚠️ Brief Buffer LOW: ${currentSize} briefs remaining (threshold: ${BRIEF_BUFFER_CONFIG.lowInventoryThreshold})`);
+    if (isLow && totalAvailable > 0) {
+      console.log(`⚠️ Brief Buffer LOW: ${totalAvailable} briefs remaining (threshold: ${BRIEF_BUFFER_CONFIG.lowInventoryThreshold})`);
     }
 
     return {
-      currentSize,
+      currentSize: totalAvailable,
       targetSize: BRIEF_BUFFER_CONFIG.targetBufferSize,
       isLow,
       pendingBriefs,
       evergreenFallbackCount: this.state.evergreenFallbackCount,
       needsRefill
     };
+  }
+  
+  /**
+   * Count Life Sciences briefs available in content_briefs.json
+   * Filters for: unused, approved, and passes basic Life Sciences domain check
+   */
+  private getLifeSciencesBriefsCount(): number {
+    try {
+      const briefsPath = 'state/content_briefs.json';
+      if (!fs.existsSync(briefsPath)) return 0;
+      
+      const data = JSON.parse(fs.readFileSync(briefsPath, 'utf-8'));
+      const briefs = data.briefs || [];
+      
+      // Life Sciences domain anchors (must have at least 1)
+      const lifeSciences = ['fda', 'gxp', 'csv', 'validation', 'qms', 'annex 11', '21 cfr', 'audit', 'capa', 'deviation', 'quality'];
+      
+      // Corporate compliance terms to filter out
+      const prohibited = ['sox', 'sarbanes', 'sec enforcement', 'gdpr fines', 'corporate governance', 'aml', 'kyc'];
+      
+      return briefs.filter((b: any) => {
+        if (b.used) return false;
+        if (!b.approvedBy) return false;
+        
+        const content = `${b.title} ${b.coreMessage || ''} ${b.valueProposition || ''}`.toLowerCase();
+        
+        // Must have Life Sciences terms
+        const hasLifeSciences = lifeSciences.some(term => content.includes(term));
+        
+        // Must NOT have prohibited corporate compliance terms
+        const hasProhibited = prohibited.some(term => content.includes(term));
+        
+        return hasLifeSciences && !hasProhibited;
+      }).length;
+    } catch {
+      return 0;
+    }
   }
 
   /**
