@@ -242,13 +242,15 @@ export async function runWinBackCampaign(): Promise<{ candidates: number; emails
 
   try {
     // Find canceled subscriptions from last 90 days
+    // Stripe stores canceled_at as Unix epoch integer, use to_timestamp()
     const churned = await db.execute(sql`
       SELECT s.id, s.customer, s.canceled_at, s.metadata,
              c.email, c.name
       FROM stripe.subscriptions s
       JOIN stripe.customers c ON s.customer = c.id
       WHERE s.status = 'canceled'
-        AND s.canceled_at::timestamp > NOW() - INTERVAL '90 days'
+        AND s.canceled_at IS NOT NULL
+        AND to_timestamp(s.canceled_at) > NOW() - INTERVAL '90 days'
     `);
 
     for (const sub of churned.rows as any[]) {
@@ -332,12 +334,14 @@ export async function identifyTestimonialCandidates(): Promise<TestimonialCandid
 
   try {
     // Find long-term active customers
+    // Stripe stores created as Unix epoch integer, use to_timestamp()
     const happyCustomers = await db.execute(sql`
       SELECT s.customer, s.created, c.email, c.name
       FROM stripe.subscriptions s
       JOIN stripe.customers c ON s.customer = c.id
       WHERE s.status = 'active'
-        AND s.created::timestamp < NOW() - INTERVAL '90 days'
+        AND s.created IS NOT NULL
+        AND to_timestamp(s.created) < NOW() - INTERVAL '90 days'
     `);
 
     for (const customer of happyCustomers.rows as any[]) {
@@ -790,12 +794,14 @@ export async function manageReferralProgram(): Promise<{ referrals: Referral[]; 
     } catch {}
 
     // Prompt happy customers to refer
+    // Stripe stores created as Unix epoch integer, use to_timestamp()
     const happyCustomers = await db.execute(sql`
       SELECT s.customer, c.email, c.name
       FROM stripe.subscriptions s
       JOIN stripe.customers c ON s.customer = c.id
       WHERE s.status = 'active'
-        AND s.created::timestamp < NOW() - INTERVAL '60 days'
+        AND s.created IS NOT NULL
+        AND to_timestamp(s.created) < NOW() - INTERVAL '60 days'
       LIMIT 10
     `);
 
