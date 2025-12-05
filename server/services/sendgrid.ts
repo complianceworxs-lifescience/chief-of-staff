@@ -172,7 +172,6 @@ export class SendGridService {
   }
 
   private hashString(str: string): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(str).digest('hex').substring(0, 16);
   }
 
