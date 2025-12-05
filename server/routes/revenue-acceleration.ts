@@ -48,6 +48,8 @@ function determinePersona(roiValue: number): string {
   return 'rising_leader';
 }
 
+const BLENDED_HOURLY_COST = 185;
+
 function calculateComplianceROI(inputs: {
   teamSize: number;
   hoursOnCompliance: number;
@@ -56,11 +58,14 @@ function calculateComplianceROI(inputs: {
   auditPrepHours: number;
   deviationsPerYear: number;
   deviationCost: number;
+  avgValidationHoursPerWeek: number;
+  avgReleaseCyclesPerYear: number;
 }): {
   currentCost: number;
   potentialSavings: number;
   roiValue: number;
   timeReclaimed: number;
+  annualWasteCost: number;
   breakdown: {
     laborSavings: number;
     auditEfficiency: number;
@@ -82,11 +87,14 @@ function calculateComplianceROI(inputs: {
   const currentCost = currentLaborCost + auditPrepCost + deviationCost;
   const timeReclaimed = Math.round((laborSavings / inputs.hourlyRate) + (auditEfficiency / inputs.hourlyRate));
 
+  const annualWasteCost = inputs.avgValidationHoursPerWeek * 52 * BLENDED_HOURLY_COST;
+
   return {
     currentCost: Math.round(currentCost),
     potentialSavings: Math.round(potentialSavings),
     roiValue: Math.round(potentialSavings),
     timeReclaimed,
+    annualWasteCost: Math.round(annualWasteCost),
     breakdown: {
       laborSavings: Math.round(laborSavings),
       auditEfficiency: Math.round(auditEfficiency),
@@ -104,7 +112,9 @@ router.post("/roi-calculator/calculate", async (req: Request, res: Response) => 
       auditFrequency = 2,
       auditPrepHours = 40,
       deviationsPerYear = 10,
-      deviationCost = 5000
+      deviationCost = 5000,
+      avgValidationHoursPerWeek = 20,
+      avgReleaseCyclesPerYear = 4
     } = req.body;
 
     const result = calculateComplianceROI({
@@ -114,7 +124,9 @@ router.post("/roi-calculator/calculate", async (req: Request, res: Response) => 
       auditFrequency: Number(auditFrequency),
       auditPrepHours: Number(auditPrepHours),
       deviationsPerYear: Number(deviationsPerYear),
-      deviationCost: Number(deviationCost)
+      deviationCost: Number(deviationCost),
+      avgValidationHoursPerWeek: Number(avgValidationHoursPerWeek),
+      avgReleaseCyclesPerYear: Number(avgReleaseCyclesPerYear)
     });
 
     const persona = determinePersona(result.roiValue);

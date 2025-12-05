@@ -7,13 +7,14 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Calculator, DollarSign, Clock, TrendingUp, CheckCircle, ArrowRight, Users, FileCheck, AlertTriangle } from "lucide-react";
+import { Calculator, DollarSign, Clock, TrendingUp, CheckCircle, ArrowRight, Users, FileCheck, AlertTriangle, Activity } from "lucide-react";
 
 interface ROIResult {
   currentCost: number;
   potentialSavings: number;
   roiValue: number;
   timeReclaimed: number;
+  annualWasteCost: number;
   breakdown: {
     laborSavings: number;
     auditEfficiency: number;
@@ -32,6 +33,8 @@ interface CalculatorInputs {
   auditPrepHours: number;
   deviationsPerYear: number;
   deviationCost: number;
+  avgValidationHoursPerWeek: number;
+  avgReleaseCyclesPerYear: number;
 }
 
 const DEFAULT_INPUTS: CalculatorInputs = {
@@ -41,7 +44,9 @@ const DEFAULT_INPUTS: CalculatorInputs = {
   auditFrequency: 2,
   auditPrepHours: 40,
   deviationsPerYear: 10,
-  deviationCost: 5000
+  deviationCost: 5000,
+  avgValidationHoursPerWeek: 20,
+  avgReleaseCyclesPerYear: 4
 };
 
 export default function ROICalculator() {
@@ -277,6 +282,51 @@ export default function ROICalculator() {
               </CardContent>
             </Card>
 
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-rose-400" />
+                  Validation Activity
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Your validation workload and release cadence
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <Label className="text-slate-300">Avg Validation Hours/Week</Label>
+                    <span className="text-rose-400 font-semibold">{inputs.avgValidationHoursPerWeek}h</span>
+                  </div>
+                  <Slider
+                    value={[inputs.avgValidationHoursPerWeek]}
+                    onValueChange={([value]) => setInputs({ ...inputs, avgValidationHoursPerWeek: value })}
+                    min={5}
+                    max={60}
+                    step={1}
+                    className="py-2"
+                    data-testid="slider-validation-hours"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <Label className="text-slate-300">Release Cycles per Year</Label>
+                    <span className="text-rose-400 font-semibold">{inputs.avgReleaseCyclesPerYear}</span>
+                  </div>
+                  <Slider
+                    value={[inputs.avgReleaseCyclesPerYear]}
+                    onValueChange={([value]) => setInputs({ ...inputs, avgReleaseCyclesPerYear: value })}
+                    min={1}
+                    max={24}
+                    step={1}
+                    className="py-2"
+                    data-testid="slider-release-cycles"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             <Button
               onClick={handleCalculate}
               disabled={calculateMutation.isPending}
@@ -326,6 +376,25 @@ export default function ROICalculator() {
                         </div>
                         <p className="text-slate-400 text-sm">Hours Reclaimed</p>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-rose-900/40 to-rose-800/20 border-rose-600/50">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-white flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-rose-400" />
+                      Your Annual Operational Waste
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-4">
+                      <div className="text-5xl font-bold text-rose-400 mb-2" data-testid="text-annual-waste-cost">
+                        {formatCurrency(result.annualWasteCost)}
+                      </div>
+                      <p className="text-slate-400 text-sm">
+                        Based on {inputs.avgValidationHoursPerWeek} validation hours/week at $185/hour blended cost
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
