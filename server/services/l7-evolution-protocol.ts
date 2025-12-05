@@ -229,7 +229,10 @@ class L7EvolutionProtocol {
           },
           thresholds: {
             min_profitable_months: 3,
-            max_operating_expense_ratio: 0.8
+            max_operating_expense_ratio: 0.55,
+            early_scale_ratio: 0.52,
+            mid_scale_ratio: 0.47,
+            mature_l7_ratio: 0.42
           },
           progress_percent: 0,
           last_evaluated: now
