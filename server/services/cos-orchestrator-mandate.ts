@@ -34,6 +34,14 @@ export const L7_GUARDRAILS = {
   requiredAttributionLogging: true,
   spendCapDaily: 25,
   spendCapWeekly: 150,
+  // ROI-BASED BUDGET EXCEPTIONS (New)
+  roiBasedBudgetExceptions: {
+    enabled: true,
+    minROIThreshold: 3.0,  // Allow higher spend if projected ROI > 3x
+    maxSpendWithROI: 150,  // Maximum daily spend with ROI exception
+    requiresConfidenceLevel: 0.7,  // Minimum confidence for ROI projection
+    weeklySpendWithROI: 500  // Maximum weekly with ROI exception
+  },
   forbiddenActions: [
     'noise_content',
     'vanity_metrics',
@@ -46,6 +54,113 @@ export const L7_GUARDRAILS = {
     rejectARRInstability: true
   },
   corePrinciple: 'If an action cannot be traced to revenue, probability of revenue, or ARR stability → it is vetoed.'
+} as const;
+
+// ============================================
+// POSITIVE FEEDBACK LOOPS (New)
+// Reward signals for high-performing agents and actions
+// ============================================
+export interface PositiveFeedbackRecord {
+  id: string;
+  agentId: string;
+  agentType: string;
+  actionId: string;
+  revenueGenerated: number;
+  revenueType: 'ARR' | 'MRR' | 'pipeline' | 'conversion';
+  performanceScore: number;
+  recordedAt: string;
+  autoPromoted: boolean;
+}
+
+export const POSITIVE_FEEDBACK_CONFIG = {
+  enabled: true,
+  // Auto-promotion thresholds
+  autoPromoteThreshold: {
+    consecutiveSuccesses: 3,
+    revenueThreshold: 5000,
+    performanceScore: 85
+  },
+  // Reward signals
+  rewardSignals: {
+    revenueGenerated: { weight: 0.4, boost: 1.2 },
+    conversionRate: { weight: 0.3, boost: 1.15 },
+    timeToConversion: { weight: 0.2, boost: 1.1 },
+    repeatSuccess: { weight: 0.1, boost: 1.25 }
+  },
+  // Autonomy level increases
+  autonomyBoosts: {
+    level1to2: { successesRequired: 5, revenueRequired: 10000 },
+    level2to3: { successesRequired: 10, revenueRequired: 50000 },
+    level3toMax: { successesRequired: 20, revenueRequired: 100000 }
+  },
+  // Always-approve list criteria
+  alwaysApproveListCriteria: {
+    consecutiveSuccesses: 5,
+    minRevenueGenerated: 10000,
+    noViolationsInDays: 30
+  }
+} as const;
+
+// ============================================
+// 3-DAY SPRINT CYCLE (Replaces 7-Day Weekly Loop)
+// Faster learning cycles for rapid iteration
+// ============================================
+export const SPRINT_CYCLE_CONFIG = {
+  durationDays: 3,
+  phases: {
+    day1: {
+      phase: 'Deploy',
+      actions: [
+        'Score all assets → approve top 20%',
+        'CMO publishes CoS-approved assets immediately',
+        'CRO activates offer switching based on user intent'
+      ],
+      kpis: ['assets_scored', 'assets_published', 'initial_engagement']
+    },
+    day2: {
+      phase: 'Measure',
+      actions: [
+        'Track conversion metrics across all deployed assets',
+        'CRO runs price experiments on high-intent visitors',
+        'Trigger checkout recovery for abandoned carts'
+      ],
+      kpis: ['conversion_rate', 'checkout_recovery', 'revenue_velocity']
+    },
+    day3: {
+      phase: 'Optimize',
+      actions: [
+        'Remove assets with conversion < 0.25%',
+        'Amplify assets with conversion > 1%',
+        'Compile KPIs → update next cycle targeting',
+        'CoS generates sprint report'
+      ],
+      kpis: ['revenue_per_asset', 'winners_amplified', 'losers_removed']
+    }
+  },
+  automatedActions: {
+    removeThreshold: 0.0025,  // Remove if < 0.25% conversion
+    amplifyThreshold: 0.01,   // Amplify if > 1% conversion
+    maxConcurrentTests: 5
+  }
+} as const;
+
+// ============================================
+// ATTRIBUTION HEALTH CHECK (New)
+// Weekly verification of attribution chain integrity
+// ============================================
+export const ATTRIBUTION_HEALTH_CONFIG = {
+  enabled: true,
+  checkInterval: 'weekly',
+  healthThresholds: {
+    minimumAttributionRate: 0.8,  // 80% of conversions must have full attribution
+    orphanAlertThreshold: 0.1,    // Alert if > 10% orphan conversions
+    chainCompletionTarget: 0.9    // 90% target for full chain completion
+  },
+  attributionChain: ['content', 'click', 'engagement', 'checkout', 'revenue'],
+  alerts: {
+    critical: { orphanRate: 0.2, chainCompletion: 0.7 },
+    warning: { orphanRate: 0.1, chainCompletion: 0.8 }
+  }
 } as const;
 
 // ============================================
@@ -148,6 +263,33 @@ export interface MandateState {
   constraintViolationCounts: Record<string, number>;
   agentFeedbackHistory: AgentFeedback[];
   recentAudits: AuditResult[];
+  // NEW: Positive feedback tracking
+  positiveFeedback: PositiveFeedbackRecord[];
+  agentSuccessStreaks: Record<string, number>;
+  alwaysApproveList: string[];  // Action patterns that auto-approve
+  autonomyLevels: Record<string, number>;  // Agent autonomy levels (1-3)
+  // NEW: Attribution health tracking
+  attributionHealth: {
+    lastCheckDate: string;
+    overallHealthScore: number;
+    chainCompletionRate: number;
+    orphanConversionRate: number;
+    alerts: Array<{ level: string; message: string; timestamp: string }>;
+  };
+  // NEW: Sprint cycle tracking
+  currentSprintCycle: {
+    cycleNumber: number;
+    startDate: string;
+    currentDay: number;
+    phase: string;
+    metrics: {
+      assetsScored: number;
+      assetsPublished: number;
+      winnersAmplified: number;
+      losersRemoved: number;
+      revenueGenerated: number;
+    };
+  };
 }
 
 export interface AgentFeedback {
@@ -180,7 +322,7 @@ class CoSOrchestatorMandateService {
     }
     
     return {
-      version: '1.0.0',
+      version: '2.0.0',
       lastUpdated: new Date().toISOString(),
       totalActionsAudited: 0,
       totalVetoes: 0,
@@ -192,7 +334,44 @@ class CoSOrchestatorMandateService {
         'SC-004': 0
       },
       agentFeedbackHistory: [],
-      recentAudits: []
+      recentAudits: [],
+      // NEW: Positive feedback defaults
+      positiveFeedback: [],
+      agentSuccessStreaks: {
+        'CMO': 0,
+        'CRO': 0,
+        'ContentManager': 0,
+        'Strategic': 0
+      },
+      alwaysApproveList: [],
+      autonomyLevels: {
+        'CMO': 1,
+        'CRO': 1,
+        'ContentManager': 1,
+        'Strategic': 2
+      },
+      // NEW: Attribution health defaults
+      attributionHealth: {
+        lastCheckDate: new Date().toISOString(),
+        overallHealthScore: 100,
+        chainCompletionRate: 1.0,
+        orphanConversionRate: 0,
+        alerts: []
+      },
+      // NEW: Sprint cycle defaults
+      currentSprintCycle: {
+        cycleNumber: 1,
+        startDate: new Date().toISOString(),
+        currentDay: 1,
+        phase: 'Deploy',
+        metrics: {
+          assetsScored: 0,
+          assetsPublished: 0,
+          winnersAmplified: 0,
+          losersRemoved: 0,
+          revenueGenerated: 0
+        }
+      }
     };
   }
 
@@ -503,22 +682,45 @@ class CoSOrchestatorMandateService {
     }
 
     // Check spend caps (if action has spend component)
+    // NEW: ROI-based budget exceptions allow higher spend if projected ROI > 3x
     const spendMatch = actionText.match(/\$(\d+)/);
     if (spendMatch) {
       const spendAmount = parseInt(spendMatch[1]);
-      if (spendAmount > L7_GUARDRAILS.spendCapDaily) {
+      const roiConfig = L7_GUARDRAILS.roiBasedBudgetExceptions;
+      
+      // Calculate projected ROI if revenue impact is specified
+      let projectedROI = 0;
+      let hasValidROI = false;
+      
+      if (action.revenueImpact && action.revenueImpact.estimatedValue && spendAmount > 0) {
+        projectedROI = action.revenueImpact.estimatedValue / spendAmount;
+        const confidence = action.revenueImpact.confidence || 0;
+        hasValidROI = roiConfig.enabled && 
+                      projectedROI >= roiConfig.minROIThreshold && 
+                      confidence >= roiConfig.requiresConfidenceLevel;
+      }
+      
+      // Determine effective spend cap based on ROI
+      const effectiveSpendCap = hasValidROI ? roiConfig.maxSpendWithROI : L7_GUARDRAILS.spendCapDaily;
+      
+      if (spendAmount > effectiveSpendCap) {
         violations.push({
           id: nanoid(),
           actionId: action.id,
           agentId: action.agentId,
           constraintId: 'L7-SPEND-CAP',
           constraintName: 'L7_DAILY_SPEND_CAP_EXCEEDED',
-          violationReason: `L7 Guardrail: Daily spend cap exceeded ($${spendAmount} > $${L7_GUARDRAILS.spendCapDaily})`,
-          violationDetails: `L7 Master Directive enforces a $${L7_GUARDRAILS.spendCapDaily}/day spend cap. Requested spend: $${spendAmount}. Reduce spend or break into multiple days.`,
+          violationReason: `L7 Guardrail: Daily spend cap exceeded ($${spendAmount} > $${effectiveSpendCap})`,
+          violationDetails: hasValidROI 
+            ? `ROI exception applied (${projectedROI.toFixed(1)}x), but spend still exceeds elevated cap of $${roiConfig.maxSpendWithROI}/day. Max allowed: $${effectiveSpendCap}`
+            : `L7 Master Directive enforces a $${L7_GUARDRAILS.spendCapDaily}/day spend cap. Requested spend: $${spendAmount}. To unlock higher spend: provide revenueImpact with ROI > ${roiConfig.minROIThreshold}x and confidence >= ${roiConfig.requiresConfidenceLevel * 100}%`,
           severity: 'veto',
           timestamp: new Date().toISOString(),
           feedbackDelivered: false
         });
+      } else if (hasValidROI && spendAmount > L7_GUARDRAILS.spendCapDaily) {
+        // Log ROI exception approval
+        console.log(`✅ L7 ROI EXCEPTION: Spend of $${spendAmount} approved (${projectedROI.toFixed(1)}x ROI, cap elevated to $${effectiveSpendCap})`);
       }
     }
 
@@ -978,6 +1180,459 @@ Strategic Agent → CMO Agent → CRO Agent
     } catch (error) {
       console.error('Failed to store feedback vector:', error);
     }
+  }
+
+  // ============================================
+  // POSITIVE FEEDBACK LOOPS (New)
+  // Reward signals for high-performing agents
+  // ============================================
+
+  /**
+   * Record positive feedback when an action generates revenue
+   */
+  recordPositiveFeedback(
+    agentId: string,
+    agentType: string,
+    actionId: string,
+    revenueGenerated: number,
+    revenueType: 'ARR' | 'MRR' | 'pipeline' | 'conversion'
+  ): void {
+    if (!POSITIVE_FEEDBACK_CONFIG.enabled) return;
+
+    const performanceScore = this.calculatePerformanceScore(revenueGenerated, revenueType);
+    
+    const feedback: PositiveFeedbackRecord = {
+      id: nanoid(),
+      agentId,
+      agentType,
+      actionId,
+      revenueGenerated,
+      revenueType,
+      performanceScore,
+      recordedAt: new Date().toISOString(),
+      autoPromoted: false
+    };
+
+    // Initialize if not exists
+    if (!this.state.positiveFeedback) this.state.positiveFeedback = [];
+    if (!this.state.agentSuccessStreaks) this.state.agentSuccessStreaks = {};
+    
+    this.state.positiveFeedback.unshift(feedback);
+    
+    // Keep last 500 positive feedback records
+    if (this.state.positiveFeedback.length > 500) {
+      this.state.positiveFeedback = this.state.positiveFeedback.slice(0, 500);
+    }
+
+    // Update success streak
+    this.state.agentSuccessStreaks[agentType] = (this.state.agentSuccessStreaks[agentType] || 0) + 1;
+
+    // Check for auto-promotion
+    this.checkAutoPromotion(agentType);
+
+    console.log(`🌟 POSITIVE FEEDBACK: ${agentType} generated $${revenueGenerated} ${revenueType} (Score: ${performanceScore})`);
+    this.saveState();
+  }
+
+  /**
+   * Calculate performance score based on revenue generated
+   */
+  private calculatePerformanceScore(revenueGenerated: number, revenueType: string): number {
+    const config = POSITIVE_FEEDBACK_CONFIG.rewardSignals;
+    let score = 50; // Base score
+
+    // Revenue-based scoring
+    if (revenueGenerated >= 10000) score += 40;
+    else if (revenueGenerated >= 5000) score += 30;
+    else if (revenueGenerated >= 1000) score += 20;
+    else if (revenueGenerated > 0) score += 10;
+
+    // Revenue type bonus
+    if (revenueType === 'ARR') score += 10;
+    else if (revenueType === 'MRR') score += 8;
+    else if (revenueType === 'conversion') score += 5;
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Check if an agent qualifies for auto-promotion
+   */
+  private checkAutoPromotion(agentType: string): void {
+    const config = POSITIVE_FEEDBACK_CONFIG.autoPromoteThreshold;
+    const streak = this.state.agentSuccessStreaks[agentType] || 0;
+    
+    if (streak >= config.consecutiveSuccesses) {
+      // Calculate total revenue from recent successes
+      const recentFeedback = this.state.positiveFeedback
+        .filter(f => f.agentType === agentType)
+        .slice(0, config.consecutiveSuccesses);
+      
+      const totalRevenue = recentFeedback.reduce((sum, f) => sum + f.revenueGenerated, 0);
+      const avgScore = recentFeedback.reduce((sum, f) => sum + f.performanceScore, 0) / recentFeedback.length;
+
+      if (totalRevenue >= config.revenueThreshold && avgScore >= config.performanceScore) {
+        this.promoteAgentAutonomy(agentType);
+        console.log(`🚀 AUTO-PROMOTION: ${agentType} upgraded for consistent revenue performance`);
+      }
+    }
+  }
+
+  /**
+   * Increase agent autonomy level
+   */
+  promoteAgentAutonomy(agentType: string): void {
+    if (!this.state.autonomyLevels) this.state.autonomyLevels = {};
+    
+    const currentLevel = this.state.autonomyLevels[agentType] || 1;
+    const boosts = POSITIVE_FEEDBACK_CONFIG.autonomyBoosts;
+    
+    // Check requirements for next level
+    const recentFeedback = this.state.positiveFeedback.filter(f => f.agentType === agentType);
+    const totalRevenue = recentFeedback.reduce((sum, f) => sum + f.revenueGenerated, 0);
+    const successCount = recentFeedback.length;
+
+    let newLevel = currentLevel;
+    
+    if (currentLevel === 1 && successCount >= boosts.level1to2.successesRequired && totalRevenue >= boosts.level1to2.revenueRequired) {
+      newLevel = 2;
+    } else if (currentLevel === 2 && successCount >= boosts.level2to3.successesRequired && totalRevenue >= boosts.level2to3.revenueRequired) {
+      newLevel = 3;
+    }
+
+    if (newLevel > currentLevel) {
+      this.state.autonomyLevels[agentType] = newLevel;
+      console.log(`⬆️ AUTONOMY BOOST: ${agentType} promoted from L${currentLevel} to L${newLevel}`);
+      this.saveState();
+    }
+  }
+
+  /**
+   * Reset success streak on veto (negative feedback)
+   */
+  resetSuccessStreak(agentType: string): void {
+    if (this.state.agentSuccessStreaks) {
+      this.state.agentSuccessStreaks[agentType] = 0;
+      this.saveState();
+    }
+  }
+
+  /**
+   * Add action pattern to always-approve list
+   */
+  addToAlwaysApproveList(actionPattern: string, agentType: string): void {
+    if (!this.state.alwaysApproveList) this.state.alwaysApproveList = [];
+    
+    const entry = `${agentType}:${actionPattern}`;
+    if (!this.state.alwaysApproveList.includes(entry)) {
+      this.state.alwaysApproveList.push(entry);
+      console.log(`✅ ALWAYS-APPROVE: Added pattern "${actionPattern}" for ${agentType}`);
+      this.saveState();
+    }
+  }
+
+  /**
+   * Check if action matches always-approve pattern
+   */
+  isInAlwaysApproveList(actionTitle: string, agentType: string): boolean {
+    if (!this.state.alwaysApproveList) return false;
+    
+    return this.state.alwaysApproveList.some(entry => {
+      const [entryAgent, pattern] = entry.split(':');
+      return entryAgent === agentType && actionTitle.toLowerCase().includes(pattern.toLowerCase());
+    });
+  }
+
+  // ============================================
+  // ATTRIBUTION HEALTH CHECK (New)
+  // Weekly verification of attribution chain integrity
+  // ============================================
+
+  /**
+   * Run weekly attribution health check
+   */
+  runAttributionHealthCheck(conversions: Array<{
+    id: string;
+    hasContent: boolean;
+    hasClick: boolean;
+    hasEngagement: boolean;
+    hasCheckout: boolean;
+    hasRevenue: boolean;
+  }>): {
+    healthScore: number;
+    chainCompletionRate: number;
+    orphanRate: number;
+    alerts: Array<{ level: string; message: string }>;
+  } {
+    if (!ATTRIBUTION_HEALTH_CONFIG.enabled || conversions.length === 0) {
+      return { healthScore: 100, chainCompletionRate: 1, orphanRate: 0, alerts: [] };
+    }
+
+    const alerts: Array<{ level: string; message: string }> = [];
+    const thresholds = ATTRIBUTION_HEALTH_CONFIG.healthThresholds;
+
+    // Calculate full chain completion (all 5 points)
+    const fullChainCount = conversions.filter(c => 
+      c.hasContent && c.hasClick && c.hasEngagement && c.hasCheckout && c.hasRevenue
+    ).length;
+    
+    // Calculate orphan conversions (revenue without attribution)
+    const orphanCount = conversions.filter(c => 
+      c.hasRevenue && !c.hasContent && !c.hasClick
+    ).length;
+
+    const chainCompletionRate = fullChainCount / conversions.length;
+    const orphanRate = orphanCount / conversions.length;
+
+    // Calculate health score
+    let healthScore = 100;
+    if (chainCompletionRate < thresholds.chainCompletionTarget) {
+      healthScore -= (thresholds.chainCompletionTarget - chainCompletionRate) * 100;
+    }
+    if (orphanRate > thresholds.orphanAlertThreshold) {
+      healthScore -= (orphanRate - thresholds.orphanAlertThreshold) * 50;
+    }
+    healthScore = Math.max(0, Math.min(100, healthScore));
+
+    // Generate alerts
+    const alertConfig = ATTRIBUTION_HEALTH_CONFIG.alerts;
+    
+    if (orphanRate >= alertConfig.critical.orphanRate) {
+      alerts.push({ level: 'CRITICAL', message: `${(orphanRate * 100).toFixed(1)}% orphan conversions (>${alertConfig.critical.orphanRate * 100}%)` });
+    } else if (orphanRate >= alertConfig.warning.orphanRate) {
+      alerts.push({ level: 'WARNING', message: `${(orphanRate * 100).toFixed(1)}% orphan conversions detected` });
+    }
+
+    if (chainCompletionRate <= alertConfig.critical.chainCompletion) {
+      alerts.push({ level: 'CRITICAL', message: `Chain completion at ${(chainCompletionRate * 100).toFixed(1)}% (<${alertConfig.critical.chainCompletion * 100}%)` });
+    } else if (chainCompletionRate <= alertConfig.warning.chainCompletion) {
+      alerts.push({ level: 'WARNING', message: `Chain completion at ${(chainCompletionRate * 100).toFixed(1)}%` });
+    }
+
+    // Update state
+    if (!this.state.attributionHealth) {
+      this.state.attributionHealth = {
+        lastCheckDate: new Date().toISOString(),
+        overallHealthScore: 100,
+        chainCompletionRate: 1,
+        orphanConversionRate: 0,
+        alerts: []
+      };
+    }
+    
+    this.state.attributionHealth = {
+      lastCheckDate: new Date().toISOString(),
+      overallHealthScore: healthScore,
+      chainCompletionRate,
+      orphanConversionRate: orphanRate,
+      alerts: alerts.map(a => ({ ...a, timestamp: new Date().toISOString() }))
+    };
+    
+    this.saveState();
+
+    console.log(`📊 ATTRIBUTION HEALTH CHECK: Score ${healthScore.toFixed(0)}% | Chain: ${(chainCompletionRate * 100).toFixed(1)}% | Orphans: ${(orphanRate * 100).toFixed(1)}%`);
+    if (alerts.length > 0) {
+      alerts.forEach(a => console.log(`   ⚠️ ${a.level}: ${a.message}`));
+    }
+
+    return { healthScore, chainCompletionRate, orphanRate, alerts };
+  }
+
+  getAttributionHealth(): typeof this.state.attributionHealth {
+    return this.state.attributionHealth;
+  }
+
+  // ============================================
+  // 3-DAY SPRINT CYCLE MANAGEMENT (New)
+  // Faster learning cycles for rapid iteration
+  // ============================================
+
+  /**
+   * Get current sprint cycle day and phase
+   */
+  getCurrentSprintPhase(): {
+    cycleNumber: number;
+    day: number;
+    phase: string;
+    actions: string[];
+    kpis: string[];
+  } {
+    // Initialize if not exists
+    if (!this.state.currentSprintCycle) {
+      this.state.currentSprintCycle = {
+        cycleNumber: 1,
+        startDate: new Date().toISOString(),
+        currentDay: 1,
+        phase: 'Deploy',
+        metrics: { assetsScored: 0, assetsPublished: 0, winnersAmplified: 0, losersRemoved: 0, revenueGenerated: 0 }
+      };
+      this.saveState();
+    }
+
+    const config = SPRINT_CYCLE_CONFIG;
+    const cycle = this.state.currentSprintCycle;
+    
+    // Calculate current day based on start date
+    const startDate = new Date(cycle.startDate);
+    const now = new Date();
+    const daysSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const currentDay = (daysSinceStart % config.durationDays) + 1;
+    
+    // Check if we've moved to a new cycle
+    if (daysSinceStart >= config.durationDays && currentDay === 1) {
+      this.advanceSprintCycle();
+    }
+
+    const dayKey = `day${currentDay}` as keyof typeof config.phases;
+    const phase = config.phases[dayKey];
+
+    return {
+      cycleNumber: cycle.cycleNumber,
+      day: currentDay,
+      phase: phase.phase,
+      actions: [...phase.actions],
+      kpis: [...phase.kpis]
+    };
+  }
+
+  /**
+   * Advance to next sprint cycle
+   */
+  advanceSprintCycle(): void {
+    const prevMetrics = this.state.currentSprintCycle.metrics;
+    
+    console.log(`\n🔄 SPRINT CYCLE ${this.state.currentSprintCycle.cycleNumber} COMPLETE`);
+    console.log(`   📊 Assets: ${prevMetrics.assetsScored} scored, ${prevMetrics.assetsPublished} published`);
+    console.log(`   🏆 Winners: ${prevMetrics.winnersAmplified} amplified, ${prevMetrics.losersRemoved} removed`);
+    console.log(`   💰 Revenue: $${prevMetrics.revenueGenerated}`);
+
+    this.state.currentSprintCycle = {
+      cycleNumber: this.state.currentSprintCycle.cycleNumber + 1,
+      startDate: new Date().toISOString(),
+      currentDay: 1,
+      phase: 'Deploy',
+      metrics: { assetsScored: 0, assetsPublished: 0, winnersAmplified: 0, losersRemoved: 0, revenueGenerated: 0 }
+    };
+
+    console.log(`\n🚀 SPRINT CYCLE ${this.state.currentSprintCycle.cycleNumber} STARTED`);
+    this.saveState();
+  }
+
+  /**
+   * Update sprint metrics
+   */
+  updateSprintMetrics(updates: Partial<{
+    assetsScored: number;
+    assetsPublished: number;
+    winnersAmplified: number;
+    losersRemoved: number;
+    revenueGenerated: number;
+  }>): void {
+    if (!this.state.currentSprintCycle) return;
+    
+    Object.assign(this.state.currentSprintCycle.metrics, updates);
+    this.saveState();
+  }
+
+  /**
+   * Get sprint cycle report
+   */
+  getSprintReport(): {
+    currentCycle: MandateState['currentSprintCycle'];
+    phase: { cycleNumber: number; day: number; phase: string; actions: string[]; kpis: string[] };
+    config: typeof SPRINT_CYCLE_CONFIG;
+  } {
+    return {
+      currentCycle: this.state.currentSprintCycle,
+      phase: this.getCurrentSprintPhase(),
+      config: SPRINT_CYCLE_CONFIG
+    };
+  }
+
+  // ============================================
+  // CONSOLIDATED 2-LAYER GUARDRAIL SYSTEM (New)
+  // Layer 1: Pre-Flight (syntax, forbidden, domain)
+  // Layer 2: Revenue Gate (CoS Mandate + L7)
+  // ============================================
+
+  /**
+   * Layer 1: Pre-Flight Check - Fast validation before full audit
+   * Returns immediately if basic checks fail
+   */
+  preFlightCheck(actionTitle: string, actionDescription: string): {
+    pass: boolean;
+    layer: 'PRE_FLIGHT';
+    reason?: string;
+    proceedToRevenueGate: boolean;
+  } {
+    const text = `${actionTitle} ${actionDescription}`.toLowerCase();
+    
+    // Check forbidden vocabulary
+    const forbiddenTerms = ['spam', 'scam', 'fake', 'hack', 'illegal'];
+    for (const term of forbiddenTerms) {
+      if (text.includes(term)) {
+        return { pass: false, layer: 'PRE_FLIGHT', reason: `Forbidden term detected: ${term}`, proceedToRevenueGate: false };
+      }
+    }
+
+    // Check domain fence (must be life sciences related for content actions)
+    if (text.includes('content') || text.includes('article') || text.includes('publish')) {
+      const lifeSciTerms = ['fda', 'gxp', 'csv', 'validation', 'compliance', 'pharma', 'biotech', 'medical', 'capa', 'qms'];
+      const hasLifeSciContext = lifeSciTerms.some(t => text.includes(t));
+      
+      if (!hasLifeSciContext) {
+        return { pass: false, layer: 'PRE_FLIGHT', reason: 'Content action missing life sciences context', proceedToRevenueGate: false };
+      }
+    }
+
+    // Pre-flight passed, proceed to revenue gate
+    return { pass: true, layer: 'PRE_FLIGHT', proceedToRevenueGate: true };
+  }
+
+  /**
+   * Consolidated 2-layer check: Pre-Flight + Revenue Gate
+   */
+  async twoLayerGuardrailCheck(
+    actionId: string,
+    agentType: string,
+    actionTitle: string,
+    actionDescription: string,
+    expectedOutcome: string,
+    revenueImpact?: { type: 'ARR' | 'MRR' | 'pipeline' | 'none'; estimatedValue?: number; confidence?: number }
+  ): Promise<{
+    layer1: { pass: boolean; layer: 'PRE_FLIGHT'; reason?: string; proceedToRevenueGate: boolean };
+    layer2?: CoSGateResult;
+    finalDecision: 'APPROVED' | 'BLOCKED';
+    blockReason?: string;
+  }> {
+    // Layer 1: Pre-Flight
+    const layer1 = this.preFlightCheck(actionTitle, actionDescription);
+    
+    if (!layer1.pass) {
+      return {
+        layer1,
+        finalDecision: 'BLOCKED',
+        blockReason: `Layer 1 Pre-Flight: ${layer1.reason}`
+      };
+    }
+
+    // Layer 2: Revenue Gate (CoS Mandate + L7 Guardrails)
+    const layer2 = await cosExecutionGate(
+      actionId,
+      agentType,
+      agentType,
+      actionTitle,
+      actionDescription,
+      expectedOutcome,
+      revenueImpact
+    );
+
+    return {
+      layer1,
+      layer2,
+      finalDecision: layer2.allowed ? 'APPROVED' : 'BLOCKED',
+      blockReason: layer2.blockReason
+    };
   }
 }
 
