@@ -9,7 +9,10 @@ import {
   runGuaranteedSuccessCycle,
   getGSEState,
   getDecisionLineage,
-  getAgentDailyLogs
+  getAgentDailyLogs,
+  getAgentOutcomes,
+  getWeeklyReports,
+  getStabilityIndices
 } from "../services/guaranteed-success-engine";
 
 const router = Router();
@@ -328,6 +331,183 @@ router.get("/guarantees", async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: "Failed to get guarantees" });
+  }
+});
+
+/**
+ * GET /api/gse/agent-outcomes
+ * Get agent outcomes logged to agent_outcomes.json (SECTION 2.1)
+ */
+router.get("/agent-outcomes", async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const outcomes = getAgentOutcomes(limit);
+    res.json({
+      success: true,
+      description: "All agent outcomes logged to agent_outcomes.json per SECTION 2.1",
+      data: outcomes,
+      count: outcomes.length
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to get agent outcomes" });
+  }
+});
+
+/**
+ * GET /api/gse/weekly-reports
+ * Get weekly system reports (SECTION 4)
+ */
+router.get("/weekly-reports", async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 4;
+    const reports = getWeeklyReports(limit);
+    res.json({
+      success: true,
+      description: "Weekly system-level review per SECTION 4",
+      contents: [
+        "Forecast vs. actual variance",
+        "Spear-tip performance report",
+        "Revenue Growth Outlook (next 30 days)",
+        "Offer Optimization Report"
+      ],
+      data: reports,
+      count: reports.length
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to get weekly reports" });
+  }
+});
+
+/**
+ * GET /api/gse/stability-indices
+ * Get daily stability indices (SECTION 4)
+ */
+router.get("/stability-indices", async (req: Request, res: Response) => {
+  try {
+    const indices = getStabilityIndices();
+    res.json({
+      success: true,
+      description: "Daily system outputs per SECTION 4",
+      indices: {
+        demandStability: {
+          name: indices.demand.name,
+          score: indices.demand.score,
+          trend: indices.demand.trend,
+          interpretation: indices.demand.score >= 70 ? "Predictable demand pipeline" : "Demand needs attention"
+        },
+        conversionStability: {
+          name: indices.conversion.name,
+          score: indices.conversion.score,
+          trend: indices.conversion.trend,
+          interpretation: indices.conversion.score >= 70 ? "Conversion paths optimized" : "Conversion needs attention"
+        },
+        revenuePredictability: {
+          name: indices.revenue.name,
+          score: indices.revenue.score,
+          trend: indices.revenue.trend,
+          interpretation: indices.revenue.score >= 85 ? "Revenue highly predictable" : "Forecast accuracy needs work"
+        },
+        retentionRisk: {
+          name: indices.retention.name,
+          score: indices.retention.score,
+          trend: indices.retention.trend,
+          interpretation: indices.retention.score >= 70 ? "Retention healthy" : "Churn risk elevated"
+        }
+      },
+      overallHealth: Math.round((indices.demand.score + indices.conversion.score + indices.revenue.score + indices.retention.score) / 4)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to get stability indices" });
+  }
+});
+
+/**
+ * GET /api/gse/governance
+ * Get governance rules and violations (SECTION 3)
+ */
+router.get("/governance", async (req: Request, res: Response) => {
+  try {
+    const state = getGSEState();
+    res.json({
+      success: true,
+      title: "Non-Negotiable Governance Rules (SECTION 3)",
+      rules: [
+        {
+          id: "NO_DRIFT",
+          name: "No Drift Rule",
+          description: "All agents must operate exclusively inside the spear-tip narrative",
+          enforcement: "Any deviation → immediate veto + correction"
+        },
+        {
+          id: "NO_DEAD_END",
+          name: "No Dead-End Rule",
+          description: "Every action must connect to a measurable conversion pathway",
+          enforcement: "No exceptions"
+        },
+        {
+          id: "NO_STAGNATION",
+          name: "No Stagnation Rule",
+          description: "Anything that doesn't improve demand/conversion/revenue/retention is removed or replaced",
+          enforcement: "Continuous pruning"
+        },
+        {
+          id: "PRECISION_OVER_VOLUME",
+          name: "Precision Over Volume Rule",
+          description: "More content ≠ more revenue. Only measurable movement qualifies",
+          enforcement: "Reject non-measurable actions"
+        },
+        {
+          id: "PREDICTABILITY_PRIORITY",
+          name: "Predictability is Priority Rule",
+          description: "If forecast variance > 10%, CoS must override all agents until stability is restored",
+          enforcement: "Automatic CoS override"
+        }
+      ],
+      status: {
+        cosOverrideActive: state.cosOverrideActive,
+        recentViolations: state.governanceViolations?.length || 0
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to get governance status" });
+  }
+});
+
+/**
+ * GET /api/gse/executive-summary
+ * Get "What Happened / What's Next" executive summary (SECTION 4)
+ */
+router.get("/executive-summary", async (req: Request, res: Response) => {
+  try {
+    const state = getGSEState();
+    const logs = getAgentDailyLogs();
+    const indices = getStabilityIndices();
+    
+    res.json({
+      success: true,
+      title: "Executive Summary: What Happened / What's Next",
+      date: new Date().toISOString().split("T")[0],
+      systemHealth: {
+        successScore: state.successScore,
+        cycleCount: state.cycleCount,
+        lastRun: state.lastRun,
+        cosOverrideActive: state.cosOverrideActive
+      },
+      stabilityIndices: {
+        demand: `${indices.demand.score}% (${indices.demand.trend})`,
+        conversion: `${indices.conversion.score}% (${indices.conversion.trend})`,
+        revenue: `${indices.revenue.score}% (${indices.revenue.trend})`,
+        retention: `${indices.retention.score}% (${indices.retention.trend})`
+      },
+      whatHappened: logs.flatMap(l => l.whatHappened.map(wh => `${l.agentName}: ${wh}`)),
+      whatsNext: logs.flatMap(l => l.whatsNext.map(wn => `${l.agentName}: ${wn}`)),
+      blockers: logs.flatMap(l => l.blockers.map(b => `${l.agentName}: ${b}`)),
+      autoCorrections: state.autoCorrections,
+      criticalIssues: state.failureModes.filter(f => f.severity === "critical").map(f => f.metric),
+      highRiskUsers: state.retentionSignals.filter(r => r.riskScore > 70).length
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Failed to get executive summary" });
   }
 });
 
