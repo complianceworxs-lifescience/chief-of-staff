@@ -45,9 +45,7 @@ export default function InitiativesPage() {
 
   const generateInitiativesMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("/api/chief-of-staff/initiatives/generate", {
-        method: "POST"
-      });
+      return await apiRequest("POST", "/api/chief-of-staff/initiatives/generate");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chief-of-staff/initiatives"] });
@@ -60,10 +58,7 @@ export default function InitiativesPage() {
 
   const delegateInitiativesMutation = useMutation({
     mutationFn: async (initiativeIds: string[]) => {
-      return await apiRequest("/api/chief-of-staff/directives/delegate", {
-        method: "POST",
-        body: JSON.stringify({ initiativeIds })
-      });
+      return await apiRequest("POST", "/api/chief-of-staff/directives/delegate", { initiativeIds });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chief-of-staff/directives"] });

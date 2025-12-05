@@ -120,7 +120,7 @@ export function ExternalVerificationDemo() {
         
         // Track strategy selection change
         trackStrategySelection('cmo', topStrategy.strategy, topStrategy.expected_impact, 
-          recommendations.optimal_strategies.map(s => s.strategy));
+          recommendations.optimal_strategies.map((s: { strategy: string }) => s.strategy));
         addLog(`🎯 GA4 Strategy Selection: CMO now prefers "${topStrategy.strategy}" (${topStrategy.expected_impact}% expected impact)`);
       }
 

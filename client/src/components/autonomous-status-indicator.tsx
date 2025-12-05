@@ -25,10 +25,10 @@ export function AutonomousStatusIndicator() {
 
   const triggerMonitoring = async () => {
     try {
-      const result = await apiRequest('/api/conflicts/trigger-monitoring', 'POST', {});
+      const result = await apiRequest('POST', '/api/conflicts/trigger-monitoring', {}) as { message?: string };
       toast({
         title: "Autonomous Monitoring Triggered",
-        description: result.message,
+        description: result?.message || "Monitoring cycle initiated",
       });
       // Refresh the data
       await refetch();

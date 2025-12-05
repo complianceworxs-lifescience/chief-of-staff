@@ -14,31 +14,45 @@ import { formatDistanceToNow } from "date-fns";
 import { qk } from "@/state/queries";
 import type { Agent, Conflict, SystemMetrics } from "@shared/schema";
 
+interface ScoreboardData {
+  date: string;
+  revenue: { realized_week: number; target_week: number; upsells: number };
+  initiatives: { on_time_pct: number; risk_inverted: number; resource_ok_pct: number; dependency_clear_pct: number };
+  alignment: { work_tied_to_objectives_pct: number };
+  autonomy: { auto_resolve_pct: number; mttr_min: number };
+  risk: { score: number; high: number; medium: number; next_deadline_hours: number };
+  narrative: { topic: string; linkedin_er_delta_pct: number; email_ctr_delta_pct: number; quiz_to_paid_delta_pct: number; conversions: number };
+}
+
+interface Initiative { id: string; title: string; status: string; progress: number; owner: string }
+interface Decision { id: string; title: string; priority: string; dueDate: string; status: string }
+interface Action { id: string; title: string; agent: string; impact: string; urgency: string }
+interface Meeting { id: string; title: string; date: string; summary: string }
+
 export default function Dashboard() {
-  // Strategic Cockpit Data Contracts - 2-hour polling for 4x daily check-ins
-  const { data: scoreboard } = useQuery({
+  const { data: scoreboard } = useQuery<ScoreboardData>({
     queryKey: ['/api/cockpit/scoreboard'],
-    refetchInterval: 7200000 // 2 hour intervals optimized for CEO check-in schedule
+    refetchInterval: 7200000
   });
 
-  const { data: initiatives = [] } = useQuery({
+  const { data: initiatives = [] } = useQuery<Initiative[]>({
     queryKey: ['/api/cockpit/initiatives'],
-    refetchInterval: 7200000 // 2 hour intervals for strategic initiatives
+    refetchInterval: 7200000
   });
 
-  const { data: decisions = [] } = useQuery({
+  const { data: decisions = [] } = useQuery<Decision[]>({
     queryKey: ['/api/cockpit/decisions'],
-    refetchInterval: 7200000 // 2 hour intervals for decision inbox
+    refetchInterval: 7200000
   });
 
-  const { data: actions = [] } = useQuery({
+  const { data: actions = [] } = useQuery<Action[]>({
     queryKey: ['/api/cockpit/actions'],
-    refetchInterval: 7200000 // 2 hour intervals for next best actions
+    refetchInterval: 7200000
   });
 
-  const { data: meetings = [] } = useQuery({
+  const { data: meetings = [] } = useQuery<Meeting[]>({
     queryKey: ['/api/cockpit/meetings'],
-    refetchInterval: 7200000 // 2 hour intervals for meeting summaries
+    refetchInterval: 7200000
   });
 
   // Strategic Cockpit KPI Calculations from Live Data
