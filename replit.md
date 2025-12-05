@@ -40,6 +40,12 @@ The design prioritizes a clear, comprehensive dashboard and interactive command 
 - **GUARANTEED SUCCESS ENGINE v2.0**: Implements 8 closed-loop, self-correcting processes to achieve mechanically predictable revenue, focusing on predictable demand, conversion, revenue, and retention, with continuous self-improvement. It includes daily monitoring, asset-to-sales loop enforcement, predictive revenue modeling, continuous offer optimization, audit-readiness narrative enforcement, failure-mode detection, closed-loop retention, and executive oversight feedback.
 - **EDITORIAL FIREWALL + MESSAGE BUS v1.0**: Provides content governance with domain anchors, prohibited terms, pillar alignment, and persona lock, alongside an inter-agent communication system for routing content creation through staged validation.
 - **COS ORCHESTRATOR MANDATE (Enhanced v1.1)**: Implements a formal governance system for the Chief of Staff agent with immutable constraints (REJECT_UNMEASURABLE_TACTICS, REJECT_ENGINE_VIOLATIONS, REJECT_VANITY_OPTIMIZATION, REQUIRE_REVENUE_MAPPING), an enterprise-wide arbitration layer, and an agent feedback loop for vetoes and iterative refinement. This mandate intercepts all agent actions in the execution pipeline.
+- **AGENT INSTALLATION DIRECTIVES v1.0**: 4 CoS-issued sub-directives that map cleanly to the Guaranteed-Success architecture:
+  - **CMO Directive**: Daily demand monitoring, message reinforcement loop, asset routing enforcement, 14-day spear-tip optimization, demand stability reporting.
+  - **CRO Directive**: Predictive revenue modeling (7/14/30 day), conversion optimization loop, retention engine activation, offer clarity enforcement, revenue stability reporting.
+  - **Strategist Directive**: Spear-tip calibration, competitive intelligence loop, positioning enforcement, strategy override protocol (24h correction), weekly strategic summary.
+  - **Content Agent Directive**: Asset eligibility rule, content-to-sales loop, high-precision style enforcement, asset replacement protocol (24h), daily output summary.
+  - API endpoints at `/api/directives/*` with state files persisted to `state/` directory.
 
 **System Design Choices:**
 The system is designed with a clear separation of concerns, a service layer for core business logic, and scalability in mind.

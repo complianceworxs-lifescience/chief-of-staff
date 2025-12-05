@@ -49,7 +49,9 @@ import l7MasterDirectiveRouter, { initL7MasterDirective } from "./routes/l7-mast
 import blogPublishPipelineRouter from "./routes/blog-publish-pipeline";
 import editorialFirewallRouter from "./routes/editorial-firewall";
 import guaranteedSuccessRouter from "./routes/guaranteed-success-routes";
+import agentDirectiveRouter from "./routes/agent-directive-routes";
 import { initializeGSEScheduler } from "./services/guaranteed-success-engine";
+import { runAllDirectiveCycles } from "./services/agent-installation-directives";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
@@ -223,7 +225,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Guaranteed Success Engine routes (8 Closed-Loop Processes)
   app.use("/api/gse", guaranteedSuccessRouter);
   initializeGSEScheduler();
-  console.log('🎯 GUARANTEED SUCCESS ENGINE v1.0 routes mounted at /api/gse');
+  console.log('🎯 GUARANTEED SUCCESS ENGINE v2.0 routes mounted at /api/gse');
+  
+  // Mount Agent Installation Directives (CMO, CRO, Strategist, Content)
+  app.use("/api/directives", agentDirectiveRouter);
+  console.log('📋 AGENT INSTALLATION DIRECTIVES (4 CoS Sub-Directives) routes mounted at /api/directives');
+  
+  // Run initial directive cycles on startup
+  setTimeout(() => {
+    console.log('[DIRECTIVES] Running initial agent directive cycles...');
+    try {
+      runAllDirectiveCycles();
+      console.log('[DIRECTIVES] Initial directive cycles complete');
+    } catch (error) {
+      console.error('[DIRECTIVES] Error running initial cycles:', error);
+    }
+  }, 5000);
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
