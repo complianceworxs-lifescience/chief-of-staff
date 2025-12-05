@@ -1,15 +1,15 @@
 {
-  "lastRun": "2025-12-05T15:31:05.922Z",
-  "cycleCount": 13,
+  "lastRun": "2025-12-05T15:49:51.302Z",
+  "cycleCount": 16,
   "demandSignals": [
     {
       "source": "LinkedIn",
       "metric": "impressions",
-      "value": 366,
-      "trend": "up",
-      "timestamp": "2025-12-05T15:31:00.684Z",
-      "actionRequired": false,
-      "lastSignalAt": "2025-12-05T15:31:00.684Z",
+      "value": 107,
+      "trend": "down",
+      "timestamp": "2025-12-05T15:49:45.643Z",
+      "actionRequired": true,
+      "lastSignalAt": "2025-12-05T15:49:45.643Z",
       "hoursSinceLastSignal": 0,
       "winningVariant": "Audit Readiness ROI",
       "suppressedVariants": [
@@ -19,26 +19,26 @@
     {
       "source": "LinkedIn",
       "metric": "profile_visits",
-      "value": 29,
-      "trend": "stable",
-      "timestamp": "2025-12-05T15:31:00.684Z",
+      "value": 42,
+      "trend": "up",
+      "timestamp": "2025-12-05T15:49:45.643Z",
       "actionRequired": false
     },
     {
       "source": "Website",
       "metric": "repeat_visitors",
-      "value": 8,
+      "value": 12,
       "trend": "stable",
-      "timestamp": "2025-12-05T15:31:00.684Z",
+      "timestamp": "2025-12-05T15:49:45.643Z",
       "actionRequired": false
     },
     {
       "source": "Email",
       "metric": "engagement_decay",
-      "value": 20,
-      "trend": "up",
-      "timestamp": "2025-12-05T15:31:00.684Z",
-      "actionRequired": false
+      "value": 80,
+      "trend": "down",
+      "timestamp": "2025-12-05T15:49:45.643Z",
+      "actionRequired": true
     }
   ],
   "assetPerformance": [],
@@ -150,61 +150,65 @@
       "severity": "warning",
       "autoCorrection": "Message recalibration",
       "correctionApplied": true,
-      "timestamp": "2025-12-05T15:31:00.952Z",
+      "timestamp": "2025-12-05T15:49:46.009Z",
       "resolution": "Applied Message recalibration",
       "deltaImpact": -83
     },
     {
       "metric": "dashboard_views",
-      "current": 56,
+      "current": 62,
       "baseline": 50,
-      "dropPercent": -12,
+      "dropPercent": -24,
       "severity": "watch",
       "autoCorrection": "None",
       "correctionApplied": false,
-      "timestamp": "2025-12-05T15:31:00.952Z"
+      "timestamp": "2025-12-05T15:49:46.009Z"
     },
     {
       "metric": "landing_page_ctr",
-      "current": 2.036136227662535,
+      "current": 1.8624524935907805,
       "baseline": 2.5,
-      "dropPercent": 18.5545508934986,
+      "dropPercent": 25.50190025636878,
       "severity": "warning",
       "autoCorrection": "Landing page replacement",
       "correctionApplied": true,
-      "timestamp": "2025-12-05T15:31:00.952Z",
+      "timestamp": "2025-12-05T15:49:46.009Z",
       "resolution": "Applied Landing page replacement",
-      "deltaImpact": -93
+      "deltaImpact": -128
     },
     {
       "metric": "conversion_rate",
-      "current": 1.4017213034056923,
+      "current": 1.0358706672292965,
       "baseline": 1.5,
-      "dropPercent": 6.551913106287177,
-      "severity": "watch",
-      "autoCorrection": "Monitoring increased frequency",
-      "correctionApplied": false,
-      "timestamp": "2025-12-05T15:31:00.952Z"
+      "dropPercent": 30.9419555180469,
+      "severity": "critical",
+      "autoCorrection": "Emergency: Offer refinement + pricing review",
+      "correctionApplied": true,
+      "timestamp": "2025-12-05T15:49:46.009Z",
+      "resolution": "Triggered Offer refinement with priority override",
+      "deltaImpact": -309
     },
     {
       "metric": "email_open_rate",
-      "current": 28.01825148491265,
+      "current": 29.597180922850274,
       "baseline": 25,
-      "dropPercent": -12.0730059396506,
+      "dropPercent": -18.388723691401097,
       "severity": "watch",
       "autoCorrection": "None",
       "correctionApplied": false,
-      "timestamp": "2025-12-05T15:31:00.952Z"
+      "timestamp": "2025-12-05T15:49:46.009Z"
     },
     {
       "metric": "email_click_rate",
-      "current": 3.119219313809793,
+      "current": 2.539418357826339,
       "baseline": 3,
-      "dropPercent": -3.9739771269931,
-      "severity": "watch",
-      "autoCorrection": "None",
-      "correctionApplied": false,
-      "timestamp": "2025-12-05T15:31:00.952Z"
+      "dropPercent": 15.352721405788694,
+      "severity": "warning",
+      "autoCorrection": "CTA optimization",
+      "correctionApplied": true,
+      "timestamp": "2025-12-05T15:49:46.009Z",
+      "resolution": "Applied CTA optimization",
+      "deltaImpact": -77
     }
   ],
   "retentionSignals": [
@@ -270,20 +274,20 @@
       "renewalPrediction": false
     }
   ],
-  "autoCorrections": 6,
-  "successScore": 62,
+  "autoCorrections": 10,
+  "successScore": 50,
   "governanceViolations": [],
   "stabilityIndices": {
     "demand": {
       "name": "Demand Stability Index",
-      "score": 100,
-      "trend": "improving",
+      "score": 50,
+      "trend": "stable",
       "components": {
-        "healthy_signals": 4,
+        "healthy_signals": 2,
         "total_signals": 4,
         "winning_variants": 1
       },
-      "timestamp": "2025-12-05T15:31:05.921Z"
+      "timestamp": "2025-12-05T15:49:51.302Z"
     },
     "conversion": {
       "name": "Conversion Stability Index",
@@ -294,7 +298,7 @@
         "rejected_assets": 0,
         "sunset_assets": 0
       },
-      "timestamp": "2025-12-05T15:31:05.921Z"
+      "timestamp": "2025-12-05T15:49:51.302Z"
     },
     "revenue": {
       "name": "Revenue Predictability Index",
@@ -305,7 +309,7 @@
         "forecast_7d": 5760,
         "forecast_30d": 6668
       },
-      "timestamp": "2025-12-05T15:31:05.921Z"
+      "timestamp": "2025-12-05T15:49:51.302Z"
     },
     "retention": {
       "name": "Retention Risk Index",
@@ -316,10 +320,10 @@
         "at_risk_users": 2,
         "interventions_active": 4
       },
-      "timestamp": "2025-12-05T15:31:05.921Z"
+      "timestamp": "2025-12-05T15:49:51.302Z"
     }
   },
   "cosOverrideActive": false,
-  "lastDemandSignalAt": "2025-12-05T15:31:00.684Z",
+  "lastDemandSignalAt": "2025-12-05T15:49:45.643Z",
   "weeklyReportGenerated": ""
 }
