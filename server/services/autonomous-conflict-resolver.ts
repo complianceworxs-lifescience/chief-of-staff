@@ -2,6 +2,47 @@ import { db } from "../db";
 import { conflicts, agents, agentDirectives, agentWorkloads, directiveConflicts } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 
+// ============================================
+// REVENUE WEIGHTING CONFIGURATION (Enhanced v2.0)
+// All conflicts resolved with revenue-first priority
+// ============================================
+const REVENUE_WEIGHTING_CONFIG = {
+  enabled: true,
+  
+  // Revenue multipliers for conflict resolution
+  revenueMultipliers: {
+    directRevenue: 3.0,      // Actions with direct revenue impact get 3x weight
+    pipelineRevenue: 2.0,    // Pipeline-generating actions get 2x weight
+    conversionOptimization: 2.5, // Conversion-focused actions get 2.5x weight
+    brandBuilding: 1.0,      // Brand-only actions get base weight
+  },
+  
+  // Agent priority boost based on revenue contribution
+  agentRevenueBoost: {
+    'cro': 1.5,              // CRO gets 50% priority boost
+    'cmo': 1.2,              // CMO gets 20% boost (revenue-aligned marketing)
+    'content-manager': 1.1,  // Content Manager gets 10% boost
+    'coo': 1.0,              // COO stays neutral
+    'ceo': 1.0,              // CEO uses strategic weight, not revenue
+    'cos': 1.3               // Chief of Staff gets 30% boost (orchestration)
+  },
+  
+  // Dynamic priority adjustment based on revenue impact
+  revenueImpactThresholds: {
+    high: { minValue: 10000, priorityBoost: 50 },
+    medium: { minValue: 1000, priorityBoost: 25 },
+    low: { minValue: 100, priorityBoost: 10 }
+  },
+  
+  // Tiebreaker rules when revenue weights are equal
+  tiebreakers: [
+    { rule: 'conversion_closeness', weight: 0.3 },   // Closer to conversion wins
+    { rule: 'strategic_alignment', weight: 0.25 },   // VQS alignment score
+    { rule: 'execution_speed', weight: 0.25 },       // Faster execution wins
+    { rule: 'risk_mitigation', weight: 0.2 }         // Lower risk wins
+  ]
+} as const;
+
 // Governance hierarchy rules from ComplianceWorxs specifications
 const GOVERNANCE_RULES = {
   CRO_over_brand: {
@@ -59,6 +100,15 @@ interface SystemState {
   workloadDistribution: Record<string, number>;
   priorityWeights: { revenue: number; marketing: number; content: number; operations: number };
   performanceMetrics: Record<string, number>;
+  revenueWeighting: {
+    enabled: boolean;
+    agentBoosts: Record<string, number>;
+    currentRevenueMetrics: {
+      trailing7DayRevenue: number;
+      conversionRate: number;
+      pipelineValue: number;
+    };
+  };
 }
 
 export class AutonomousConflictResolver {
@@ -210,12 +260,101 @@ export class AutonomousConflictResolver {
       return acc;
     }, {} as Record<string, number>);
 
+    // Revenue-weighted priorities (60% revenue, 25% marketing, 10% content, 5% operations)
+    // This is a shift from the previous 50/30/15/5 split to be more revenue-focused
     return {
       agentCapacities,
       workloadDistribution,
-      priorityWeights: { revenue: 50, marketing: 30, content: 15, operations: 5 },
-      performanceMetrics
+      priorityWeights: { revenue: 60, marketing: 25, content: 10, operations: 5 },
+      performanceMetrics,
+      revenueWeighting: {
+        enabled: REVENUE_WEIGHTING_CONFIG.enabled,
+        agentBoosts: REVENUE_WEIGHTING_CONFIG.agentRevenueBoost,
+        currentRevenueMetrics: {
+          trailing7DayRevenue: 0, // Would be fetched from revenue tracking
+          conversionRate: 0,
+          pipelineValue: 0
+        }
+      }
     };
+  }
+
+  /**
+   * Calculate revenue-weighted priority for an agent
+   * Combines base priority with revenue contribution boost
+   */
+  private calculateRevenueWeightedPriority(
+    agentId: string,
+    basePriority: number,
+    revenueImpact: number = 0,
+    state: SystemState
+  ): number {
+    if (!REVENUE_WEIGHTING_CONFIG.enabled) {
+      return basePriority;
+    }
+
+    // Apply agent-specific revenue boost
+    const agentBoost = state.revenueWeighting.agentBoosts[agentId] || 1.0;
+    let weightedPriority = basePriority * agentBoost;
+
+    // Apply revenue impact threshold boosts
+    const thresholds = REVENUE_WEIGHTING_CONFIG.revenueImpactThresholds;
+    if (revenueImpact >= thresholds.high.minValue) {
+      weightedPriority += thresholds.high.priorityBoost;
+    } else if (revenueImpact >= thresholds.medium.minValue) {
+      weightedPriority += thresholds.medium.priorityBoost;
+    } else if (revenueImpact >= thresholds.low.minValue) {
+      weightedPriority += thresholds.low.priorityBoost;
+    }
+
+    return weightedPriority;
+  }
+
+  /**
+   * Resolve tie between agents using revenue-focused tiebreakers
+   */
+  private resolveTieWithRevenueLogic(
+    agents: string[],
+    conflict: any,
+    state: SystemState
+  ): string {
+    const scores: Record<string, number> = {};
+
+    for (const agent of agents) {
+      let score = 0;
+      const agentPriority = state.performanceMetrics[agent] || 50;
+
+      // Apply tiebreaker weights
+      for (const tiebreaker of REVENUE_WEIGHTING_CONFIG.tiebreakers) {
+        switch (tiebreaker.rule) {
+          case 'conversion_closeness':
+            // CRO and CMO are closer to conversion
+            if (agent === 'cro') score += 100 * tiebreaker.weight;
+            else if (agent === 'cmo') score += 75 * tiebreaker.weight;
+            else if (agent === 'content-manager') score += 50 * tiebreaker.weight;
+            break;
+          case 'strategic_alignment':
+            score += agentPriority * tiebreaker.weight;
+            break;
+          case 'execution_speed':
+            // Lower workload = faster execution
+            const utilization = state.workloadDistribution[agent] || 50;
+            score += (100 - utilization) * tiebreaker.weight;
+            break;
+          case 'risk_mitigation':
+            // Higher success rate = lower risk
+            const capacity = state.agentCapacities[agent] || 50;
+            score += capacity * tiebreaker.weight;
+            break;
+        }
+      }
+
+      scores[agent] = score;
+    }
+
+    // Return agent with highest score
+    const sorted = Object.entries(scores).sort(([,a], [,b]) => b - a);
+    return sorted[0][0];
   }
 
   private async executeResourceRebalancing(conflict: any, state: SystemState): Promise<string[]> {

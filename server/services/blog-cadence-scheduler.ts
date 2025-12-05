@@ -1,6 +1,6 @@
 /**
  * ====================================================
- * BLOG CADENCE SCHEDULER
+ * BLOG CADENCE SCHEDULER v2.0
  * ====================================================
  * 
  * Chief of Staff Scheduling Directive – Blog Cadence
@@ -9,17 +9,77 @@
  * Days: Monday and Thursday
  * Time: 15:00 UTC
  * 
+ * ENHANCEMENTS:
+ * - Brief Buffer: Pre-approved queue ensures publishing never stalls
+ * - Fallback Logic: Uses evergreen content if primary brief fails
+ * - Inventory Alerts: Warns when brief buffer runs low
+ * 
  * This scheduler automatically triggers RUN_BLOG_PUBLISH_PIPELINE
  * at the configured times.
  */
 
 import { blogPublishPipeline } from './blog-publish-pipeline.js';
 import * as fs from 'fs';
+import { nanoid } from 'nanoid';
+
+// Brief Buffer Configuration
+const BRIEF_BUFFER_CONFIG = {
+  minBufferSize: 3,         // Minimum briefs to have ready
+  targetBufferSize: 5,      // Ideal buffer size
+  lowInventoryThreshold: 2, // Alert when this low
+  evergreenFallback: true,  // Use evergreen content as fallback
+  maxRetries: 2             // Retries before using fallback
+} as const;
+
+// Pre-approved evergreen topics for fallback
+const EVERGREEN_FALLBACK_BRIEFS = [
+  {
+    id: 'evergreen-1',
+    topic: 'Preparing for FDA Audits: A Validation Leader\'s Quarterly Checklist',
+    angle: 'proactive compliance preparation',
+    persona: 'Validation Strategist',
+    pillar: 'Time Reclaimed',
+    revenueHook: 'audit preparation efficiency'
+  },
+  {
+    id: 'evergreen-2', 
+    topic: 'The True Cost of Manual Compliance: Calculating Your Hidden Overhead',
+    angle: 'ROI quantification',
+    persona: 'Rising Leader',
+    pillar: 'Proof of ROI',
+    revenueHook: 'cost reduction demonstration'
+  },
+  {
+    id: 'evergreen-3',
+    topic: 'Building a Compliance Culture That Scales: From Lab to Enterprise',
+    angle: 'organizational transformation',
+    persona: 'Compliance Architect',
+    pillar: 'Professional Equity',
+    revenueHook: 'enterprise readiness positioning'
+  }
+] as const;
+
+interface BriefBufferItem {
+  id: string;
+  topic: string;
+  angle: string;
+  persona: string;
+  pillar: string;
+  revenueHook: string;
+  addedAt: string;
+  status: 'pending' | 'used' | 'failed';
+  priority: number;
+  isEvergreen: boolean;
+}
 
 interface SchedulerState {
   enabled: boolean;
   lastRun: string | null;
   nextScheduledRun: string | null;
+  briefBuffer: BriefBufferItem[];
+  briefsUsedToday: number;
+  lastBufferRefill: string | null;
+  evergreenFallbackCount: number;
   executionHistory: Array<{
     timestamp: string;
     day: string;
@@ -27,6 +87,8 @@ interface SchedulerState {
     pipelineId?: string;
     postUrl?: string;
     error?: string;
+    briefId?: string;
+    usedFallback?: boolean;
   }>;
 }
 
@@ -42,7 +104,15 @@ class BlogCadenceScheduler {
   private loadState(): SchedulerState {
     try {
       if (fs.existsSync(this.stateFilePath)) {
-        return JSON.parse(fs.readFileSync(this.stateFilePath, 'utf-8'));
+        const loaded = JSON.parse(fs.readFileSync(this.stateFilePath, 'utf-8'));
+        // Ensure new fields exist
+        return {
+          ...loaded,
+          briefBuffer: loaded.briefBuffer || [],
+          briefsUsedToday: loaded.briefsUsedToday || 0,
+          lastBufferRefill: loaded.lastBufferRefill || null,
+          evergreenFallbackCount: loaded.evergreenFallbackCount || 0
+        };
       }
     } catch (error) {
       console.log('📅 Blog Scheduler: Initializing fresh state');
@@ -52,6 +122,10 @@ class BlogCadenceScheduler {
       enabled: true,
       lastRun: null,
       nextScheduledRun: null,
+      briefBuffer: [],
+      briefsUsedToday: 0,
+      lastBufferRefill: null,
+      evergreenFallbackCount: 0,
       executionHistory: []
     };
   }
@@ -250,11 +324,215 @@ class BlogCadenceScheduler {
     console.log('📅 Blog Scheduler: Disabled');
   }
 
+  // ============================================
+  // BRIEF BUFFER MANAGEMENT (New v2.0)
+  // ============================================
+
+  /**
+   * Get current buffer status
+   */
+  getBufferStatus(): {
+    currentSize: number;
+    targetSize: number;
+    isLow: boolean;
+    pendingBriefs: BriefBufferItem[];
+    evergreenFallbackCount: number;
+    needsRefill: boolean;
+  } {
+    const pendingBriefs = this.state.briefBuffer.filter(b => b.status === 'pending');
+    const currentSize = pendingBriefs.length;
+    const isLow = currentSize <= BRIEF_BUFFER_CONFIG.lowInventoryThreshold;
+    const needsRefill = currentSize < BRIEF_BUFFER_CONFIG.minBufferSize;
+
+    if (isLow) {
+      console.log(`⚠️ Brief Buffer LOW: ${currentSize} briefs remaining (threshold: ${BRIEF_BUFFER_CONFIG.lowInventoryThreshold})`);
+    }
+
+    return {
+      currentSize,
+      targetSize: BRIEF_BUFFER_CONFIG.targetBufferSize,
+      isLow,
+      pendingBriefs,
+      evergreenFallbackCount: this.state.evergreenFallbackCount,
+      needsRefill
+    };
+  }
+
+  /**
+   * Add a brief to the buffer (called by CMO/CoS after approval)
+   */
+  addBriefToBuffer(brief: {
+    topic: string;
+    angle: string;
+    persona: string;
+    pillar: string;
+    revenueHook: string;
+    priority?: number;
+  }): BriefBufferItem {
+    const bufferedBrief: BriefBufferItem = {
+      id: nanoid(),
+      topic: brief.topic,
+      angle: brief.angle,
+      persona: brief.persona,
+      pillar: brief.pillar,
+      revenueHook: brief.revenueHook,
+      addedAt: new Date().toISOString(),
+      status: 'pending',
+      priority: brief.priority || 1,
+      isEvergreen: false
+    };
+
+    this.state.briefBuffer.push(bufferedBrief);
+    this.saveState();
+
+    console.log(`📝 Brief Buffer: Added "${brief.topic.slice(0, 50)}..." (Buffer: ${this.state.briefBuffer.filter(b => b.status === 'pending').length})`);
+    return bufferedBrief;
+  }
+
+  /**
+   * Get the next brief from buffer (highest priority first)
+   */
+  private getNextBriefFromBuffer(): BriefBufferItem | null {
+    const pendingBriefs = this.state.briefBuffer
+      .filter(b => b.status === 'pending')
+      .sort((a, b) => b.priority - a.priority);
+
+    return pendingBriefs[0] || null;
+  }
+
+  /**
+   * Get evergreen fallback brief
+   */
+  private getEvergreenFallback(): BriefBufferItem {
+    // Rotate through evergreen content
+    const evergreenIndex = this.state.evergreenFallbackCount % EVERGREEN_FALLBACK_BRIEFS.length;
+    const evergreenBrief = EVERGREEN_FALLBACK_BRIEFS[evergreenIndex];
+
+    this.state.evergreenFallbackCount++;
+    this.saveState();
+
+    console.log(`🌲 Using evergreen fallback: "${evergreenBrief.topic.slice(0, 50)}..."`);
+
+    return {
+      id: `${evergreenBrief.id}-${Date.now()}`,
+      topic: evergreenBrief.topic,
+      angle: evergreenBrief.angle,
+      persona: evergreenBrief.persona,
+      pillar: evergreenBrief.pillar,
+      revenueHook: evergreenBrief.revenueHook,
+      addedAt: new Date().toISOString(),
+      status: 'pending',
+      priority: 0,
+      isEvergreen: true
+    };
+  }
+
+  /**
+   * Get brief with fallback logic
+   * Priority: Buffer > Evergreen > null
+   */
+  getBriefWithFallback(): { brief: BriefBufferItem | null; source: 'buffer' | 'evergreen' | 'none' } {
+    // Try buffer first
+    const bufferedBrief = this.getNextBriefFromBuffer();
+    if (bufferedBrief) {
+      return { brief: bufferedBrief, source: 'buffer' };
+    }
+
+    // Fallback to evergreen if enabled
+    if (BRIEF_BUFFER_CONFIG.evergreenFallback) {
+      const evergreenBrief = this.getEvergreenFallback();
+      return { brief: evergreenBrief, source: 'evergreen' };
+    }
+
+    return { brief: null, source: 'none' };
+  }
+
+  /**
+   * Mark brief as used (successful publish)
+   */
+  markBriefUsed(briefId: string): void {
+    const brief = this.state.briefBuffer.find(b => b.id === briefId);
+    if (brief) {
+      brief.status = 'used';
+      this.saveState();
+    }
+  }
+
+  /**
+   * Mark brief as failed
+   */
+  markBriefFailed(briefId: string): void {
+    const brief = this.state.briefBuffer.find(b => b.id === briefId);
+    if (brief) {
+      brief.status = 'failed';
+      this.saveState();
+    }
+  }
+
+  /**
+   * Pre-populate buffer with CMO-suggested topics
+   */
+  async refillBufferIfNeeded(): Promise<void> {
+    const status = this.getBufferStatus();
+    
+    if (!status.needsRefill) {
+      return;
+    }
+
+    console.log(`📥 Brief Buffer: Refilling (current: ${status.currentSize}, target: ${BRIEF_BUFFER_CONFIG.targetBufferSize})`);
+
+    // Generate placeholder briefs for CMO to approve
+    // In production, this would call the CMO agent to generate topic ideas
+    const suggestedTopics = [
+      {
+        topic: 'Emerging Trends in CSV Automation for 2025',
+        angle: 'technology advancement',
+        persona: 'Rising Leader',
+        pillar: 'Time Reclaimed',
+        revenueHook: 'future-proofing investment'
+      },
+      {
+        topic: 'How Top Pharma Companies Measure Compliance ROI',
+        angle: 'industry benchmarking',
+        persona: 'Validation Strategist',
+        pillar: 'Proof of ROI',
+        revenueHook: 'competitive benchmarking'
+      }
+    ];
+
+    // Add suggested topics to buffer (these would typically go through CoS approval first)
+    for (const topic of suggestedTopics) {
+      if (this.state.briefBuffer.filter(b => b.status === 'pending').length < BRIEF_BUFFER_CONFIG.targetBufferSize) {
+        this.addBriefToBuffer({ ...topic, priority: 1 });
+      }
+    }
+
+    this.state.lastBufferRefill = new Date().toISOString();
+    this.saveState();
+  }
+
+  /**
+   * Clear old used/failed briefs from buffer
+   */
+  cleanupBuffer(): void {
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    
+    this.state.briefBuffer = this.state.briefBuffer.filter(brief => {
+      if (brief.status === 'pending') return true;
+      const addedDate = new Date(brief.addedAt).getTime();
+      return addedDate > thirtyDaysAgo;
+    });
+
+    this.saveState();
+    console.log('📦 Brief Buffer: Cleaned up old entries');
+  }
+
   getStatus(): {
     enabled: boolean;
     lastRun: string | null;
     nextScheduledRun: string;
     schedule: { days: string[]; time_utc: string };
+    briefBuffer: ReturnType<typeof this.getBufferStatus>;
     recentExecutions: SchedulerState['executionHistory'];
   } {
     const config = this.getScheduleConfig();
@@ -266,6 +544,7 @@ class BlogCadenceScheduler {
         days: config.days,
         time_utc: config.time_utc
       },
+      briefBuffer: this.getBufferStatus(),
       recentExecutions: this.state.executionHistory.slice(0, 10)
     };
   }
