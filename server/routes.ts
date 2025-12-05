@@ -51,7 +51,11 @@ import editorialFirewallRouter from "./routes/editorial-firewall";
 import guaranteedSuccessRouter from "./routes/guaranteed-success-routes";
 import agentDirectiveRouter from "./routes/agent-directive-routes";
 import directiveEnhancementRouter from "./routes/directive-enhancement-routes";
+import revenueAccelerationRouter from "./routes/revenue-acceleration";
+import intelligenceToContentRouter from "./routes/intelligence-to-content-routes";
 import { initializeGSEScheduler } from "./services/guaranteed-success-engine";
+import { abandonedCheckoutRecovery } from "./services/abandoned-checkout-recovery";
+import { intelligenceToContent } from "./services/intelligence-to-content";
 import { runAllDirectiveCycles } from "./services/agent-installation-directives";
 import { runEnhancedDirectiveCycle } from "./services/directive-enhancements";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
@@ -236,6 +240,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Directive Enhancements (5 High-Impact Improvements)
   app.use("/api/enhancements", directiveEnhancementRouter);
   console.log('🚀 DIRECTIVE ENHANCEMENTS v1.0 (5 High-Impact Improvements) routes mounted at /api/enhancements');
+  
+  // Mount REVENUE ACCELERATION PACKAGE routes
+  app.use("/api/revenue-acceleration", revenueAccelerationRouter);
+  console.log('💰 REVENUE ACCELERATION PACKAGE routes mounted at /api/revenue-acceleration');
+  
+  // Mount INTELLIGENCE-TO-CONTENT AUTOMATION routes
+  app.use("/api/intelligence-content", intelligenceToContentRouter);
+  console.log('🧠 INTELLIGENCE-TO-CONTENT AUTOMATION routes mounted at /api/intelligence-content');
+  
+  // Initialize Revenue Acceleration Services
+  abandonedCheckoutRecovery.initialize();
+  intelligenceToContent.initialize();
   
   // Run initial directive cycles on startup
   setTimeout(() => {

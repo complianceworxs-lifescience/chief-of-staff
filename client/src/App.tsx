@@ -21,6 +21,7 @@ import COODashboard from "@/pages/coo-dashboard";
 import { CRODashboard } from "@/components/CRODashboard";
 import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
+import ROICalculator from "@/pages/roi-calculator";
 
 function Router() {
   return (
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/coo" component={COODashboard} />
         <Route path="/cro" component={CRODashboard} />
         <Route path="/governance/dashboard" component={GovernanceDashboard} />
+        <Route path="/roi-calculator" component={ROICalculator} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
