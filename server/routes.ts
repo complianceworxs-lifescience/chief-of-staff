@@ -48,6 +48,8 @@ import cosOrchestratorMandateRouter from "./routes/cos-orchestrator-mandate";
 import l7MasterDirectiveRouter, { initL7MasterDirective } from "./routes/l7-master-directive";
 import blogPublishPipelineRouter from "./routes/blog-publish-pipeline";
 import editorialFirewallRouter from "./routes/editorial-firewall";
+import guaranteedSuccessRouter from "./routes/guaranteed-success-routes";
+import { initializeGSEScheduler } from "./services/guaranteed-success-engine";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
@@ -217,6 +219,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Mount Editorial Firewall routes (Agent-to-Agent Wiring)
   app.use("/api/firewall", editorialFirewallRouter);
   console.log('🔒 EDITORIAL FIREWALL (Agent-to-Agent Wiring) routes mounted at /api/firewall');
+  
+  // Mount Guaranteed Success Engine routes (8 Closed-Loop Processes)
+  app.use("/api/gse", guaranteedSuccessRouter);
+  initializeGSEScheduler();
+  console.log('🎯 GUARANTEED SUCCESS ENGINE v1.0 routes mounted at /api/gse');
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();

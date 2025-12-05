@@ -54,6 +54,22 @@ The system is designed with a clear separation of concerns, a service layer for 
 - **MailChimp**: For email campaign execution.
 - **OpenAI**: GPT-5 integration for LLM-powered autonomous agent reasoning.
 
+## Recent Changes (2025-12-05)
+- **GUARANTEED SUCCESS ENGINE v1.0**: 8 closed-loop, self-correcting processes that eliminate randomness and transform success into a mechanical output.
+  - **Process 1: Daily Demand Signal Monitoring** - Tracks engagement signals (LinkedIn impressions, profile visits, repeat visitors), auto-adjusts campaigns based on live performance
+  - **Process 2: Asset-to-Sales Loop** - Routes every content piece to micro-conversions (dashboard view, ROI calc, membership explainer), auto-sunsets poor performers
+  - **Process 3: Predictive Revenue Modeling** - Forecasts 7/14/30 day revenue with confidence intervals, blocks initiatives threatening predictability
+  - **Process 4: Continuous Offer Optimization** - Analyzes feature correlation with conversions, auto-highlights winners and suppresses non-performers
+  - **Process 5: Audit-Readiness Narrative Enforcement** - Validates all content reinforces "Audit Readiness → ROI → The System" messaging (via Editorial Firewall)
+  - **Process 6: Failure-Mode Detection** - Daily checks for drops in impressions, dashboard views, CTR, conversion rate; auto-corrects before revenue impact
+  - **Process 7: Closed-Loop Retention Engine** - Monitors churn signals (inactivity, drop-off), auto-triggers re-engagement sequences with ROI updates
+  - **Process 8: Executive Oversight Feedback Loop** - Daily "What Happened / What's Next" agent logs, CoS aggregation, Strategist recalibration
+  - **Success Score**: Calculated from all 8 process health metrics (target: 80%+)
+  - **Auto-Corrections**: System automatically applies corrections before problems impact revenue
+  - **Decision Lineage**: All decisions logged to `state/decision_lineage.json` for self-improvement
+  - **Cycle Interval**: 2 hours (continuous)
+  - **API**: `/api/gse/*` - status, demand-signals, asset-performance, revenue-forecasts, offer-optimizations, failure-modes, retention-signals, decision-lineage, agent-logs, guarantees
+
 ## Recent Changes (2025-12-04)
 - **EDITORIAL FIREWALL + MESSAGE BUS v1.0**: Single enforcement brain for content governance with inter-agent communication system.
   - **Editorial Firewall** (`/utils/editorialFirewall.ts`): Validates at idea, brief, and draft stages
