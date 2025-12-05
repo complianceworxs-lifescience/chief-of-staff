@@ -182,11 +182,20 @@ class L7EvolutionProtocol {
   };
 
   // Hard limits for Self-Capitalization (No Ad Spend - Organic Only)
+  // Based on actual ComplianceWorxs cost structure
   private readonly CAPITAL_LIMITS = {
-    daily_total: 750,
-    token_budget: 500,
-    infra_budget: 150,
-    services_budget: 100
+    daily_total: 38.33,           // $25 + $10 + $3.33
+    token_budget_daily: 25,       // AI agent tokens (OpenAI, Gemini)
+    infra_budget_daily: 10,       // Replit, GCP
+    services_budget_monthly: 100  // SendGrid ($100/month)
+  };
+
+  // Monthly cost breakdown
+  private readonly MONTHLY_COSTS = {
+    token_budget: 750,    // $25/day × 30 days
+    infrastructure: 300,  // $10/day × 30 days
+    services: 100,        // SendGrid flat monthly
+    total: 1150           // ~$1,150/month base operating costs
   };
 
   // L5 Safety Locks (immutable)
@@ -539,32 +548,39 @@ class L7EvolutionProtocol {
 
   public getAllocations(): CapitalAllocation[] {
     // Organic Growth Model - No Ad Spend, allocate to AI/infra/services only
+    // Daily limits: Tokens $25, Infra $10, Services $3.33 (monthly $100)
+    const dailyServicesAllocation = Math.round(this.CAPITAL_LIMITS.services_budget_monthly / 30 * 100) / 100;
+    
     return [
       {
         category: 'Token Budget (AI Agents)',
-        allocated: this.CAPITAL_LIMITS.token_budget,
-        spent: Math.floor(Math.random() * 200),
+        allocated: this.CAPITAL_LIMITS.token_budget_daily,
+        spent: Math.floor(Math.random() * 20),
         remaining: 0,
-        hard_limit: this.CAPITAL_LIMITS.token_budget,
+        hard_limit: this.CAPITAL_LIMITS.token_budget_daily,
         roas: null
       },
       {
         category: 'Infrastructure (Replit, GCP)',
-        allocated: this.CAPITAL_LIMITS.infra_budget,
-        spent: Math.floor(Math.random() * 100),
+        allocated: this.CAPITAL_LIMITS.infra_budget_daily,
+        spent: Math.floor(Math.random() * 8),
         remaining: 0,
-        hard_limit: this.CAPITAL_LIMITS.infra_budget,
+        hard_limit: this.CAPITAL_LIMITS.infra_budget_daily,
         roas: null
       },
       {
         category: 'Services (SendGrid, APIs)',
-        allocated: this.CAPITAL_LIMITS.services_budget,
-        spent: Math.floor(Math.random() * 80),
+        allocated: dailyServicesAllocation,
+        spent: Math.floor(Math.random() * 3),
         remaining: 0,
-        hard_limit: this.CAPITAL_LIMITS.services_budget,
+        hard_limit: dailyServicesAllocation,
         roas: null
       }
     ].map(a => ({ ...a, remaining: a.allocated - a.spent }));
+  }
+
+  public getMonthlyCosts(): typeof this.MONTHLY_COSTS {
+    return this.MONTHLY_COSTS;
   }
 
   public getFinancialStage(currentARR: number): {
