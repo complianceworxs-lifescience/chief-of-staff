@@ -436,9 +436,57 @@ class CoSOrchestatorMandateService {
   }
 
   // ============================================
-  // EMERGENCY ALIGNMENT PROTOCOL (EAP-26)
-  // Trigger: Monthly Net Member Growth < 90% of Forecast for 7 consecutive days
+  // EMERGENCY ALIGNMENT MODE PROTOCOL (EAM-PROT-2026)
+  // Trigger: Net Growth or Total Members falls below 90% of Monthly Forecast Target
+  // Objective: Restore membership trajectory to forecast within 21 days
   // ============================================
+  private eamState: {
+    active: boolean;
+    activatedAt: string | null;
+    currentPhase: 'DIAGNOSIS' | 'CORRECTION' | 'VERIFICATION' | null;
+    phaseStartedAt: string | null;
+    primaryConstraint: 'TRAFFIC' | 'CONVERSION' | 'RETENTION' | 'NARRATIVE' | 'ASSET_QUALITY' | null;
+    responsibleAgent: string | null;
+    cycleNumber: number;
+    daysInCurrentCycle: number;
+    lastCheck: string;
+    rootCauseSummary: {
+      primaryConstraint: string | null;
+      secondaryConstraints: string[];
+      correctiveActions: string[];
+    };
+    exitMetrics: {
+      netGrowthPercent: number;
+      churnRate: number;
+      ecoUsageRate: number;
+      benchmarkIntegration: number;
+      optInRateDelta: number;
+    };
+  } = {
+    active: false,
+    activatedAt: null,
+    currentPhase: null,
+    phaseStartedAt: null,
+    primaryConstraint: null,
+    responsibleAgent: null,
+    cycleNumber: 0,
+    daysInCurrentCycle: 0,
+    lastCheck: new Date().toISOString(),
+    rootCauseSummary: {
+      primaryConstraint: null,
+      secondaryConstraints: [],
+      correctiveActions: []
+    },
+    exitMetrics: {
+      netGrowthPercent: 0,
+      churnRate: 0,
+      ecoUsageRate: 0,
+      benchmarkIntegration: 0,
+      optInRateDelta: 0
+    }
+  };
+
+  // Legacy EAP-26 state for backward compatibility
   private eap26State: {
     active: boolean;
     activatedAt: string | null;
@@ -566,13 +614,246 @@ class CoSOrchestatorMandateService {
   }
 
   getOperationalFreezeRules(): string[] {
-    if (!this.eap26State.active) return [];
+    if (!this.eap26State.active && !this.eamState.active) return [];
     
     return [
-      "No New Experiments: All A/B testing stops. Winning variants are hard-coded.",
-      "No Brand Building: 'Thought leadership' posts suspended. Only 'Direct Response' assets permitted.",
-      "Veto Power: CoS rejects any output that does not address the identified Diagnostic Scenario."
+      "Zero Experiments: Only correction actions may be executed.",
+      "Zero New Tools: No new free tools, features, or outputs may be introduced.",
+      "Strict Spear-Tip Enforcement: Any misaligned asset is immediately vetoed.",
+      "24-Hour Reporting Cadence: CRO, CMO, and Strategist must deliver daily status reports to CoS.",
+      "Human Override Protection: No agent can alter EAM logic; only Chairman can override."
     ];
+  }
+
+  // ============================================
+  // EAM-PROT-2026: Full 21-Day Correction Protocol
+  // ============================================
+  
+  activateEAM(shortfallPercent: number, constraintType: 'TRAFFIC' | 'CONVERSION' | 'RETENTION' | 'NARRATIVE' | 'ASSET_QUALITY'): void {
+    const responsibleAgents: Record<string, string> = {
+      'TRAFFIC': 'CMO',
+      'CONVERSION': 'CRO',
+      'RETENTION': 'CRO',
+      'NARRATIVE': 'Strategist',
+      'ASSET_QUALITY': 'Content Agent'
+    };
+
+    this.eamState = {
+      active: true,
+      activatedAt: new Date().toISOString(),
+      currentPhase: 'DIAGNOSIS',
+      phaseStartedAt: new Date().toISOString(),
+      primaryConstraint: constraintType,
+      responsibleAgent: responsibleAgents[constraintType],
+      cycleNumber: this.eamState.cycleNumber + 1,
+      daysInCurrentCycle: 0,
+      lastCheck: new Date().toISOString(),
+      rootCauseSummary: {
+        primaryConstraint: constraintType,
+        secondaryConstraints: [],
+        correctiveActions: []
+      },
+      exitMetrics: {
+        netGrowthPercent: 100 - shortfallPercent,
+        churnRate: 0,
+        ecoUsageRate: 0,
+        benchmarkIntegration: 0,
+        optInRateDelta: 0
+      }
+    };
+
+    // Also activate legacy EAP-26 for backward compatibility
+    this.eap26State.active = true;
+    this.eap26State.activatedAt = new Date().toISOString();
+
+    console.log(`🚨 EAM-PROT-2026 ACTIVATED: Cycle #${this.eamState.cycleNumber}`);
+    console.log(`   Primary Constraint: ${constraintType}`);
+    console.log(`   Responsible Agent: ${responsibleAgents[constraintType]}`);
+    console.log(`   Phase: DIAGNOSIS (Days 1-3)`);
+    console.log(`   Objective: Restore forecast within 21 days`);
+  }
+
+  advanceEAMPhase(): { phase: string; day: number; actions: string[] } {
+    if (!this.eamState.active) {
+      return { phase: 'INACTIVE', day: 0, actions: [] };
+    }
+
+    this.eamState.daysInCurrentCycle++;
+    const day = this.eamState.daysInCurrentCycle;
+
+    // Phase 1: Diagnosis (Days 1-3)
+    if (day <= 3) {
+      this.eamState.currentPhase = 'DIAGNOSIS';
+      return {
+        phase: 'DIAGNOSIS',
+        day,
+        actions: this.getDiagnosisActions()
+      };
+    }
+
+    // Phase 2: Correction (Days 4-14)
+    if (day <= 14) {
+      this.eamState.currentPhase = 'CORRECTION';
+      return {
+        phase: 'CORRECTION',
+        day,
+        actions: this.getCorrectionActions()
+      };
+    }
+
+    // Phase 3: Verification (Days 15-21)
+    if (day <= 21) {
+      this.eamState.currentPhase = 'VERIFICATION';
+      return {
+        phase: 'VERIFICATION',
+        day,
+        actions: this.getVerificationActions()
+      };
+    }
+
+    // Day 21+ without exit: Repeat cycle
+    console.log(`🔄 EAM-PROT-2026: Cycle #${this.eamState.cycleNumber} did not meet exit criteria. Repeating.`);
+    this.eamState.cycleNumber++;
+    this.eamState.daysInCurrentCycle = 0;
+    this.eamState.currentPhase = 'DIAGNOSIS';
+    return {
+      phase: 'DIAGNOSIS (REPEAT)',
+      day: 1,
+      actions: this.getDiagnosisActions()
+    };
+  }
+
+  private getDiagnosisActions(): string[] {
+    return [
+      "CRO: Run full funnel audit (Free Tool → Email Opt-in → SendGrid → Membership → Churn Risk)",
+      "CMO: Deliver past 14-day content-performance analysis",
+      "Strategist: Review benchmark-poll alignment with Spear-Tip narrative",
+      "Content Agent: Submit ECO quality audit",
+      "CoS: Generate Root Cause Summary (Primary Constraint, Secondary Constraints, Corrective Actions)"
+    ];
+  }
+
+  private getCorrectionActions(): string[] {
+    const constraint = this.eamState.primaryConstraint;
+    
+    switch (constraint) {
+      case 'TRAFFIC':
+        return [
+          "CMO: Increase dashboard-driven posts from 30% → 60%",
+          "CMO: Push 1 Benchmark Poll per week",
+          "CMO: Run 3 consecutive 'Audit Delta' posts",
+          "CMO: Highlight ECOs in every post for 10 days"
+        ];
+      case 'CONVERSION':
+        return [
+          "CRO: Rewrite SendGrid Email #3 and #5 using ECO format",
+          "CRO: Add 'Executive Summary' CTA",
+          "CRO: Reduce friction on tool landing pages",
+          "CRO: Deploy personal 'Audit Delta' email inserts"
+        ];
+      case 'RETENTION':
+        return [
+          "CRO: Activate Churn Defense Protocol for all risk accounts",
+          "CRO: Send 'Risk Re-Evaluation' sequence to dormant members",
+          "CRO: Add 'Your Year-to-Date ROI Delta' ECO to re-engage"
+        ];
+      case 'NARRATIVE':
+        return [
+          "Strategist: Re-anchor topic map to audit risk & economic consequences",
+          "Strategist: Remove all 'trend-driven' topics",
+          "Strategist: Insert benchmark-poll data into next 10 pieces of content"
+        ];
+      case 'ASSET_QUALITY':
+        return [
+          "Content: Rebuild top 5 ECO outputs using ECO template",
+          "Content: Fix visual hierarchy, charts, executive takeaway formatting",
+          "Content: Produce 3 new 'Executive Clarity Snapshots' for CMO"
+        ];
+      default:
+        return ["Run general correction protocol"];
+    }
+  }
+
+  private getVerificationActions(): string[] {
+    return [
+      "CoS: Recalculate Net Growth trajectory using updated funnel metrics",
+      "CoS: Verify pacing ≥95% of forecast",
+      "CoS: Confirm churn ≤5%",
+      "CoS: Run narrative alignment check across all agent outputs",
+      "CoS: Approve release from Emergency Mode if thresholds met"
+    ];
+  }
+
+  checkEAMExitCriteria(metrics: {
+    netGrowthPercent: number;
+    churnRate: number;
+    ecoUsageRate: number;
+    benchmarkIntegration: number;
+    optInRateDelta: number;
+  }): { canExit: boolean; failedCriteria: string[]; passedCriteria: string[] } {
+    const failedCriteria: string[] = [];
+    const passedCriteria: string[] = [];
+
+    // Net Growth ≥ 95% of forecast
+    if (metrics.netGrowthPercent >= 95) {
+      passedCriteria.push(`Net Growth: ${metrics.netGrowthPercent}% ≥ 95%`);
+    } else {
+      failedCriteria.push(`Net Growth: ${metrics.netGrowthPercent}% < 95%`);
+    }
+
+    // Churn ≤ 5%
+    if (metrics.churnRate <= 5) {
+      passedCriteria.push(`Churn: ${metrics.churnRate}% ≤ 5%`);
+    } else {
+      failedCriteria.push(`Churn: ${metrics.churnRate}% > 5%`);
+    }
+
+    // ECO usage rate ≥ 70%
+    if (metrics.ecoUsageRate >= 70) {
+      passedCriteria.push(`ECO Usage: ${metrics.ecoUsageRate}% ≥ 70%`);
+    } else {
+      failedCriteria.push(`ECO Usage: ${metrics.ecoUsageRate}% < 70%`);
+    }
+
+    // Benchmark data ≥ 50%
+    if (metrics.benchmarkIntegration >= 50) {
+      passedCriteria.push(`Benchmark Integration: ${metrics.benchmarkIntegration}% ≥ 50%`);
+    } else {
+      failedCriteria.push(`Benchmark Integration: ${metrics.benchmarkIntegration}% < 50%`);
+    }
+
+    // Opt-in rate +0.5%
+    if (metrics.optInRateDelta >= 0.5) {
+      passedCriteria.push(`Opt-in Rate Delta: +${metrics.optInRateDelta}% ≥ +0.5%`);
+    } else {
+      failedCriteria.push(`Opt-in Rate Delta: +${metrics.optInRateDelta}% < +0.5%`);
+    }
+
+    const canExit = failedCriteria.length === 0;
+
+    if (canExit) {
+      this.terminateEAM();
+    }
+
+    return { canExit, failedCriteria, passedCriteria };
+  }
+
+  terminateEAM(): void {
+    console.log('✅ EAM TERMINATION DIRECTIVE: System returns to Standard Operating Mode.');
+    console.log(`   Cycles Completed: ${this.eamState.cycleNumber}`);
+    console.log(`   Total Days: ${this.eamState.daysInCurrentCycle}`);
+
+    this.eamState.active = false;
+    this.eamState.currentPhase = null;
+    this.eap26State.active = false;
+  }
+
+  getEAMStatus(): typeof this.eamState {
+    return this.eamState;
+  }
+
+  isEAMActive(): boolean {
+    return this.eamState.active;
   }
 
   private loadState(): MandateState {

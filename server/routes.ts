@@ -1057,6 +1057,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency Alignment Mode Protocol (EAM-PROT-2026) routes
+  app.get('/api/cos/eam/status', async (req, res) => {
+    try {
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const status = cosOrchestratorMandate.getEAMStatus();
+      const freezeRules = cosOrchestratorMandate.getOperationalFreezeRules();
+      res.json({
+        ...status,
+        freezeRules,
+        protocol: 'EAM-PROT-2026',
+        description: 'Emergency Alignment Mode - 21-day correction protocol when Net Growth < 90% of forecast'
+      });
+    } catch (error) {
+      console.error('Error getting EAM status:', error);
+      res.status(500).json({ message: 'Failed to get EAM status' });
+    }
+  });
+
+  app.post('/api/cos/eam/activate', async (req, res) => {
+    try {
+      const { shortfallPercent, constraintType } = req.body;
+      const validConstraints = ['TRAFFIC', 'CONVERSION', 'RETENTION', 'NARRATIVE', 'ASSET_QUALITY'];
+      
+      if (!validConstraints.includes(constraintType)) {
+        return res.status(400).json({ 
+          message: 'Invalid constraint type. Must be one of: ' + validConstraints.join(', ')
+        });
+      }
+
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      cosOrchestratorMandate.activateEAM(shortfallPercent || 15, constraintType);
+      
+      res.json({
+        activated: true,
+        status: cosOrchestratorMandate.getEAMStatus(),
+        message: `EAM-PROT-2026 activated. Primary constraint: ${constraintType}. 21-day correction window started.`
+      });
+    } catch (error) {
+      console.error('Error activating EAM:', error);
+      res.status(500).json({ message: 'Failed to activate EAM' });
+    }
+  });
+
+  app.post('/api/cos/eam/advance-phase', async (req, res) => {
+    try {
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const result = cosOrchestratorMandate.advanceEAMPhase();
+      res.json({
+        ...result,
+        status: cosOrchestratorMandate.getEAMStatus()
+      });
+    } catch (error) {
+      console.error('Error advancing EAM phase:', error);
+      res.status(500).json({ message: 'Failed to advance EAM phase' });
+    }
+  });
+
+  app.post('/api/cos/eam/check-exit', async (req, res) => {
+    try {
+      const { 
+        netGrowthPercent = 0, 
+        churnRate = 0, 
+        ecoUsageRate = 0, 
+        benchmarkIntegration = 0, 
+        optInRateDelta = 0 
+      } = req.body;
+      
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const result = cosOrchestratorMandate.checkEAMExitCriteria({
+        netGrowthPercent,
+        churnRate,
+        ecoUsageRate,
+        benchmarkIntegration,
+        optInRateDelta
+      });
+      
+      res.json({
+        ...result,
+        status: result.canExit 
+          ? 'EAM Termination Directive issued: System returns to Standard Operating Mode'
+          : 'EAM still active - exit criteria not met',
+        eamActive: cosOrchestratorMandate.isEAMActive()
+      });
+    } catch (error) {
+      console.error('Error checking EAM exit criteria:', error);
+      res.status(500).json({ message: 'Failed to check EAM exit criteria' });
+    }
+  });
+
+  app.post('/api/cos/eam/terminate', async (req, res) => {
+    try {
+      const { chairmanOverride } = req.body;
+      
+      if (!chairmanOverride) {
+        return res.status(403).json({ 
+          message: 'Chairman override required. Only Chairman can terminate EAM early.'
+        });
+      }
+      
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      cosOrchestratorMandate.terminateEAM();
+      
+      res.json({
+        terminated: true,
+        message: 'EAM Termination Directive: System returns to Standard Operating Mode (Chairman Override)',
+        eamActive: cosOrchestratorMandate.isEAMActive()
+      });
+    } catch (error) {
+      console.error('Error terminating EAM:', error);
+      res.status(500).json({ message: 'Failed to terminate EAM' });
+    }
+  });
+
   // COO Automation Monitoring routes
   app.get('/api/coo/automation-status', async (req, res) => {
     try {

@@ -17,10 +17,11 @@
     "status": "Non-Negotiable",
     "rule": "All agent actions must directly increase Net Membership Growth. If an action cannot show a measurable causal link to the Monthly Forecast Targets, it is automatically vetoed by the CoS.",
     
-    "spear_tip_narrative_rule": {
-      "name": "Single-Line Spear-Tip Narrative Rule",
-      "requirement": "All content must reveal the hidden audit gap, quantify its economic impact, and position ComplianceWorxs as the only system that closes it.",
-      "enforcement": "Violate it → instant veto"
+    "single_line_spear_tip_rule": {
+      "name": "The Single-Line Spear-Tip Rule",
+      "type": "Pass/Fail Filter",
+      "rule": "All content must reveal the hidden audit gap, quantify its economic impact, and position ComplianceWorxs as the only system that closes it.",
+      "enforcement": "This is the foundational alignment rule. Violate it → instant veto."
     },
 
     "fluff_definition": {
@@ -123,7 +124,14 @@
         "Operate solely through LinkedIn + Dark Social (no paid media)",
         "Publish daily clarity-driven content",
         "Shift content weighting based on Strategist-provided data points"
-      ]
+      ],
+      "constraints": {
+        "linkedin_content_rule": {
+          "threshold": 0.70,
+          "rule": "≥70% of all LinkedIn posts must contain either a Board-Ready excerpt or benchmark data",
+          "purpose": "Protects Q3/Q4 velocity"
+        }
+      }
     },
     "cro": {
       "title": "CRO Agent",
@@ -187,93 +195,161 @@
     }
   },
 
-  "emergency_alignment_protocol": {
-    "id": "EAP-26",
-    "owner": "Chief of Staff",
-    "trigger_condition": {
-      "metric": "monthly_net_member_growth",
-      "threshold": 0.90,
-      "window_days": 7,
-      "description": "Monthly Net Member Growth < 90% of Forecast for 7 consecutive days"
-    },
-    "status_when_active": "OVERRIDE",
-    "effect": "Suspends standard daily operations",
-    
-    "diagnostic_triage": {
-      "description": "Root Cause Scan - CoS queries Dashboard to isolate failure point",
-      "scenarios": {
-        "A": {
-          "name": "Traffic Failure",
-          "condition": "Tool unique visitors < Weekly Target",
-          "interventions": {
-            "cmo_override": {
-              "action": "Shift content mix to 100% Risk/Fear Narrative",
-              "tasks": [
-                "Deploy 'The Cost of Doing Nothing' charts daily (vs. weekly)",
-                "Repost top-performing asset from previous quarter immediately"
-              ]
-            },
-            "strategist_override": {
-              "action": "Execute 'Controversial Industry Poll' in 13k Group to force algorithm visibility"
-            }
-          }
+  "emergency_alignment_mode_protocol": {
+    "id": "EAM-PROT-2026",
+    "trigger": "Activated automatically when Net Growth or Total Members falls below 90% of the Monthly Forecast Target",
+    "authority": "Chief of Staff (CoS)",
+    "scope": ["Strategist", "CMO", "CRO", "Content Agent"],
+    "objective": "Restore membership trajectory to forecast within 21 days",
+
+    "section_1_activation_logic": {
+      "name": "CoS Mandatory Checks",
+      "steps": {
+        "1_performance_delta_analysis": {
+          "actions": [
+            "Identify shortfall %",
+            "Determine whether the failure is Traffic, Conversion, or Retention"
+          ],
+          "output": "Primary Constraint = X"
         },
-        "B": {
-          "name": "Conversion Failure",
-          "condition": "Tool → Member Rate < Target % (e.g., <2.5% in Q1)",
-          "interventions": {
-            "cro_override": {
-              "action": "Activate 'Frictionless Mode'",
-              "tasks": [
-                "Remove 'Company Name' and 'Phone' fields from Free Tool opt-in",
-                "Change CTA from 'Join Membership' to 'Get Your Board-Ready Slide' (Value-first framing)"
-              ]
-            },
-            "content_override": {
-              "action": "Pause generic dashboards",
-              "tasks": [
-                "Create one specific 'Before/After' visual demonstrating immediate ROI"
-              ]
-            }
-          }
+        "2_agent_responsibility_assignment": {
+          "traffic_shortfall": "CMO",
+          "conversion_shortfall": "CRO",
+          "retention_shortfall": "CRO",
+          "narrative_inconsistency": "Strategist",
+          "asset_quality_failure": "Content Agent"
         },
-        "C": {
-          "name": "Churn Spike",
-          "condition": "Churn Rate > 5%",
-          "interventions": {
-            "cro_override": {
-              "action": "Activate 'Red Alert Retention'",
-              "tasks": [
-                "Pause all acquisition emails",
-                "Send plain-text personal email from Founder: 'I noticed you stopped using the Audit Score. Can I fix something for you?'",
-                "Offer 1:1 'Audit Strategy Audit' (15 min) to high-value churn risks"
-              ]
-            }
-          }
+        "3_lock_down": {
+          "rules": [
+            "All experiments paused",
+            "No new content types",
+            "No new tool variations",
+            "No new funnels"
+          ]
+        },
+        "4_correction_mode": {
+          "description": "The next 21 days are dedicated exclusively to restoring forecast alignment"
         }
       }
     },
 
-    "operational_freeze": {
-      "rules": [
+    "section_2_21_day_correction_window": {
+      "phase_1_diagnosis": {
+        "days": "1-3",
+        "cos_commands": {
+          "cro": "Run full funnel audit: Free Tool → Email Opt-in → SendGrid Sequence → Membership → Membership Activity → Churn Risk",
+          "cmo": "Deliver past 14-day content-performance analysis",
+          "strategist": "Review benchmark-poll alignment with Spear-Tip narrative",
+          "content": "Submit ECO quality audit"
+        },
+        "output_required": {
+          "name": "Root Cause Summary",
+          "format": "one-page",
+          "contents": [
+            "Primary Constraint",
+            "Secondary Constraints",
+            "Required Corrective Actions"
+          ]
+        }
+      },
+
+      "phase_2_correction": {
+        "days": "4-14",
+        "correction_orders": {
+          "if_traffic_constraint_cmo": {
+            "actions": [
+              "Increase dashboard-driven posts from 30% → 60%",
+              "Push 1 Benchmark Poll per week",
+              "Run 3 consecutive 'Audit Delta' posts",
+              "Highlight ECOs in every post for 10 days"
+            ]
+          },
+          "if_conversion_constraint_cro": {
+            "actions": [
+              "Rewrite SendGrid Email #3 and #5 using ECO format",
+              "Add 'Executive Summary' CTA",
+              "Reduce friction on tool landing pages",
+              "Deploy personal 'Audit Delta' email inserts"
+            ]
+          },
+          "if_retention_constraint_cro": {
+            "actions": [
+              "Activate Churn Defense Protocol for all risk accounts",
+              "Send 'Risk Re-Evaluation' sequence to dormant members",
+              "Add 1 'Your Year-to-Date ROI Delta' ECO to re-engage"
+            ]
+          },
+          "if_narrative_constraint_strategist": {
+            "actions": [
+              "Re-anchor topic map to audit risk & economic consequences",
+              "Remove all 'trend-driven' topics",
+              "Insert benchmark-poll data into next 10 pieces of content"
+            ]
+          },
+          "if_asset_quality_constraint_content": {
+            "actions": [
+              "Rebuild top 5 ECO outputs using the ECO-defined template",
+              "Fix visual hierarchy, charts, and executive takeaway formatting",
+              "Produce 3 new 'Executive Clarity Snapshots' for CMO use"
+            ]
+          }
+        }
+      },
+
+      "phase_3_verification": {
+        "days": "15-21",
+        "cos_requirements": [
+          "Recalculate Net Growth trajectory using the updated funnel metrics",
+          "Verify that pacing has returned to ≥95% of forecast",
+          "Confirm churn is ≤5%",
+          "Run narrative alignment check across all agent outputs",
+          "Approve release from Emergency Mode only if metrics meet thresholds"
+        ],
+        "if_thresholds_not_met": {
+          "action": "EAM repeats automatically for an additional 21-day cycle",
+          "rule": "The system does not exit until compliance is achieved"
+        }
+      }
+    },
+
+    "section_3_operating_rules": {
+      "name": "Rules During Emergency Mode",
+      "overrides": [
         {
-          "name": "No New Experiments",
-          "description": "All A/B testing stops. Winning variants are hard-coded."
+          "name": "Zero Experiments",
+          "rule": "Only correction actions may be executed"
         },
         {
-          "name": "No Brand Building",
-          "description": "'Thought leadership' posts are suspended. Only 'Direct Response' assets permitted."
+          "name": "Zero New Tools",
+          "rule": "No new free tools, features, or outputs may be introduced"
         },
         {
-          "name": "Veto Power",
-          "description": "CoS automatically rejects any agent output that does not directly address the identified Diagnostic Scenario."
+          "name": "Strict Spear-Tip Enforcement",
+          "rule": "Any misaligned asset is immediately vetoed"
+        },
+        {
+          "name": "24-Hour Reporting Cadence",
+          "rule": "CRO, CMO, and Strategist must deliver daily status reports to the CoS"
+        },
+        {
+          "name": "Human Override Protection",
+          "rule": "No agent can alter EAM logic; only the Chairman can override or terminate EAM early"
         }
       ]
     },
 
-    "exit_criteria": {
-      "condition": "7-day rolling average returns to >95% of forecast",
-      "then": "Protocol lifts, normal operations resume"
+    "section_4_exit_conditions": {
+      "name": "CoS Final Verification",
+      "requirements": [
+        { "metric": "Net Growth", "threshold": "≥95% of forecast" },
+        { "metric": "Churn", "threshold": "≤5%" },
+        { "metric": "ECO usage rate", "threshold": "≥70% of content/posts" },
+        { "metric": "Benchmark data integration", "threshold": "≥50% of content topics" },
+        { "metric": "Free tool opt-in rate", "threshold": "+0.5% from pre-EAM levels" }
+      ],
+      "on_validation": {
+        "action": "CoS issues: 'EAM Termination Directive: System returns to Standard Operating Mode.'"
+      }
     }
   },
 
@@ -284,5 +360,5 @@
   },
 
   "effective_date": "2025-12-05T00:00:00.000Z",
-  "version": "2026-EXECUTION-ALPHA-FINAL"
+  "version": "2026-EXECUTION-ALPHA-FINAL-v2"
 }
