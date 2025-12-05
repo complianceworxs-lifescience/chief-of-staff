@@ -58,6 +58,21 @@ ComplianceWorxs is an AI-powered compliance intelligence platform for life-scien
 - Compliance Managers and VPs
 - Consultants serving life-science companies
 
+## Why ComplianceWorxs Exists (Strategic Reason)
+1. **SMBs carry enterprise-level regulatory burden with a fraction of the resources** - They are underserved and overlooked by larger compliance vendors.
+2. **Compliance is treated as a cost center** - Professionals struggle to show value, impact, or ROI.
+3. **Audit failure is existential** - A single deviation or failed inspection creates financial risk, reputation damage, and operational disruption.
+4. **No accessible, trusted source of automated clarity** - They lack dashboards, ROI visibility, and real-time insight.
+
+**Purpose Statement:** ComplianceWorxs exists to give SMB life-science companies enterprise-grade compliance intelligence, audit readiness, and ROI visibility without enterprise-level cost or complexity.
+
+## Strategic Identity (Encoded Rules)
+1. **ComplianceWorxs sells clarity and ROI, not generic content.**
+2. **ComplianceWorxs turns compliance into a revenue-aligned, executive-respectable function.**
+3. **ComplianceWorxs is built for professionals who must be audit-ready but are overwhelmed and under-resourced.**
+4. **ComplianceWorxs is an AI-powered system, not a consulting firm.**
+5. **ComplianceWorxs exists to create a compounding, system-run business asset — not a founder-run service.**
+
 ## System Architecture
 The application employs a full-stack architecture featuring a React-based SPA frontend (TypeScript, Tailwind CSS, shadcn/ui) and an Express.js REST API backend (TypeScript, ESM modules). PostgreSQL with Drizzle ORM handles database operations.
 
