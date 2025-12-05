@@ -46,6 +46,13 @@ The design prioritizes a clear, comprehensive dashboard and interactive command 
   - **Strategist Directive**: Spear-tip calibration, competitive intelligence loop, positioning enforcement, strategy override protocol (24h correction), weekly strategic summary.
   - **Content Agent Directive**: Asset eligibility rule, content-to-sales loop, high-precision style enforcement, asset replacement protocol (24h), daily output summary.
   - API endpoints at `/api/directives/*` with state files persisted to `state/` directory.
+- **DIRECTIVE ENHANCEMENTS v1.0**: 5 high-impact improvements for Agent Installation Directives:
+  - **Real-Time Conversion Tracking**: Connects CRO to actual Stripe checkout events, payment data, MRR/ARR calculations.
+  - **Inter-Directive Signal Routing**: Feedback loops between CMO→Content, CRO→CMO, Strategist→ALL, Content→CRO.
+  - **Retention Engine with Real Data**: Database-driven churn scoring using actual user activity and subscription status.
+  - **AI-Powered Asset Generation**: OpenAI GPT-4o generates content assets when gaps detected, enforces spear-tip scoring.
+  - **Automated Intelligence Scraping**: Gathers FDA regulatory updates, industry news, competitor activity with relevance scoring.
+  - API endpoints at `/api/enhancements/*` with enhancement state files in `state/enhancement_*.json`.
 
 **System Design Choices:**
 The system is designed with a clear separation of concerns, a service layer for core business logic, and scalability in mind.

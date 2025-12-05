@@ -50,8 +50,10 @@ import blogPublishPipelineRouter from "./routes/blog-publish-pipeline";
 import editorialFirewallRouter from "./routes/editorial-firewall";
 import guaranteedSuccessRouter from "./routes/guaranteed-success-routes";
 import agentDirectiveRouter from "./routes/agent-directive-routes";
+import directiveEnhancementRouter from "./routes/directive-enhancement-routes";
 import { initializeGSEScheduler } from "./services/guaranteed-success-engine";
 import { runAllDirectiveCycles } from "./services/agent-installation-directives";
+import { runEnhancedDirectiveCycle } from "./services/directive-enhancements";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
 import { unifiedOrchestrator } from "./services/unified-orchestrator";
 import { criticalInfrastructureConfig } from "./services/critical-infrastructure-config";
@@ -231,6 +233,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/directives", agentDirectiveRouter);
   console.log('📋 AGENT INSTALLATION DIRECTIVES (4 CoS Sub-Directives) routes mounted at /api/directives');
   
+  // Mount Directive Enhancements (5 High-Impact Improvements)
+  app.use("/api/enhancements", directiveEnhancementRouter);
+  console.log('🚀 DIRECTIVE ENHANCEMENTS v1.0 (5 High-Impact Improvements) routes mounted at /api/enhancements');
+  
   // Run initial directive cycles on startup
   setTimeout(() => {
     console.log('[DIRECTIVES] Running initial agent directive cycles...');
@@ -241,6 +247,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('[DIRECTIVES] Error running initial cycles:', error);
     }
   }, 5000);
+  
+  // Run enhanced directive cycle after initial directives (adds real data integration)
+  setTimeout(() => {
+    console.log('[ENHANCEMENTS] Running initial enhanced directive cycle...');
+    runEnhancedDirectiveCycle().then(() => {
+      console.log('[ENHANCEMENTS] Initial enhanced cycle complete');
+    }).catch(error => {
+      console.error('[ENHANCEMENTS] Error running enhanced cycle:', error);
+    });
+  }, 8000);
   
   // Start the Unified Orchestrator
   unifiedOrchestrator.start();
