@@ -138,13 +138,55 @@ class L7EvolutionProtocol {
   private readonly STATE_FILE = path.join(process.cwd(), 'state/L7_EVOLUTION_STATE.json');
   private state: L7State;
 
-  // Hard limits for Self-Capitalization
+  // ComplianceWorxs Operating Expense Stages (Organic Growth Model)
+  // No paid media - 100% organic revenue via LinkedIn, SEO, Email (SendGrid)
+  private readonly FINANCIAL_STAGES = {
+    early_scale: {
+      name: 'Early Scale',
+      arr_threshold: 120000,
+      max_expense_ratio: 0.55,
+      max_annual_expenses: 66000,
+      min_operating_margin: 0.45,
+      supports: 'Stable infra, core agent cycles, dashboard delivery'
+    },
+    mid_scale: {
+      name: 'Mid-Scale',
+      arr_threshold: 360000,
+      max_expense_ratio: 0.50,
+      target_expense_ratio: 0.45,
+      max_annual_expenses: 162000,
+      min_operating_margin: 0.50,
+      target_operating_margin: 0.55,
+      supports: 'Expanded Intelligence Feed, agent orchestration, lower marginal costs'
+    },
+    mature: {
+      name: 'Mature System',
+      arr_threshold: 1000000,
+      max_expense_ratio: 0.45,
+      target_expense_ratio: 0.38,
+      max_annual_expenses: 450000,
+      target_annual_expenses: 380000,
+      min_operating_margin: 0.55,
+      target_operating_margin: 0.62,
+      supports: 'Full L6-L7 autonomy, predictive alerts, enterprise-grade reporting'
+    }
+  };
+
+  // Baseline assumptions
+  private readonly FINANCIAL_ASSUMPTIONS = {
+    avg_membership_revenue: 199, // blended annual
+    ai_infra_scales_slowly: true,
+    no_paid_media: true,
+    agent_automation_replaces_headcount: true,
+    goal: 'L6-L7 autonomy'
+  };
+
+  // Hard limits for Self-Capitalization (No Ad Spend - Organic Only)
   private readonly CAPITAL_LIMITS = {
-    daily_total: 2500,
-    ad_spend_max: 1000,
+    daily_total: 750,
     token_budget: 500,
-    infra_budget: 300,
-    services_budget: 200
+    infra_budget: 150,
+    services_budget: 100
   };
 
   // L5 Safety Locks (immutable)
@@ -496,17 +538,10 @@ class L7EvolutionProtocol {
   // ============================================================================
 
   public getAllocations(): CapitalAllocation[] {
+    // Organic Growth Model - No Ad Spend, allocate to AI/infra/services only
     return [
       {
-        category: 'Ad Spend',
-        allocated: this.CAPITAL_LIMITS.ad_spend_max,
-        spent: Math.floor(Math.random() * 500),
-        remaining: 0,
-        hard_limit: this.CAPITAL_LIMITS.ad_spend_max,
-        roas: 2.3
-      },
-      {
-        category: 'Token Budget',
+        category: 'Token Budget (AI Agents)',
         allocated: this.CAPITAL_LIMITS.token_budget,
         spent: Math.floor(Math.random() * 200),
         remaining: 0,
@@ -514,7 +549,7 @@ class L7EvolutionProtocol {
         roas: null
       },
       {
-        category: 'Infrastructure',
+        category: 'Infrastructure (Replit, GCP)',
         allocated: this.CAPITAL_LIMITS.infra_budget,
         spent: Math.floor(Math.random() * 100),
         remaining: 0,
@@ -522,7 +557,7 @@ class L7EvolutionProtocol {
         roas: null
       },
       {
-        category: 'Services',
+        category: 'Services (SendGrid, APIs)',
         allocated: this.CAPITAL_LIMITS.services_budget,
         spent: Math.floor(Math.random() * 80),
         remaining: 0,
@@ -532,35 +567,77 @@ class L7EvolutionProtocol {
     ].map(a => ({ ...a, remaining: a.allocated - a.spent }));
   }
 
-  public modulateAdSpend(
-    profitMargin: number,
-    currentROAS: number
-  ): { decision: string; newBudget: number; reasoning: string } {
-    let newBudget = this.CAPITAL_LIMITS.ad_spend_max;
-    let decision: string;
-    let reasoning: string;
-
-    if (profitMargin < 0) {
-      newBudget = Math.floor(this.CAPITAL_LIMITS.ad_spend_max * 0.5);
-      decision = 'REDUCE';
-      reasoning = 'Negative profit margin - cutting ad spend by 50%';
-    } else if (currentROAS < 1.0) {
-      newBudget = Math.floor(this.CAPITAL_LIMITS.ad_spend_max * 0.7);
-      decision = 'REDUCE';
-      reasoning = 'ROAS below 1.0 - reducing spend by 30%';
-    } else if (currentROAS >= 2.0 && profitMargin > 20) {
-      newBudget = this.CAPITAL_LIMITS.ad_spend_max;
-      decision = 'MAINTAIN_MAX';
-      reasoning = 'Strong ROAS and profit - maintaining maximum spend';
+  public getFinancialStage(currentARR: number): {
+    stage: string;
+    max_expense_ratio: number;
+    max_annual_expenses: number;
+    min_operating_margin: number;
+    supports: string;
+  } {
+    if (currentARR >= this.FINANCIAL_STAGES.mature.arr_threshold) {
+      return {
+        stage: this.FINANCIAL_STAGES.mature.name,
+        max_expense_ratio: this.FINANCIAL_STAGES.mature.max_expense_ratio,
+        max_annual_expenses: this.FINANCIAL_STAGES.mature.max_annual_expenses,
+        min_operating_margin: this.FINANCIAL_STAGES.mature.min_operating_margin,
+        supports: this.FINANCIAL_STAGES.mature.supports
+      };
+    } else if (currentARR >= this.FINANCIAL_STAGES.mid_scale.arr_threshold) {
+      return {
+        stage: this.FINANCIAL_STAGES.mid_scale.name,
+        max_expense_ratio: this.FINANCIAL_STAGES.mid_scale.max_expense_ratio,
+        max_annual_expenses: this.FINANCIAL_STAGES.mid_scale.max_annual_expenses,
+        min_operating_margin: this.FINANCIAL_STAGES.mid_scale.min_operating_margin,
+        supports: this.FINANCIAL_STAGES.mid_scale.supports
+      };
     } else {
-      decision = 'MAINTAIN';
-      reasoning = 'Metrics within acceptable range - no change needed';
+      return {
+        stage: this.FINANCIAL_STAGES.early_scale.name,
+        max_expense_ratio: this.FINANCIAL_STAGES.early_scale.max_expense_ratio,
+        max_annual_expenses: this.FINANCIAL_STAGES.early_scale.max_annual_expenses,
+        min_operating_margin: this.FINANCIAL_STAGES.early_scale.min_operating_margin,
+        supports: this.FINANCIAL_STAGES.early_scale.supports
+      };
+    }
+  }
+
+  public evaluateOperatingExpenses(
+    currentARR: number,
+    currentExpenses: number
+  ): { 
+    compliant: boolean; 
+    stage: string;
+    current_ratio: number;
+    max_ratio: number;
+    margin: number;
+    recommendation: string;
+  } {
+    const stage = this.getFinancialStage(currentARR);
+    const currentRatio = currentARR > 0 ? currentExpenses / currentARR : 0;
+    const margin = 1 - currentRatio;
+    const compliant = currentRatio <= stage.max_expense_ratio;
+
+    let recommendation: string;
+    if (compliant && currentRatio <= stage.max_expense_ratio - 0.1) {
+      recommendation = 'Excellent efficiency - operating well within target range';
+    } else if (compliant) {
+      recommendation = 'Within limits but approaching ceiling - monitor closely';
+    } else {
+      const overage = ((currentRatio - stage.max_expense_ratio) * 100).toFixed(1);
+      recommendation = `Expense ratio ${overage}% over limit - reduce costs or increase revenue`;
     }
 
-    this.state.engines.scl.last_action = `Ad spend modulation: ${decision} to $${newBudget}`;
+    this.state.engines.scl.last_action = `Expense evaluation: ${stage.stage} - ${compliant ? 'COMPLIANT' : 'OVER_LIMIT'}`;
     this.saveState();
 
-    return { decision, newBudget, reasoning };
+    return {
+      compliant,
+      stage: stage.stage,
+      current_ratio: Math.round(currentRatio * 100) / 100,
+      max_ratio: stage.max_expense_ratio,
+      margin: Math.round(margin * 100) / 100,
+      recommendation
+    };
   }
 
   public optimizeCosts(): {
