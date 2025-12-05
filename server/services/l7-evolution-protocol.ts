@@ -219,17 +219,17 @@ class L7EvolutionProtocol {
         financial_autonomy: {
           id: 'L7_PC3',
           name: 'Financial Autonomy',
-          description: 'Consistent profitable reinvestment via tiered budget and Stripe-driven loop.',
+          description: 'Consistent profitable operation via organic revenue (memberships, subscriptions, services).',
           status: 'NOT_MET',
           metrics: {
             monthly_profit: 0,
-            paid_media_roas: 0,
-            budget_utilization_rate: 0,
+            monthly_recurring_revenue: 0,
+            operating_expense_ratio: 0,
             profitable_months: 0
           },
           thresholds: {
             min_profitable_months: 3,
-            min_roas: 1.2
+            max_operating_expense_ratio: 0.8
           },
           progress_percent: 0,
           last_evaluated: now
