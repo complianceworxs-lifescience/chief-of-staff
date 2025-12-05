@@ -112,9 +112,9 @@ class AbandonedCheckoutRecoveryService {
   private startRecoveryLoop() {
     this.recoveryInterval = setInterval(() => {
       this.processAbandonedCheckouts();
-    }, 30 * 60 * 1000);
+    }, 2 * 60 * 60 * 1000);
     
-    console.log('🔄 Recovery loop started - checking every 30 minutes');
+    console.log('🔄 Recovery loop started - checking every 2 hours');
   }
 
   async trackCheckoutSession(session: CheckoutSession) {
