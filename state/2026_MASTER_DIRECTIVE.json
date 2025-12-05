@@ -141,5 +141,95 @@
       "Fluff content without substance",
       "Off-brand messaging"
     ]
+  },
+
+  "emergency_alignment_protocol": {
+    "id": "EAP-26",
+    "owner": "Chief of Staff",
+    "trigger_condition": {
+      "metric": "monthly_net_member_growth",
+      "threshold": 0.90,
+      "window_days": 7,
+      "description": "Monthly Net Member Growth < 90% of Forecast for 7 consecutive days"
+    },
+    "status_when_active": "OVERRIDE",
+    "effect": "Suspends standard daily operations",
+    
+    "diagnostic_triage": {
+      "description": "Root Cause Scan - CoS queries Dashboard to isolate failure point",
+      "scenarios": {
+        "A": {
+          "name": "Traffic Failure",
+          "condition": "Tool unique visitors < Weekly Target",
+          "interventions": {
+            "cmo_override": {
+              "action": "Shift content mix to 100% Risk/Fear Narrative",
+              "tasks": [
+                "Deploy 'The Cost of Doing Nothing' charts daily (vs. weekly)",
+                "Repost top-performing asset from previous quarter immediately"
+              ]
+            },
+            "strategist_override": {
+              "action": "Execute 'Controversial Industry Poll' in 13k Group to force algorithm visibility"
+            }
+          }
+        },
+        "B": {
+          "name": "Conversion Failure",
+          "condition": "Tool → Member Rate < Target % (e.g., <2.5% in Q1)",
+          "interventions": {
+            "cro_override": {
+              "action": "Activate 'Frictionless Mode'",
+              "tasks": [
+                "Remove 'Company Name' and 'Phone' fields from Free Tool opt-in",
+                "Change CTA from 'Join Membership' to 'Get Your Board-Ready Slide' (Value-first framing)"
+              ]
+            },
+            "content_override": {
+              "action": "Pause generic dashboards",
+              "tasks": [
+                "Create one specific 'Before/After' visual demonstrating immediate ROI"
+              ]
+            }
+          }
+        },
+        "C": {
+          "name": "Churn Spike",
+          "condition": "Churn Rate > 5%",
+          "interventions": {
+            "cro_override": {
+              "action": "Activate 'Red Alert Retention'",
+              "tasks": [
+                "Pause all acquisition emails",
+                "Send plain-text personal email from Founder: 'I noticed you stopped using the Audit Score. Can I fix something for you?'",
+                "Offer 1:1 'Audit Strategy Audit' (15 min) to high-value churn risks"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "operational_freeze": {
+      "rules": [
+        {
+          "name": "No New Experiments",
+          "description": "All A/B testing stops. Winning variants are hard-coded."
+        },
+        {
+          "name": "No Brand Building",
+          "description": "'Thought leadership' posts are suspended. Only 'Direct Response' assets are permitted."
+        },
+        {
+          "name": "Veto Power",
+          "description": "CoS automatically rejects any agent output that does not directly address the identified Diagnostic Scenario."
+        }
+      ]
+    },
+
+    "exit_criteria": {
+      "condition": "7-day rolling average returns to >95% of forecast",
+      "then": "Protocol lifts, normal operations resume"
+    }
   }
 }

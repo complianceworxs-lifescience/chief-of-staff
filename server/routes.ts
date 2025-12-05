@@ -983,6 +983,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Emergency Alignment Protocol (EAP-26) routes
+  app.get('/api/cos/eap26/status', async (req, res) => {
+    try {
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const status = cosOrchestratorMandate.getEAP26Status();
+      const freezeRules = cosOrchestratorMandate.getOperationalFreezeRules();
+      res.json({
+        ...status,
+        freezeRules,
+        protocol: 'EAP-26',
+        description: 'Emergency Alignment Protocol - Triggers when Monthly Net Member Growth < 90% of Forecast for 7 consecutive days'
+      });
+    } catch (error) {
+      console.error('Error getting EAP-26 status:', error);
+      res.status(500).json({ message: 'Failed to get EAP-26 status' });
+    }
+  });
+
+  app.post('/api/cos/eap26/check-trigger', async (req, res) => {
+    try {
+      const { currentGrowth, forecastGrowth } = req.body;
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const result = cosOrchestratorMandate.checkEAP26Trigger(currentGrowth || 0, forecastGrowth || 100);
+      res.json(result);
+    } catch (error) {
+      console.error('Error checking EAP-26 trigger:', error);
+      res.status(500).json({ message: 'Failed to check EAP-26 trigger' });
+    }
+  });
+
+  app.post('/api/cos/eap26/diagnostic', async (req, res) => {
+    try {
+      const { 
+        toolVisitors = 0, 
+        weeklyVisitorTarget = 100, 
+        toolToMemberRate = 0, 
+        targetConversionRate = 2.5, 
+        churnRate = 0 
+      } = req.body;
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const diagnosis = cosOrchestratorMandate.runDiagnosticTriage({
+        toolVisitors,
+        weeklyVisitorTarget,
+        toolToMemberRate,
+        targetConversionRate,
+        churnRate
+      });
+      res.json({
+        diagnosis,
+        eapActive: cosOrchestratorMandate.isEAP26Active(),
+        freezeRules: cosOrchestratorMandate.getOperationalFreezeRules()
+      });
+    } catch (error) {
+      console.error('Error running EAP-26 diagnostic:', error);
+      res.status(500).json({ message: 'Failed to run EAP-26 diagnostic' });
+    }
+  });
+
+  app.post('/api/cos/eap26/check-exit', async (req, res) => {
+    try {
+      const { currentGrowth, forecastGrowth } = req.body;
+      const { cosOrchestratorMandate } = await import('./services/cos-orchestrator-mandate.js');
+      const exitMet = cosOrchestratorMandate.checkEAP26ExitCriteria(currentGrowth || 0, forecastGrowth || 100);
+      res.json({
+        exitCriteriaMet: exitMet,
+        status: exitMet ? 'Protocol lifted, normal operations resumed' : 'EAP-26 still active',
+        eapActive: cosOrchestratorMandate.isEAP26Active()
+      });
+    } catch (error) {
+      console.error('Error checking EAP-26 exit criteria:', error);
+      res.status(500).json({ message: 'Failed to check EAP-26 exit criteria' });
+    }
+  });
+
   // COO Automation Monitoring routes
   app.get('/api/coo/automation-status', async (req, res) => {
     try {

@@ -403,6 +403,146 @@ class CoSOrchestatorMandateService {
     return { shouldVeto: false };
   }
 
+  // ============================================
+  // EMERGENCY ALIGNMENT PROTOCOL (EAP-26)
+  // Trigger: Monthly Net Member Growth < 90% of Forecast for 7 consecutive days
+  // ============================================
+  private eap26State: {
+    active: boolean;
+    activatedAt: string | null;
+    diagnosticScenario: 'A' | 'B' | 'C' | null;
+    daysUnderThreshold: number;
+    lastCheck: string;
+  } = {
+    active: false,
+    activatedAt: null,
+    diagnosticScenario: null,
+    daysUnderThreshold: 0,
+    lastCheck: new Date().toISOString()
+  };
+
+  checkEAP26Trigger(currentGrowth: number, forecastGrowth: number): {
+    triggered: boolean;
+    percentOfForecast: number;
+    daysUnderThreshold: number;
+  } {
+    const percentOfForecast = forecastGrowth > 0 ? (currentGrowth / forecastGrowth) * 100 : 100;
+    const threshold = 90;
+
+    if (percentOfForecast < threshold) {
+      this.eap26State.daysUnderThreshold++;
+    } else {
+      this.eap26State.daysUnderThreshold = 0;
+    }
+
+    const triggered = this.eap26State.daysUnderThreshold >= 7;
+
+    if (triggered && !this.eap26State.active) {
+      console.log('🚨 EAP-26 TRIGGERED: Monthly growth at ' + percentOfForecast.toFixed(1) + '% of forecast for 7 days');
+      this.eap26State.active = true;
+      this.eap26State.activatedAt = new Date().toISOString();
+    }
+
+    this.eap26State.lastCheck = new Date().toISOString();
+    return {
+      triggered,
+      percentOfForecast,
+      daysUnderThreshold: this.eap26State.daysUnderThreshold
+    };
+  }
+
+  runDiagnosticTriage(metrics: {
+    toolVisitors: number;
+    weeklyVisitorTarget: number;
+    toolToMemberRate: number;
+    targetConversionRate: number;
+    churnRate: number;
+  }): { scenario: 'A' | 'B' | 'C'; name: string; interventions: string[] } {
+    // Scenario A: Traffic Failure
+    if (metrics.toolVisitors < metrics.weeklyVisitorTarget) {
+      this.eap26State.diagnosticScenario = 'A';
+      return {
+        scenario: 'A',
+        name: 'Traffic Failure',
+        interventions: [
+          "CMO: Shift content mix to 100% Risk/Fear Narrative",
+          "CMO: Deploy 'The Cost of Doing Nothing' charts daily",
+          "CMO: Repost top-performing asset from previous quarter",
+          "Strategist: Execute 'Controversial Industry Poll' in 13k Group"
+        ]
+      };
+    }
+
+    // Scenario B: Conversion Failure
+    if (metrics.toolToMemberRate < metrics.targetConversionRate) {
+      this.eap26State.diagnosticScenario = 'B';
+      return {
+        scenario: 'B',
+        name: 'Conversion Failure',
+        interventions: [
+          "CRO: Activate 'Frictionless Mode'",
+          "CRO: Remove 'Company Name' and 'Phone' from opt-in",
+          "CRO: Change CTA to 'Get Your Board-Ready Slide'",
+          "Content: Create specific 'Before/After' ROI visual"
+        ]
+      };
+    }
+
+    // Scenario C: Churn Spike
+    if (metrics.churnRate > 0.05) {
+      this.eap26State.diagnosticScenario = 'C';
+      return {
+        scenario: 'C',
+        name: 'Churn Spike',
+        interventions: [
+          "CRO: Activate 'Red Alert Retention'",
+          "CRO: Pause all acquisition emails",
+          "CRO: Send plain-text personal email from Founder",
+          "CRO: Offer 1:1 'Audit Strategy Audit' to high-value churn risks"
+        ]
+      };
+    }
+
+    // Default to traffic if no clear scenario
+    this.eap26State.diagnosticScenario = 'A';
+    return {
+      scenario: 'A',
+      name: 'Traffic Failure (Default)',
+      interventions: ["CMO: Shift content mix to 100% Risk/Fear Narrative"]
+    };
+  }
+
+  isEAP26Active(): boolean {
+    return this.eap26State.active;
+  }
+
+  getEAP26Status(): typeof this.eap26State {
+    return this.eap26State;
+  }
+
+  checkEAP26ExitCriteria(currentGrowth: number, forecastGrowth: number): boolean {
+    const percentOfForecast = forecastGrowth > 0 ? (currentGrowth / forecastGrowth) * 100 : 100;
+    
+    if (percentOfForecast >= 95) {
+      console.log('✅ EAP-26 EXIT CRITERIA MET: Growth at ' + percentOfForecast.toFixed(1) + '% of forecast');
+      this.eap26State.active = false;
+      this.eap26State.diagnosticScenario = null;
+      this.eap26State.daysUnderThreshold = 0;
+      return true;
+    }
+    return false;
+  }
+
+  getOperationalFreezeRules(): string[] {
+    if (!this.eap26State.active) return [];
+    
+    return [
+      "No New Experiments: All A/B testing stops. Winning variants are hard-coded.",
+      "No Brand Building: 'Thought leadership' posts suspended. Only 'Direct Response' assets permitted.",
+      "Veto Power: CoS rejects any output that does not address the identified Diagnostic Scenario."
+    ];
+  }
+
   private loadState(): MandateState {
     try {
       if (fs.existsSync(this.stateFilePath)) {
