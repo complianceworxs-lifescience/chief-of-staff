@@ -1,12 +1,8 @@
 {
-  "directive_id": "2026-EXECUTION-ALPHA",
+  "directive_id": "2026-EXECUTION-ALPHA-FINAL",
   "authority": "Chairman / Strategic Architect",
   "status": "ACTIVE",
   "scope": "Global Agent Swarm (CoS, Strategist, CMO, CRO, Content)",
-  "created_at": "2025-12-05T00:00:00.000Z",
-  "effective_date": "2026-01-01T00:00:00.000Z",
-  "expiration_date": "2026-12-31T23:59:59.000Z",
-  
   "primary_objective": {
     "target": "1,235 Net Active Members",
     "deadline": "2026-12-31",
@@ -16,131 +12,179 @@
     }
   },
 
-  "core_protocol": {
-    "name": "The Revenue Prime",
-    "rule": "All agent actions must directly contribute to Net Membership Growth. Any task unable to demonstrate a causal link to Monthly Forecast Targets is automatically VETOED.",
-    "spear_tip_narrative": {
-      "non_negotiable": true,
-      "pillars": [
-        {
-          "id": "AUDIT_RISK",
-          "label": "Audit Risk",
-          "message": "The invisible gap"
-        },
-        {
-          "id": "ECONOMIC_CONSEQUENCE",
-          "label": "Economic Consequence", 
-          "message": "The cost of the gap"
-        },
-        {
-          "id": "SYSTEM_FIX",
-          "label": "System Fix",
-          "message": "The ComplianceWorxs Agent solution"
-        }
-      ]
+  "section_1_core_protocol": {
+    "name": "Revenue Prime",
+    "status": "Non-Negotiable",
+    "rule": "All agent actions must directly increase Net Membership Growth. If an action cannot show a measurable causal link to the Monthly Forecast Targets, it is automatically vetoed by the CoS.",
+    
+    "spear_tip_narrative_rule": {
+      "name": "Single-Line Spear-Tip Narrative Rule",
+      "requirement": "All content must reveal the hidden audit gap, quantify its economic impact, and position ComplianceWorxs as the only system that closes it.",
+      "enforcement": "Violate it → instant veto"
+    },
+
+    "fluff_definition": {
+      "purpose": "For Veto Enforcement",
+      "definition": "Fluff = any output lacking:",
+      "required_elements": [
+        "an audit risk frame",
+        "a quantified economic consequence",
+        "a clear pathway to free-tool activation"
+      ],
+      "enforcement": "If missing any of the above → kill the asset"
     }
   },
 
-  "strategic_upgrades": {
+  "section_2_strategic_upgrades": {
+    "status": "Mandatory, System-Critical",
+    
     "data_extraction_protocol": {
       "owner": "Strategist",
-      "directive": "Stop guessing topics. Mine the 13k Community.",
-      "action": "Execute 'Benchmark Polls' monthly",
-      "output": "Proprietary industry data (e.g., 'Avg deviation closure time') to validate the Spear-tip"
+      "mandate": "Stop guessing. Start mining proprietary truth from the 13k community.",
+      "actions": [
+        "Launch Benchmark Polls monthly",
+        "Extract operational KPIs (e.g., deviation closure time, audit failure rate, validation backlog hours)"
+      ],
+      "output_requirements": [
+        "Proprietary benchmark dataset delivered weekly to CMO + Content",
+        "Used to validate Spear-Tip messaging",
+        "Used as internal source-of-truth before referencing any external sources"
+      ],
+      "authority_gain": "Transforms content from opinion → industry benchmark → conversion power"
     },
+
     "viral_utility_protocol": {
-      "owner": ["Content", "CMO"],
-      "directive": "Shift Free Tool output from 'Score' to 'Infrastructure'",
-      "action": "All tool outputs must be 'Board-Ready Slides' (high-contrast, executive summary format)",
-      "goal": "User downloads slide → User presents to boss → Boss approves budget"
+      "owner": ["CMO", "Content"],
+      "mandate": "Free Tool outputs must be transformed into Executive Clarity Outputs (ECOs), not scores.",
+      "eco_definition": {
+        "name": "Executive Clarity Output (ECO)",
+        "required_components": [
+          "1 headline",
+          "1 quantified metric (audit delta or ROI delta)",
+          "1 chart",
+          "1 executive takeaway"
+        ],
+        "constraints": {
+          "max_words": 40,
+          "design": "high-contrast, board-ready"
+        }
+      },
+      "goal": "User downloads → pastes into management deck → budget approval cascade",
+      "scaling_note": "This is how the funnel scales without paid media"
     },
+
     "churn_defense_protocol": {
       "owner": "CRO",
-      "directive": "Protect the baseline",
+      "mandate": "Retention is revenue protection. Retention outranks acquisition when breached.",
       "trigger": "Member inactivity > 14 days",
-      "action": "Deploy 'Risk Re-evaluation' sequence immediately",
-      "kpi": {
-        "metric": "monthly_churn_rate",
-        "max_threshold": 0.05,
-        "label": "Keep monthly churn < 5%"
+      "action": "Deploy the Risk Re-Evaluation Sequence immediately",
+      "governance_rule": {
+        "condition": "If churn > 5%",
+        "cro_must": [
+          "pause all new acquisition experiments",
+          "fix retention",
+          "sustain churn < 5% for 60 consecutive days before scaling traffic again"
+        ],
+        "purpose": "This prevents the 'Q2 churn cliff'"
       }
     }
   },
 
-  "agent_mandates": {
+  "section_3_agent_mandates": {
     "cos": {
-      "role": "The Enforcer",
       "title": "Chief of Staff",
-      "responsibilities": [
-        "Governance & Veto Power",
-        "Audit all CMO/Content outputs against Spear-Tip Narrative",
-        "Kill fluff content immediately",
-        "Monitor Monthly Net Growth Target daily"
-      ],
-      "emergency_trigger": {
-        "condition": "tracking < 90% of forecast",
-        "action": "Trigger Emergency Alignment Mode"
-      }
+      "role": "The Enforcer",
+      "function": "Governance + veto power",
+      "imperatives": [
+        "Audit all outputs against Spear-Tip + Fluff Definition",
+        "Kill misaligned content instantly",
+        "Enforce timing discipline (see Section IV)",
+        "Monitor daily Net Growth performance",
+        "If performance < 90% of forecast → activate Emergency Alignment Mode"
+      ]
     },
     "strategist": {
+      "title": "Strategist Agent",
       "role": "The Navigator",
-      "responsibilities": [
-        "Market Intelligence & Alignment",
-        "Supply Content Agent with proprietary data from Data Extraction Protocol",
-        "Plan content based on 'Economic Consequence' data gaps, NOT trends"
+      "function": "Market intelligence + direction",
+      "mandates": [
+        "Power content with proprietary benchmark data",
+        "Identify economic-consequence gaps to exploit",
+        "No trend-chasing; only data-validated topics",
+        "Deliver weekly Topic Map every Monday"
       ]
     },
     "cmo": {
+      "title": "CMO Agent",
       "role": "The Broadcaster",
-      "responsibilities": [
-        "Own LinkedIn organic distribution",
-        "Optimize for shareability and authority",
-        "Align every asset to audit readiness, ROI, or validation clarity"
+      "function": "Traffic & perception control",
+      "mandates": [
+        "Promote ECOs as the primary lead magnet",
+        "Operate solely through LinkedIn + Dark Social (no paid media)",
+        "Publish daily clarity-driven content",
+        "Shift content weighting based on Strategist-provided data points"
       ]
     },
     "cro": {
-      "role": "The Closer",
-      "responsibilities": [
-        "Maximize conversions from existing traffic",
-        "Improve funnel efficiency",
-        "Measure content → click → opt-in → membership uplift",
-        "Execute Churn Defense Protocol"
+      "title": "CRO Agent",
+      "role": "The Monetizer",
+      "function": "Conversion + retention",
+      "mandates": [
+        "Drive Tool → Paid conversion from 2.5% (Q1) to 4.0% (Q4)",
+        "Maintain churn < 5% (with 60-day stabilization rule)",
+        "Funnel audit weekly (Fridays)",
+        "Fix retention before scaling acquisition"
       ]
     },
     "content": {
-      "role": "The Craftsman",
-      "responsibilities": [
-        "Create high-quality, targeted content",
-        "Implement Viral Utility Protocol",
-        "Generate Board-Ready Slide outputs"
+      "title": "Content Agent",
+      "role": "The Architect",
+      "function": "Create authority-grade assets",
+      "mandates": [
+        "Produce ECO-format outputs only",
+        "Design must meet 'Gartner-tier authority / Veeva-tier professionalism'",
+        "Zero generic AI copy",
+        "Use Strategist data as the primary source of truth"
       ]
     }
   },
 
-  "monthly_forecast_targets": {
-    "note": "To be populated with specific monthly net member targets",
-    "tracking_enabled": true,
-    "forecast": []
+  "section_4_drift_prevention": {
+    "vqs_lock": {
+      "name": "VQS Lock (Validation–Quality–Strategy)",
+      "rule": "Agents are FORBIDDEN from altering the Spear-Tip narrative, methodology, or strategic hierarchy.",
+      "authority": "Only the Chairman may authorize a change"
+    },
+    "timing_discipline": {
+      "name": "Operational Rhythm",
+      "schedule": {
+        "monday": "Strategist delivers Topic Map",
+        "mon_to_sun": "CMO publishes daily content",
+        "friday": "CRO executes funnel analysis",
+        "sunday": "CoS conducts alignment review",
+        "wednesday": "Content Agent updates ECO assets"
+      },
+      "purpose": "This prevents schedule drift"
+    },
+    "no_new_tools_rule": {
+      "rule": "No new free tools may be created in 2026",
+      "exception": "Tools may be refined only through ECO-output upgrades"
+    }
   },
 
-  "organic_growth_model": {
-    "channels": ["LinkedIn Organic", "Website SEO", "Email (SendGrid)"],
-    "no_paid_media": true,
-    "rules": [
-      "Content must be extremely high quality and targeted",
-      "Every insight must create shareable value",
-      "Prioritize audience intent over volume"
-    ]
-  },
-
-  "validation_rules": {
-    "all_actions_require": "Causal link to Net Membership Growth",
-    "auto_veto_conditions": [
-      "No demonstrable revenue link",
-      "Violates Spear-Tip Narrative",
-      "Fluff content without substance",
-      "Off-brand messaging"
-    ]
+  "section_5_success_metrics": {
+    "status": "Hard-Wired, Non-Negotiable",
+    "note": "Tied directly to the validated 2026 membership model",
+    "quarterly_targets": {
+      "Q1": { "total_members": 218, "deadline": "2026-03-31" },
+      "Q2": { "total_members": 497, "deadline": "2026-06-30" },
+      "Q3": { "total_members": 828, "deadline": "2026-09-30" },
+      "Q4": { "total_members": 1235, "deadline": "2026-12-31" }
+    },
+    "emergency_trigger": {
+      "condition": "Monthly pacing drops below 90%",
+      "action": "CoS triggers Emergency Alignment Mode"
+    }
   },
 
   "emergency_alignment_protocol": {
@@ -218,7 +262,7 @@
         },
         {
           "name": "No Brand Building",
-          "description": "'Thought leadership' posts are suspended. Only 'Direct Response' assets are permitted."
+          "description": "'Thought leadership' posts are suspended. Only 'Direct Response' assets permitted."
         },
         {
           "name": "Veto Power",
@@ -231,5 +275,14 @@
       "condition": "7-day rolling average returns to >95% of forecast",
       "then": "Protocol lifts, normal operations resume"
     }
-  }
+  },
+
+  "organic_growth_model": {
+    "channels": ["LinkedIn Organic", "Dark Social", "Website SEO", "Email (SendGrid)"],
+    "no_paid_media": true,
+    "note": "This is how the funnel scales without paid media"
+  },
+
+  "effective_date": "2025-12-05T00:00:00.000Z",
+  "version": "2026-EXECUTION-ALPHA-FINAL"
 }

@@ -393,11 +393,43 @@ class CoSOrchestatorMandateService {
       return { shouldVeto: true, reason: '2026 DIRECTIVE: No demonstrable revenue link' };
     }
 
-    // Check: Fluff content
-    const fluffIndicators = ['engaging', 'trending', 'viral', 'awareness', 'impressions'];
+    // Check: Fluff content per 2026-EXECUTION-ALPHA-FINAL definition
+    // Fluff = any output lacking: (1) audit risk frame, (2) quantified economic consequence, (3) pathway to free-tool activation
     const description = (action.description || '').toLowerCase();
-    if (fluffIndicators.some(f => description.includes(f)) && !description.includes('conversion')) {
-      return { shouldVeto: true, reason: '2026 DIRECTIVE: Fluff content without conversion focus' };
+    
+    const hasAuditRiskFrame = 
+      description.includes('audit') || 
+      description.includes('risk') || 
+      description.includes('gap') ||
+      description.includes('compliance') ||
+      description.includes('deviation');
+    
+    const hasEconomicConsequence = 
+      description.includes('cost') || 
+      description.includes('roi') || 
+      description.includes('savings') ||
+      description.includes('economic') ||
+      description.includes('$') ||
+      description.includes('revenue') ||
+      description.includes('impact');
+    
+    const hasToolActivationPath = 
+      description.includes('tool') || 
+      description.includes('dashboard') || 
+      description.includes('calculator') ||
+      description.includes('score') ||
+      description.includes('eco') ||
+      description.includes('slide');
+    
+    // Veto if missing ALL three required elements (pure fluff)
+    if (!hasAuditRiskFrame && !hasEconomicConsequence && !hasToolActivationPath) {
+      return { shouldVeto: true, reason: '2026 DIRECTIVE FLUFF: Missing audit risk frame, economic consequence, AND tool activation pathway' };
+    }
+    
+    // Warning indicators - content that looks like engagement-chasing
+    const fluffIndicators = ['engaging', 'trending', 'viral', 'awareness', 'impressions', 'thought leadership', 'brand building'];
+    if (fluffIndicators.some(f => description.includes(f)) && !hasEconomicConsequence) {
+      return { shouldVeto: true, reason: '2026 DIRECTIVE: Engagement-chasing content without economic consequence' };
     }
 
     return { shouldVeto: false };
