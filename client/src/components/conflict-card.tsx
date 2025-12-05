@@ -10,8 +10,12 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Conflict } from "@shared/schema";
 
+interface ExtendedConflict extends Conflict {
+  resolutionHistory?: Array<{ timestamp: string; action: string }>;
+}
+
 interface ConflictCardProps {
-  conflict: Conflict;
+  conflict: ExtendedConflict;
 }
 
 export function ConflictCard({ conflict }: ConflictCardProps) {

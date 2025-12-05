@@ -63,14 +63,14 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
   const { resolutions, startResolution, dismissResolution } = useResolutionTracker();
 
   // Query for predictions data using unified query keys
-  const { data: predictionsData } = useQuery({
+  const { data: predictionsData } = useQuery<ConflictPrediction[]>({
     queryKey: qk.conflicts,
     refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
     staleTime: 0, // Always consider data stale to force revalidation
   });
 
   // Use server data if available, fallback to mock data
-  const predictions: ConflictPrediction[] = predictionsData || [
+  const predictions: ConflictPrediction[] = predictionsData ?? [
     {
       id: "pred_cro_cmo_content_conflict",
       title: "CRO Agent vs CMO Agent vs Content Agent",
@@ -106,7 +106,23 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
   ];
 
   // Add recommendations query
-  const { data: recommendationsData } = useQuery({
+  interface Recommendation {
+    id: string;
+    title: string;
+    description: string;
+    impact: string;
+    status: string;
+    agent?: string;
+    agents?: string[];
+    effort?: string;
+    actions?: string[];
+    createdAt?: string;
+  }
+  interface RecommendationsResponse {
+    recommendations: Recommendation[];
+    stats: { pending: number; implemented: number; highImpact: number; successRate: number };
+  }
+  const { data: recommendationsData } = useQuery<RecommendationsResponse>({
     queryKey: ['/api/recommendations'],
     refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
@@ -449,7 +465,7 @@ export function PredictiveAnalytics({ conflicts, agents }: PredictiveAnalyticsPr
                   
                   <div className="flex justify-between items-center pt-2 border-t">
                     <div className="text-xs text-gray-500">
-                      Created {new Date(recommendation.createdAt).toLocaleDateString()} at {new Date(recommendation.createdAt).toLocaleTimeString()}
+                      Created {recommendation.createdAt ? new Date(recommendation.createdAt).toLocaleDateString() : 'N/A'} at {recommendation.createdAt ? new Date(recommendation.createdAt).toLocaleTimeString() : 'N/A'}
                     </div>
                     <div className="flex gap-2">
                       <Button 

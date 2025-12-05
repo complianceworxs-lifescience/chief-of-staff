@@ -6,20 +6,33 @@ import { Progress } from "@/components/ui/progress";
 import { AlertTriangle, CheckCircle, Clock, TrendingUp, Target, Users, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
+interface Objective {
+  id: string;
+  title: string;
+  progress: number;
+  status: string;
+}
+
+interface SystemMetricsData {
+  systemHealth: number;
+  cpuUsage?: number;
+  memoryUsage?: number;
+}
+
 export function LiveMetricsDashboard() {
-  const { data: objectives = [] } = useQuery({
+  const { data: objectives = [] } = useQuery<Objective[]>({
     queryKey: ["/api/objectives"]
   });
 
-  const { data: agents = [] } = useQuery({
+  const { data: agents = [] } = useQuery<Array<{ id: string; name: string; status: string }>>({
     queryKey: ["/api/agents"]
   });
 
-  const { data: activeConflicts = [] } = useQuery({
+  const { data: activeConflicts = [] } = useQuery<Array<{ id: string; status: string }>>({
     queryKey: ["/api/conflicts/active"]
   });
 
-  const { data: systemMetrics } = useQuery({
+  const { data: systemMetrics } = useQuery<SystemMetricsData>({
     queryKey: ["/api/system/metrics"]
   });
 

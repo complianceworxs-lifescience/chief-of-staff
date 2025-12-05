@@ -21,8 +21,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Agent } from "@shared/schema";
 
+interface ExtendedAgent extends Agent {
+  avatar?: string;
+  displayName?: string;
+}
+
 interface AgentStatusCardProps {
-  agent: Agent;
+  agent: ExtendedAgent;
 }
 
 interface RemediationState {

@@ -49,6 +49,9 @@ interface DirectiveConflict {
   resolvedBy?: string;
   resolvedAt?: string;
   status: string;
+  governanceRule?: string;
+  impactScore?: number;
+  revenueRisk?: number;
 }
 
 interface DirectiveActionsProps {

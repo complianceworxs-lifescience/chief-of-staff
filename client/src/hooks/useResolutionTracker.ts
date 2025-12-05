@@ -156,7 +156,7 @@ export function useResolutionTracker() {
           // Invalidate queries to refresh UI
           queryClient.invalidateQueries({ queryKey: qk.agents });
           queryClient.invalidateQueries({ queryKey: qk.conflictsActive });
-          queryClient.invalidateQueries({ queryKey: qk.conflictsPredictions });
+          queryClient.invalidateQueries({ queryKey: qk.conflicts });
           
           return;
         }

@@ -228,7 +228,7 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
             <Stat label="Activation" value={`${pct(revenue.activation_rate.value_pct)}%`} sub="7‑day onboarding completion" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {revenue.mrr_by_tier.map((t) => {
+            {revenue.mrr_by_tier.map((t: { tier: string; current: number; last_week: number }) => {
               const tierDelta = ((t.current - t.last_week) / t.last_week) * 100;
               return (
                 <div key={t.tier} className="p-4 border rounded-xl">
@@ -250,7 +250,7 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
         <CardContent className="p-6 space-y-4">
           <h2 className="text-xl font-semibold">Agent Performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {agents.map((a) => (
+            {agents.map((a: { name: string; owner: string; execution_score: number; tasks_assigned: number; tasks_done: number; mttr_minutes: number; auto_resolve_pct: number; blockers: string[]; business_impact: string }) => (
               <div key={a.name} className="p-4 border rounded-xl space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{a.name}</div>
@@ -296,7 +296,7 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
           <CardContent className="p-6 space-y-2">
             <h3 className="font-semibold">Emerging Opportunities</h3>
             <ul className="list-disc pl-5 text-sm space-y-1">
-              {opportunities.emerging.map((x, i) => <li key={i}>{x}</li>)}
+              {opportunities.emerging.map((x: string, i: number) => <li key={i}>{x}</li>)}
             </ul>
           </CardContent>
         </Card>
@@ -304,7 +304,7 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
           <CardContent className="p-6 space-y-2">
             <h3 className="font-semibold">Risks</h3>
             <ul className="list-disc pl-5 text-sm space-y-1">
-              {opportunities.risks.map((x, i) => <li key={i}>{x}</li>)}
+              {opportunities.risks.map((x: string, i: number) => <li key={i}>{x}</li>)}
             </ul>
           </CardContent>
         </Card>
@@ -312,7 +312,7 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
           <CardContent className="p-6 space-y-2">
             <h3 className="font-semibold">Cost Flags</h3>
             <ul className="list-disc pl-5 text-sm space-y-1">
-              {opportunities.cost_flags.map((x, i) => <li key={i}>{x}</li>)}
+              {opportunities.cost_flags.map((x: string, i: number) => <li key={i}>{x}</li>)}
             </ul>
           </CardContent>
         </Card>
@@ -326,19 +326,19 @@ function ExecutiveIntelligenceReport({ report = sampleExecutiveReport, onDownloa
             <div className="p-4 border rounded-xl">
               <h4 className="font-semibold mb-2">Top Fixes</h4>
               <ul className="list-disc pl-5 text-sm space-y-1">
-                {actions.top_fixes.map((x, i) => <li key={i}>{x}</li>)}
+                {actions.top_fixes.map((x: string, i: number) => <li key={i}>{x}</li>)}
               </ul>
             </div>
             <div className="p-4 border rounded-xl">
               <h4 className="font-semibold mb-2">Top Wins</h4>
               <ul className="list-disc pl-5 text-sm space-y-1">
-                {actions.top_wins.map((x, i) => <li key={i}>{x}</li>)}
+                {actions.top_wins.map((x: string, i: number) => <li key={i}>{x}</li>)}
               </ul>
             </div>
             <div className="p-4 border rounded-xl">
               <h4 className="font-semibold mb-2">Decisions Needed</h4>
               <ul className="space-y-2 text-sm">
-                {actions.decisions_needed.map((d, i) => (
+                {actions.decisions_needed.map((d: { question: string; owner: string; deadline: string; options: string[] }, i: number) => (
                   <li key={i} className="p-3 border rounded-lg">
                     <div className="font-medium">{d.question}</div>
                     <div className="text-xs text-muted-foreground">Owner: {d.owner} · Deadline: {d.deadline}</div>

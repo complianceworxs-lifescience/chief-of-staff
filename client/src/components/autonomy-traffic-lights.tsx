@@ -43,7 +43,7 @@ export function AutonomyTrafficLights() {
   });
 
   // Fallback to current autonomy KPIs if traffic lights endpoint not available
-  const { data: fallbackKPIs } = useQuery({
+  const { data: fallbackKPIs } = useQuery<{ auto_resolve_rate?: number; mttr_minutes?: number; escalated?: number }>({
     queryKey: ['/api/autonomy/kpis'],
     refetchInterval: 7200000, // 2 hour intervals - unified polling schedule
   });
