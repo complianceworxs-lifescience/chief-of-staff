@@ -53,9 +53,11 @@ import agentDirectiveRouter from "./routes/agent-directive-routes";
 import directiveEnhancementRouter from "./routes/directive-enhancement-routes";
 import revenueAccelerationRouter from "./routes/revenue-acceleration";
 import intelligenceToContentRouter from "./routes/intelligence-to-content-routes";
+import revenueGrowthRouter from "./routes/revenue-growth-routes";
 import { initializeGSEScheduler } from "./services/guaranteed-success-engine";
 import { abandonedCheckoutRecovery } from "./services/abandoned-checkout-recovery";
 import { intelligenceToContent } from "./services/intelligence-to-content";
+import { runAllRevenueEngines } from "./services/revenue-growth-engines";
 import { runAllDirectiveCycles } from "./services/agent-installation-directives";
 import { runEnhancedDirectiveCycle } from "./services/directive-enhancements";
 import { blogCadenceScheduler } from "./services/blog-cadence-scheduler";
@@ -249,9 +251,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/intelligence-content", intelligenceToContentRouter);
   console.log('🧠 INTELLIGENCE-TO-CONTENT AUTOMATION routes mounted at /api/intelligence-content');
   
+  // Mount REVENUE GROWTH ENGINES routes
+  app.use("/api/revenue-growth", revenueGrowthRouter);
+  console.log('📈 REVENUE GROWTH ENGINES (10 Systems) routes mounted at /api/revenue-growth');
+  
   // Initialize Revenue Acceleration Services
   abandonedCheckoutRecovery.initialize();
   intelligenceToContent.initialize();
+  
+  // Run initial Revenue Growth Engines cycle
+  setTimeout(() => {
+    console.log('[REVENUE GROWTH] Running initial revenue engines cycle...');
+    runAllRevenueEngines().then(() => {
+      console.log('[REVENUE GROWTH] Initial cycle complete');
+    }).catch(err => {
+      console.error('[REVENUE GROWTH] Error in initial cycle:', err);
+    });
+  }, 10000);
   
   // Run initial directive cycles on startup
   setTimeout(() => {
