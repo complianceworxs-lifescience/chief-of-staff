@@ -10,6 +10,54 @@ Autonomy requirement: Complete NO HITL - Chief of Staff must resolve all conflic
 Rollout timeline: 6-week progressive rollout following Chief of Staff Runbook (Tiers 1-2 LIVE, Tier 3 next).
 Industry Focus: Exclusively Life Sciences - pharmaceuticals, biotechnology, medical devices, CROs, CMOs, diagnostics, and life sciences software/IT only. Filter out all non-Life Sciences content.
 
+## What ComplianceWorxs Is
+ComplianceWorxs is an AI-powered compliance intelligence platform for life-science companies. It serves validation, quality, regulatory, and compliance professionals who need audit readiness, operational clarity, and measurable business impact.
+
+**What It Does:**
+- Automates compliance analysis, dashboards, and reporting
+- Translates regulatory and validation data into audit-ready insights
+- Gives users clear visibility into risk, gaps, ROI, and operational performance
+- Provides AI agents that synthesize information, produce reports, and guide decisions
+- Helps teams reclaim time, quantify compliance value, and strengthen professional credibility
+
+**What It Sells:**
+- Paid Memberships (Rising Leader, Validation Strategist, Compliance Architect)
+- Compliance Intelligence Dashboards (audit readiness, risk scoring, ROI modeling)
+- AI Executive Agents (Strategist, CRO, CMO, CCO, Chief of Staff)
+- ClarityOS Mobile + Web Access
+
+**Core Value Proposition:** ComplianceWorxs turns compliance from a cost center into a measurable driver of ROI, audit readiness, and professional equity — powered entirely by autonomous AI agents.
+
+## Target Market: SMB Life Sciences (20-500 employees)
+**Segments:** Biotech, Pharma, Medical Devices, Diagnostics, CDMOs/CROs, Digital Health
+
+**Operating Reality:**
+- Lean teams with limited compliance headcount
+- Same regulatory expectations as enterprise
+- High documentation overhead, accelerating audit pressure
+- Executive demand for proof of ROI, not just activity
+
+**Pain Profile:**
+- Manual, spreadsheet-driven validation
+- Fragmented quality and regulatory processes
+- Difficulty proving value to leadership
+- Constant fire-fighting during audits
+- No internal data layer for compliance insights
+
+**Why They Buy:**
+- Reduce workload with practical, affordable tools
+- Improve audit readiness without adding headcount
+- Quantify compliance impact in executive-friendly terms
+- Strengthen credibility with leadership
+
+**Target Roles:**
+- Validation Engineers, Specialists, Architects
+- QA Managers and Directors
+- Regulatory Affairs professionals
+- CSV/CSA leads
+- Compliance Managers and VPs
+- Consultants serving life-science companies
+
 ## System Architecture
 The application employs a full-stack architecture featuring a React-based SPA frontend (TypeScript, Tailwind CSS, shadcn/ui) and an Express.js REST API backend (TypeScript, ESM modules). PostgreSQL with Drizzle ORM handles database operations.
 

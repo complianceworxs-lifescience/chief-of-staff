@@ -495,35 +495,83 @@ export async function generateLinkedInPosts(): Promise<LinkedInPost[]> {
 }
 
 // ============================================================================
-// 6. COMPETITIVE DISPLACEMENT ENGINE
+// 6. PROSPECT TARGETING ENGINE (Repurposed from Competitive Displacement)
 // ============================================================================
 
-interface CompetitorTarget {
+interface ProspectTarget {
   id: string;
   companyName: string;
-  industry: string;
-  currentVendor: string;
+  segment: "biotech" | "pharma" | "medical_device" | "cdmo_cro" | "digital_health" | "diagnostics";
+  estimatedSize: "small" | "mid" | "emerging";
+  targetRoles: string[];
   painPoints: string[];
-  outreachStatus: "identified" | "researched" | "contacted" | "engaged";
+  outreachStatus: "identified" | "researched" | "contacted" | "engaged" | "opportunity";
   personalizedMessage?: string;
+  membershipFit: "rising_leader" | "validation_strategist" | "compliance_architect";
   createdAt: string;
 }
 
-const COMPETITORS = [
-  "MasterControl",
-  "Veeva",
-  "TrackWise",
-  "Sparta Systems",
-  "Qualio"
+const TARGET_SEGMENTS = {
+  biotech: { label: "Small-Mid Biotech", membershipFit: "validation_strategist" as const },
+  pharma: { label: "Emerging Pharma", membershipFit: "compliance_architect" as const },
+  medical_device: { label: "Medical Device Manufacturer", membershipFit: "validation_strategist" as const },
+  cdmo_cro: { label: "CDMO/CRO", membershipFit: "compliance_architect" as const },
+  digital_health: { label: "Digital Health", membershipFit: "rising_leader" as const },
+  diagnostics: { label: "Diagnostics Company", membershipFit: "validation_strategist" as const }
+};
+
+const TARGET_ROLES = [
+  "Validation Engineer",
+  "Validation Specialist",
+  "Validation Architect",
+  "QA Manager",
+  "QA Director",
+  "Regulatory Affairs Manager",
+  "CSV/CSA Lead",
+  "Compliance Manager",
+  "VP Quality",
+  "Compliance Consultant"
 ];
 
-export async function runCompetitiveDisplacement(): Promise<CompetitorTarget[]> {
-  console.log("🎯 [COMPETITIVE] Identifying competitor displacement targets...");
+// SMB Market Reality (20-500 employees)
+const SMB_OPERATING_REALITY = [
+  "Lean teams with limited compliance headcount",
+  "Same regulatory expectations as enterprise",
+  "High documentation overhead",
+  "Accelerating audit pressure",
+  "Executive demand for proof of ROI, not just activity"
+];
+
+const BUYER_PAIN_POINTS = [
+  "Manual, spreadsheet-driven validation processes",
+  "Fragmented quality and regulatory processes",
+  "Difficulty proving compliance value to leadership",
+  "Constant fire-fighting during audits",
+  "No internal data layer for compliance insights",
+  "High audit exposure with limited prep time",
+  "Pressure to quantify compliance impact for executives"
+];
+
+const WHY_THEY_BUY = [
+  "Reduce workload with practical, affordable tools",
+  "Improve audit readiness without adding headcount",
+  "Quantify compliance impact in executive-friendly terms",
+  "Strengthen credibility with leadership"
+];
+
+export async function runProspectTargeting(): Promise<ProspectTarget[]> {
+  console.log("🎯 [PROSPECT TARGETING] Identifying ideal customer prospects...");
   
-  const targets: CompetitorTarget[] = [];
+  let targets: ProspectTarget[] = [];
 
   try {
-    // Generate sample competitive targets based on intelligence
+    // Load existing targets
+    try {
+      const data = await fs.readFile(`${STATE_DIR}/prospect_targets.json`, "utf-8");
+      targets = JSON.parse(data).targets || [];
+    } catch {}
+
+    // Generate prospect targets from intelligence
     const intelligenceFile = `${STATE_DIR}/enhancement_intelligence.json`;
     let intelligence: any[] = [];
     
@@ -532,64 +580,89 @@ export async function runCompetitiveDisplacement(): Promise<CompetitorTarget[]> 
       intelligence = JSON.parse(data).items || [];
     } catch {}
 
-    // Create displacement targets from competitor mentions in intelligence
-    const competitorMentions = intelligence.filter((item: any) => 
-      COMPETITORS.some(comp => item.title?.toLowerCase().includes(comp.toLowerCase()))
+    // Create prospects from FDA/regulatory intelligence signals
+    const regulatorySignals = intelligence.filter((item: any) => 
+      item.type === "fda_update" || 
+      item.title?.toLowerCase().includes("audit") ||
+      item.title?.toLowerCase().includes("compliance") ||
+      item.title?.toLowerCase().includes("483")
     );
 
-    for (const mention of competitorMentions.slice(0, 5)) {
-      const competitor = COMPETITORS.find(c => 
-        mention.title?.toLowerCase().includes(c.toLowerCase())
-      ) || "Unknown";
+    const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+    // Generate segment-specific prospects
+    const segments = Object.keys(TARGET_SEGMENTS) as Array<keyof typeof TARGET_SEGMENTS>;
+    
+    for (const segment of segments) {
+      const existing = targets.find(t => t.segment === segment);
+      if (existing) continue;
+
+      const segmentInfo = TARGET_SEGMENTS[segment];
+      const randomPainPoints = BUYER_PAIN_POINTS
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+      const randomRoles = TARGET_ROLES
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+
+      let personalizedMessage = `Validation and compliance leaders at ${segmentInfo.label} companies are discovering that compliance doesn't have to be overhead—it's a measurable business asset. ComplianceWorxs delivers audit readiness, ROI visibility, and AI-powered insights designed for professionals like you.`;
+
+      if (openai) {
+        try {
+          const buyingReason = WHY_THEY_BUY[Math.floor(Math.random() * WHY_THEY_BUY.length)];
+          const operatingReality = SMB_OPERATING_REALITY[Math.floor(Math.random() * SMB_OPERATING_REALITY.length)];
+          
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [{
+              role: "user",
+              content: `Write a brief LinkedIn outreach message (3 sentences) for a ${segmentInfo.label} company (20-500 employees) targeting roles like ${randomRoles.join(", ")}. 
+
+Their reality: ${operatingReality}
+Pain points: ${randomPainPoints.join("; ")}
+Why they buy: ${buyingReason}
+
+Core message: ComplianceWorxs turns compliance from overhead into a measurable business asset with AI-powered audit readiness and ROI visibility.
+
+Membership tier that fits: ${segmentInfo.membershipFit}
+
+Keep it consultative, not salesy. Acknowledge they're a lean team facing enterprise-level regulatory expectations. Focus on practical value.`
+            }],
+            max_tokens: 150
+          });
+          personalizedMessage = response.choices[0]?.message?.content || personalizedMessage;
+        } catch {}
+      }
 
       targets.push({
-        id: `target_${nanoid(8)}`,
-        companyName: `Company using ${competitor}`,
-        industry: "Life Sciences",
-        currentVendor: competitor,
-        painPoints: [
-          "Complex implementation",
-          "High total cost of ownership",
-          "Limited ROI visibility"
-        ],
+        id: `prospect_${nanoid(8)}`,
+        companyName: `${segmentInfo.label} Prospect`,
+        segment,
+        estimatedSize: segment === "pharma" ? "emerging" : "mid",
+        targetRoles: randomRoles,
+        painPoints: randomPainPoints,
         outreachStatus: "identified",
-        personalizedMessage: `Are you getting measurable ROI from ${competitor}? Many Life Sciences companies are discovering that compliance can be a business asset, not just overhead.`,
+        personalizedMessage,
+        membershipFit: segmentInfo.membershipFit,
         createdAt: new Date().toISOString()
       });
     }
 
-    // Add some standard displacement targets
-    if (targets.length < 3) {
-      for (const competitor of COMPETITORS.slice(0, 3 - targets.length)) {
-        targets.push({
-          id: `target_${nanoid(8)}`,
-          companyName: `${competitor} Customer`,
-          industry: "Life Sciences",
-          currentVendor: competitor,
-          painPoints: [
-            "Audit readiness challenges",
-            "Manual compliance processes",
-            "Difficulty demonstrating ROI"
-          ],
-          outreachStatus: "identified",
-          personalizedMessage: `Switching from ${competitor}? See how ComplianceWorxs delivers measurable compliance ROI.`,
-          createdAt: new Date().toISOString()
-        });
-      }
-    }
-
     await fs.writeFile(
-      `${STATE_DIR}/competitive_targets.json`,
+      `${STATE_DIR}/prospect_targets.json`,
       JSON.stringify({ targets, lastRun: new Date().toISOString() }, null, 2)
     );
 
-    console.log(`🎯 [COMPETITIVE] Identified ${targets.length} displacement targets`);
+    console.log(`🎯 [PROSPECT TARGETING] Identified ${targets.length} ideal customer prospects`);
     return targets;
   } catch (error) {
-    console.error("[COMPETITIVE] Error:", error);
+    console.error("[PROSPECT TARGETING] Error:", error);
     return [];
   }
 }
+
+// Alias for backward compatibility
+export const runCompetitiveDisplacement = runProspectTargeting;
 
 // ============================================================================
 // 7. PRICING EXPERIMENT SYSTEM
