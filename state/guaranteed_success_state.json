@@ -1,15 +1,15 @@
 {
-  "lastRun": "2025-12-05T19:46:55.809Z",
-  "cycleCount": 31,
+  "lastRun": "2025-12-05T19:48:58.314Z",
+  "cycleCount": 33,
   "demandSignals": [
     {
       "source": "LinkedIn",
       "metric": "impressions",
-      "value": 247,
-      "trend": "stable",
-      "timestamp": "2025-12-05T19:46:47.928Z",
-      "actionRequired": false,
-      "lastSignalAt": "2025-12-05T19:46:47.928Z",
+      "value": 149,
+      "trend": "down",
+      "timestamp": "2025-12-05T19:48:51.877Z",
+      "actionRequired": true,
+      "lastSignalAt": "2025-12-05T19:48:51.877Z",
       "hoursSinceLastSignal": 0,
       "winningVariant": "Audit Readiness ROI",
       "suppressedVariants": [
@@ -19,9 +19,9 @@
     {
       "source": "LinkedIn",
       "metric": "profile_visits",
-      "value": 57,
+      "value": 58,
       "trend": "up",
-      "timestamp": "2025-12-05T19:46:47.928Z",
+      "timestamp": "2025-12-05T19:48:51.877Z",
       "actionRequired": false
     },
     {
@@ -29,16 +29,16 @@
       "metric": "repeat_visitors",
       "value": 17,
       "trend": "up",
-      "timestamp": "2025-12-05T19:46:47.928Z",
+      "timestamp": "2025-12-05T19:48:51.877Z",
       "actionRequired": false
     },
     {
       "source": "Email",
       "metric": "engagement_decay",
-      "value": 50,
-      "trend": "stable",
-      "timestamp": "2025-12-05T19:46:47.928Z",
-      "actionRequired": false
+      "value": 80,
+      "trend": "down",
+      "timestamp": "2025-12-05T19:48:51.877Z",
+      "actionRequired": true
     }
   ],
   "assetPerformance": [],
@@ -150,59 +150,63 @@
       "severity": "warning",
       "autoCorrection": "Message recalibration",
       "correctionApplied": true,
-      "timestamp": "2025-12-05T19:46:48.362Z",
+      "timestamp": "2025-12-05T19:48:53.132Z",
       "resolution": "Applied Message recalibration",
       "deltaImpact": -83
     },
     {
       "metric": "dashboard_views",
-      "current": 58,
+      "current": 46,
       "baseline": 50,
-      "dropPercent": -16,
-      "severity": "watch",
-      "autoCorrection": "None",
-      "correctionApplied": false,
-      "timestamp": "2025-12-05T19:46:48.362Z"
-    },
-    {
-      "metric": "landing_page_ctr",
-      "current": 2.2105044721801366,
-      "baseline": 2.5,
-      "dropPercent": 11.579821112794537,
+      "dropPercent": 8,
       "severity": "watch",
       "autoCorrection": "Monitoring increased frequency",
       "correctionApplied": false,
-      "timestamp": "2025-12-05T19:46:48.362Z"
+      "timestamp": "2025-12-05T19:48:53.132Z"
+    },
+    {
+      "metric": "landing_page_ctr",
+      "current": 3.401420112800945,
+      "baseline": 2.5,
+      "dropPercent": -36.0568045120378,
+      "severity": "watch",
+      "autoCorrection": "None",
+      "correctionApplied": false,
+      "timestamp": "2025-12-05T19:48:53.132Z"
     },
     {
       "metric": "conversion_rate",
-      "current": 1.707289259248016,
+      "current": 1.9944990157459197,
       "baseline": 1.5,
-      "dropPercent": -13.819283949867733,
+      "dropPercent": -32.96660104972798,
       "severity": "watch",
       "autoCorrection": "None",
       "correctionApplied": false,
-      "timestamp": "2025-12-05T19:46:48.362Z"
+      "timestamp": "2025-12-05T19:48:53.132Z"
     },
     {
       "metric": "email_open_rate",
-      "current": 25.93614704981364,
+      "current": 20.12209021403148,
       "baseline": 25,
-      "dropPercent": -3.744588199254565,
-      "severity": "watch",
-      "autoCorrection": "None",
-      "correctionApplied": false,
-      "timestamp": "2025-12-05T19:46:48.362Z"
+      "dropPercent": 19.511639143874078,
+      "severity": "warning",
+      "autoCorrection": "Subject line A/B test",
+      "correctionApplied": true,
+      "timestamp": "2025-12-05T19:48:53.132Z",
+      "resolution": "Applied Subject line A/B test",
+      "deltaImpact": -98
     },
     {
       "metric": "email_click_rate",
-      "current": 3.5481366559976535,
+      "current": 2.474992111238787,
       "baseline": 3,
-      "dropPercent": -18.271221866588448,
-      "severity": "watch",
-      "autoCorrection": "None",
-      "correctionApplied": false,
-      "timestamp": "2025-12-05T19:46:48.362Z"
+      "dropPercent": 17.500262958707104,
+      "severity": "warning",
+      "autoCorrection": "CTA optimization",
+      "correctionApplied": true,
+      "timestamp": "2025-12-05T19:48:53.132Z",
+      "resolution": "Applied CTA optimization",
+      "deltaImpact": -88
     }
   ],
   "retentionSignals": [
@@ -268,20 +272,20 @@
       "renewalPrediction": false
     }
   ],
-  "autoCorrections": 5,
-  "successScore": 65,
+  "autoCorrections": 9,
+  "successScore": 52,
   "governanceViolations": [],
   "stabilityIndices": {
     "demand": {
       "name": "Demand Stability Index",
-      "score": 100,
-      "trend": "improving",
+      "score": 50,
+      "trend": "stable",
       "components": {
-        "healthy_signals": 4,
+        "healthy_signals": 2,
         "total_signals": 4,
         "winning_variants": 1
       },
-      "timestamp": "2025-12-05T19:46:55.808Z"
+      "timestamp": "2025-12-05T19:48:58.314Z"
     },
     "conversion": {
       "name": "Conversion Stability Index",
@@ -292,7 +296,7 @@
         "rejected_assets": 0,
         "sunset_assets": 0
       },
-      "timestamp": "2025-12-05T19:46:55.808Z"
+      "timestamp": "2025-12-05T19:48:58.314Z"
     },
     "revenue": {
       "name": "Revenue Predictability Index",
@@ -303,7 +307,7 @@
         "forecast_7d": 5760,
         "forecast_30d": 6668
       },
-      "timestamp": "2025-12-05T19:46:55.808Z"
+      "timestamp": "2025-12-05T19:48:58.314Z"
     },
     "retention": {
       "name": "Retention Risk Index",
@@ -314,10 +318,10 @@
         "at_risk_users": 2,
         "interventions_active": 4
       },
-      "timestamp": "2025-12-05T19:46:55.808Z"
+      "timestamp": "2025-12-05T19:48:58.314Z"
     }
   },
   "cosOverrideActive": false,
-  "lastDemandSignalAt": "2025-12-05T19:46:47.928Z",
+  "lastDemandSignalAt": "2025-12-05T19:48:51.877Z",
   "weeklyReportGenerated": ""
 }
