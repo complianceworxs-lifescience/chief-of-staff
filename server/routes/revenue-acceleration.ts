@@ -377,4 +377,68 @@ router.get("/roi-calculator/leads", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/sendgrid/test", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    const { sendgrid } = await import('../services/sendgrid');
+    
+    if (!sendgrid.isConfigured()) {
+      return res.json({
+        success: false,
+        error: "SendGrid not configured",
+        details: {
+          apiKeySet: !!process.env.SENDGRID_API_KEY,
+          fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@complianceworxs.com',
+          fromName: process.env.SENDGRID_FROM_NAME || 'ComplianceWorxs'
+        }
+      });
+    }
+
+    const testHtml = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:40px;background:#0f172a;font-family:system-ui,sans-serif;">
+  <div style="max-width:500px;margin:0 auto;background:#1e3a5f;border-radius:12px;padding:32px;border:1px solid rgba(59,130,246,0.3);">
+    <h1 style="color:#ffffff;margin:0 0 16px 0;">SendGrid Test Email</h1>
+    <p style="color:#94a3b8;margin:0 0 24px 0;">
+      This is a test email from ComplianceWorxs ROI Calculator.
+    </p>
+    <p style="color:#3b82f6;font-size:24px;font-weight:bold;margin:0;">
+      Connection verified at ${new Date().toISOString()}
+    </p>
+  </div>
+</body>
+</html>`;
+
+    const result = await sendgrid.sendEmail({
+      to: email,
+      subject: `ComplianceWorxs SendGrid Test - ${new Date().toLocaleTimeString()}`,
+      html: testHtml,
+      text: `SendGrid Test Email - Connection verified at ${new Date().toISOString()}`
+    });
+
+    console.log(`📧 SENDGRID TEST: ${result.success ? 'SUCCESS' : 'FAILED'} - ${email}`);
+    
+    res.json({
+      success: result.success,
+      sendId: result.sendId,
+      error: result.error,
+      config: {
+        fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@complianceworxs.com',
+        fromName: process.env.SENDGRID_FROM_NAME || 'ComplianceWorxs',
+        apiKeyConfigured: !!process.env.SENDGRID_API_KEY
+      }
+    });
+  } catch (error) {
+    console.error("SendGrid test error:", error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+});
+
 export default router;
