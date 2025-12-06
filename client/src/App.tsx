@@ -25,26 +25,30 @@ import ROICalculator from "@/pages/roi-calculator";
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={ExecutiveCommand} />
-        <Route path="/command" component={ExecutiveCommand} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/goals" component={Goals} />
-        <Route path="/initiatives" component={Initiatives} />
-        <Route path="/directive-center" component={DirectiveCenter} />
-        <Route path="/directives" component={Directives} />
-        <Route path="/analytics" component={AnalyticsPage} />
-        <Route path="/ai-assistant" component={AiAssistant} />
-        <Route path="/governance" component={GovernancePage} />
-        <Route path="/market-intelligence" component={MarketIntelligence} />
-        <Route path="/coo" component={COODashboard} />
-        <Route path="/cro" component={CRODashboard} />
-        <Route path="/governance/dashboard" component={GovernanceDashboard} />
-        <Route path="/roi-calculator" component={ROICalculator} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/roi-calculator" component={ROICalculator} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={ExecutiveCommand} />
+            <Route path="/command" component={ExecutiveCommand} />
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/goals" component={Goals} />
+            <Route path="/initiatives" component={Initiatives} />
+            <Route path="/directive-center" component={DirectiveCenter} />
+            <Route path="/directives" component={Directives} />
+            <Route path="/analytics" component={AnalyticsPage} />
+            <Route path="/ai-assistant" component={AiAssistant} />
+            <Route path="/governance" component={GovernancePage} />
+            <Route path="/market-intelligence" component={MarketIntelligence} />
+            <Route path="/coo" component={COODashboard} />
+            <Route path="/cro" component={CRODashboard} />
+            <Route path="/governance/dashboard" component={GovernanceDashboard} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 
