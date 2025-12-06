@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +7,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { initGA } from "./lib/analytics";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
-import { PublicLayout } from "@/components/public-layout";
 import Dashboard from "@/pages/dashboard";
 import ExecutiveCommand from "@/pages/executive-command";
 import Goals from "@/pages/goals-fixed";
@@ -24,15 +23,13 @@ import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
 import ROICalculator from "@/pages/roi-calculator";
 
-function PublicROICalculator() {
-  return (
-    <PublicLayout>
-      <ROICalculator />
-    </PublicLayout>
-  );
-}
+function Router() {
+  const [location] = useLocation();
+  
+  if (location === "/roi-calculator") {
+    return <ROICalculator />;
+  }
 
-function AdminRoutes() {
   return (
     <Layout>
       <Switch>
@@ -53,15 +50,6 @@ function AdminRoutes() {
         <Route component={NotFound} />
       </Switch>
     </Layout>
-  );
-}
-
-function Router() {
-  return (
-    <Switch>
-      <Route path="/roi-calculator" component={PublicROICalculator} />
-      <Route component={AdminRoutes} />
-    </Switch>
   );
 }
 

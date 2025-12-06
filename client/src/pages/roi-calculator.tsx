@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,25 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Calculator, DollarSign, Clock, TrendingUp, CheckCircle, ArrowRight, Users, FileCheck, AlertTriangle, Activity } from "lucide-react";
+
+const HIDE_NAV_STYLES = `
+  nav, header, .navbar, .sidebar, aside, 
+  [class*="nav"], [class*="header"], [class*="sidebar"],
+  .bg-white.shadow-md, .bg-gray-50 > header,
+  .md\\:hidden.bg-white, .max-w-7xl > header {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+  body, html, #root {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+  .min-h-screen.bg-gray-50 > main {
+    padding-top: 0 !important;
+  }
+`;
 
 interface ROIResult {
   currentCost: number;
@@ -61,6 +80,22 @@ export default function ROICalculator() {
     company: "",
     role: ""
   });
+
+  useEffect(() => {
+    const styleId = 'roi-calculator-hide-nav';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = HIDE_NAV_STYLES;
+      document.head.appendChild(style);
+    }
+    return () => {
+      const existingStyle = document.getElementById(styleId);
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
+  }, []);
 
   const calculateMutation = useMutation({
     mutationFn: async (inputs: CalculatorInputs) => {
