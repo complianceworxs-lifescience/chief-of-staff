@@ -176,6 +176,8 @@ router.post("/roi-calculator/capture-lead", async (req: Request, res: Response) 
 
     const leadId = `lead_${nanoid(12)}`;
     
+    const annualWasteCost = req.body.annualWasteCost;
+    
     const leadData = {
       id: leadId,
       email,
@@ -184,6 +186,7 @@ router.post("/roi-calculator/capture-lead", async (req: Request, res: Response) 
       company: company || '',
       role: role || '',
       roiValue: Number(roiValue) || 0,
+      annualWasteCost: Number(annualWasteCost) || 0,
       persona: persona || 'rising_leader',
       calculatorInputs: calculatorInputs || {},
       capturedAt: new Date().toISOString(),
@@ -235,45 +238,100 @@ router.post("/roi-calculator/capture-lead", async (req: Request, res: Response) 
 
 async function triggerEmailJourney(lead: any) {
   try {
-    const mailchimpApiKey = process.env.MAILCHIMP_API_KEY;
-    const audienceId = process.env.MAILCHIMP_AUDIENCE_ID;
-    const serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX || 'us1';
-
-    if (!mailchimpApiKey || !audienceId) {
-      console.log(`⚠️ Mailchimp not configured - skipping email journey for ${lead.email}`);
+    const { sendgrid } = await import('../services/sendgrid');
+    
+    if (!sendgrid.isConfigured()) {
+      console.log(`⚠️ SendGrid not configured - skipping email journey for ${lead.email}`);
       return;
     }
 
-    const response = await fetch(`https://${serverPrefix}.api.mailchimp.com/3.0/lists/${audienceId}/members`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${mailchimpApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email_address: lead.email,
-        status: 'subscribed',
-        merge_fields: {
-          FNAME: lead.firstName,
-          LNAME: lead.lastName,
-          COMPANY: lead.company,
-          ROLE: lead.role,
-          ROI_VAL: lead.roiValue.toString(),
-          PERSONA: lead.persona
-        },
-        tags: [`roi_calculator`, lead.persona, 'new_lead']
-      })
+    const roiFormatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(lead.roiValue);
+    const annualWasteFormatted = lead.annualWasteCost 
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(lead.annualWasteCost)
+      : 'Not calculated';
+    
+    const personaLabel = lead.persona.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    
+    const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Personalized ROI Report</title>
+</head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:system-ui,-apple-system,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:linear-gradient(135deg,#1e3a5f 0%,#2d4a6f 100%);border-radius:16px;padding:40px;border:1px solid rgba(59,130,246,0.3);">
+      <h1 style="color:#ffffff;font-size:28px;margin:0 0 8px 0;">
+        Hi ${lead.firstName || 'there'},
+      </h1>
+      <p style="color:#94a3b8;font-size:16px;margin:0 0 32px 0;">
+        Your personalized compliance ROI analysis is ready.
+      </p>
+      
+      <div style="background:rgba(30,58,138,0.4);border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid rgba(59,130,246,0.4);">
+        <p style="color:#94a3b8;font-size:14px;margin:0 0 8px 0;">Your Annual Savings Potential</p>
+        <p style="color:#3b82f6;font-size:42px;font-weight:bold;margin:0;">${roiFormatted}</p>
+      </div>
+      
+      <div style="background:rgba(127,29,29,0.3);border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid rgba(239,68,68,0.4);">
+        <p style="color:#94a3b8;font-size:14px;margin:0 0 8px 0;">Your Annual Operational Waste</p>
+        <p style="color:#ef4444;font-size:32px;font-weight:bold;margin:0;">${annualWasteFormatted}</p>
+      </div>
+      
+      <div style="background:rgba(20,50,80,0.5);border-radius:12px;padding:24px;margin-bottom:32px;border:1px solid rgba(71,85,105,0.5);">
+        <p style="color:#60a5fa;font-size:14px;font-weight:600;margin:0 0 8px 0;">Your Profile: ${personaLabel}</p>
+        <p style="color:#e2e8f0;font-size:15px;margin:0;">
+          Based on your compliance profile at ${lead.company || 'your organization'}, you're positioned for 
+          ${lead.persona === 'compliance_architect' ? 'enterprise-level compliance transformation' : 
+            lead.persona === 'validation_strategist' ? 'significant efficiency gains through process optimization' :
+            'building visibility and recognition with leadership'}.
+        </p>
+      </div>
+      
+      <h2 style="color:#ffffff;font-size:20px;margin:0 0 16px 0;">Your Board-Ready Strategy Guide</h2>
+      <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
+        Here's how to present these findings to leadership:
+      </p>
+      
+      <ol style="color:#e2e8f0;font-size:15px;line-height:1.8;padding-left:24px;margin:0 0 32px 0;">
+        <li><strong>Lead with the waste number</strong> - ${annualWasteFormatted} in operational inefficiency gets attention.</li>
+        <li><strong>Show the savings potential</strong> - ${roiFormatted} annual savings makes the business case clear.</li>
+        <li><strong>Quantify time reclaimed</strong> - Hours your team can redirect to strategic initiatives.</li>
+        <li><strong>Connect to audit readiness</strong> - Reduced risk exposure and faster inspection prep.</li>
+      </ol>
+      
+      <a href="https://complianceworxs.com/membership?persona=${lead.persona}&roi=${lead.roiValue}" 
+         style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:16px 32px;border-radius:8px;font-weight:600;font-size:16px;">
+        Explore ComplianceWorxs Membership
+      </a>
+      
+      <p style="color:#64748b;font-size:13px;margin:32px 0 0 0;">
+        Questions? Reply to this email - we read every response.
+      </p>
+    </div>
+    
+    <p style="color:#475569;font-size:12px;text-align:center;margin:24px 0 0 0;">
+      ComplianceWorxs | AI-Powered Compliance Intelligence for Life Sciences
+    </p>
+  </div>
+</body>
+</html>`;
+
+    const result = await sendgrid.sendEmail({
+      to: lead.email,
+      subject: `${lead.firstName || 'Your'} ROI Report: ${roiFormatted} Annual Savings Potential`,
+      html: emailHtml,
+      campaignId: 'roi_calculator_lead',
+      persona: lead.persona,
+      segment: 'new_lead'
     });
 
-    if (response.ok) {
-      console.log(`✅ Mailchimp: Added ${lead.email} to ${lead.persona} journey`);
+    if (result.success) {
+      console.log(`✅ SendGrid: Sent ROI report to ${lead.email} (${lead.persona})`);
     } else {
-      const errorText = await response.text();
-      if (errorText.includes('Member Exists')) {
-        console.log(`ℹ️ Mailchimp: ${lead.email} already exists - updating tags`);
-      } else {
-        console.error(`❌ Mailchimp error: ${errorText}`);
-      }
+      console.error(`❌ SendGrid: Failed to send to ${lead.email}: ${result.error}`);
     }
   } catch (error) {
     console.error("Error triggering email journey:", error);

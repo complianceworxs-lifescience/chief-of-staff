@@ -348,15 +348,105 @@
           </div>
         </div>
 
-        <div class="card" style="background: linear-gradient(135deg, rgba(88, 28, 135, 0.3) 0%, rgba(30, 58, 138, 0.3) 100%); border-color: rgba(139, 92, 246, 0.3);">
-          <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-purple-400">
+        <div class="card" style="background: linear-gradient(135deg, rgba(30, 64, 107, 0.6) 0%, rgba(20, 50, 90, 0.4) 100%); border-color: rgba(59, 130, 200, 0.4);">
+          <h3 class="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             Your Profile: ${result.personaLabel}
           </h3>
-          <p class="text-slate-300" data-testid="text-recommendation">
+          <p class="text-slate-300 mb-6" data-testid="text-recommendation">
             ${result.recommendation}
           </p>
+          
+          <div class="border-t border-slate-600/50 pt-6">
+            <h4 class="text-lg font-semibold text-white mb-6">Get your personalized ROI report + strategy guide:</h4>
+            
+            <form id="leadCaptureForm" class="space-y-4" onsubmit="submitLead(event)">
+              <input type="hidden" id="leadRoiValue" value="${result.roiValue}" />
+              <input type="hidden" id="leadPersona" value="${result.persona}" />
+              <input type="hidden" id="leadAnnualWaste" value="${result.annualWasteCost}" />
+              
+              <div>
+                <input type="email" id="leadEmail" required placeholder="Work Email" data-testid="input-lead-email"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-500/50 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400" />
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="leadFirstName" required placeholder="First Name" data-testid="input-lead-firstname"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-500/50 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400" />
+                <input type="text" id="leadLastName" required placeholder="Last Name" data-testid="input-lead-lastname"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-500/50 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400" />
+              </div>
+              
+              <div>
+                <input type="text" id="leadCompany" required placeholder="Company" data-testid="input-lead-company"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-500/50 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400" />
+              </div>
+              
+              <div>
+                <input type="text" id="leadRole" required placeholder="Role / Title" data-testid="input-lead-role"
+                  class="w-full px-4 py-3 rounded-xl bg-slate-700/50 border border-slate-500/50 text-white placeholder-slate-400 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400" />
+              </div>
+              
+              <button type="submit" id="leadSubmitBtn" data-testid="button-submit-lead"
+                class="w-full py-4 px-6 bg-slate-600/80 hover:bg-slate-500/80 text-white font-semibold rounded-xl transition-colors border border-slate-500/50">
+                Get My Free Report
+              </button>
+            </form>
+            
+            <div id="leadSuccessMessage" class="hidden text-center py-8">
+              <svg class="w-16 h-16 text-teal-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <h4 class="text-xl font-semibold text-white mb-2">Report on its way!</h4>
+              <p class="text-slate-400">Check your inbox for your personalized ROI report and Board-Ready Strategy Guide.</p>
+            </div>
+          </div>
         </div>
       `;
+      
+      window.currentResult = result;
+    }
+    
+    async function submitLead(event) {
+      event.preventDefault();
+      
+      const btn = document.getElementById('leadSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      const leadData = {
+        email: document.getElementById('leadEmail').value,
+        firstName: document.getElementById('leadFirstName').value,
+        lastName: document.getElementById('leadLastName').value,
+        company: document.getElementById('leadCompany').value,
+        role: document.getElementById('leadRole').value,
+        roiValue: parseInt(document.getElementById('leadRoiValue').value),
+        annualWasteCost: parseInt(document.getElementById('leadAnnualWaste').value),
+        persona: document.getElementById('leadPersona').value
+      };
+      
+      try {
+        const response = await fetch('/api/revenue-acceleration/roi-calculator/capture-lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(leadData)
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+          document.getElementById('leadCaptureForm').classList.add('hidden');
+          document.getElementById('leadSuccessMessage').classList.remove('hidden');
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Get My Free Report';
+          alert('Something went wrong. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error submitting lead:', error);
+        btn.disabled = false;
+        btn.textContent = 'Get My Free Report';
+        alert('Something went wrong. Please try again.');
+      }
     }
   </script>
 </body>
