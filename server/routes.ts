@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import { agentMonitor } from "./services/agent-monitor";
 import { conflictResolver } from "./services/conflict-resolver";
@@ -94,6 +95,12 @@ import { eq } from "drizzle-orm";
 import { getConfig } from "./config-loader";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // CLEAN PUBLIC TOOL - Serves standalone HTML without React SPA
+  app.get("/public-tool", (req, res) => {
+    res.sendFile(path.resolve(import.meta.dirname, "..", "client", "public-tool.html"));
+  });
+  console.log('🧮 PUBLIC ROI CALCULATOR (Clean HTML) available at /public-tool');
+
   // Initialize Content Manager
   const contentManager = new ContentManager(storage);
   await contentManager.initializeBrandAssets();

@@ -1,15 +1,15 @@
 {
-  "lastRun": "2025-12-06T12:27:16.008Z",
-  "cycleCount": 70,
+  "lastRun": "2025-12-06T12:38:52.238Z",
+  "cycleCount": 72,
   "demandSignals": [
     {
       "source": "LinkedIn",
       "metric": "impressions",
-      "value": 168,
-      "trend": "stable",
-      "timestamp": "2025-12-06T12:27:08.463Z",
+      "value": 521,
+      "trend": "up",
+      "timestamp": "2025-12-06T12:38:46.533Z",
       "actionRequired": false,
-      "lastSignalAt": "2025-12-06T12:27:08.463Z",
+      "lastSignalAt": "2025-12-06T12:38:46.533Z",
       "hoursSinceLastSignal": 0,
       "winningVariant": "Audit Readiness ROI",
       "suppressedVariants": [
@@ -19,25 +19,25 @@
     {
       "source": "LinkedIn",
       "metric": "profile_visits",
-      "value": 14,
-      "trend": "down",
-      "timestamp": "2025-12-06T12:27:08.463Z",
-      "actionRequired": true
+      "value": 55,
+      "trend": "up",
+      "timestamp": "2025-12-06T12:38:46.533Z",
+      "actionRequired": false
     },
     {
       "source": "Website",
       "metric": "repeat_visitors",
-      "value": 4,
-      "trend": "down",
-      "timestamp": "2025-12-06T12:27:08.463Z",
-      "actionRequired": true
+      "value": 16,
+      "trend": "up",
+      "timestamp": "2025-12-06T12:38:46.533Z",
+      "actionRequired": false
     },
     {
       "source": "Email",
       "metric": "engagement_decay",
-      "value": 50,
-      "trend": "stable",
-      "timestamp": "2025-12-06T12:27:08.463Z",
+      "value": 20,
+      "trend": "up",
+      "timestamp": "2025-12-06T12:38:46.533Z",
       "actionRequired": false
     }
   ],
@@ -150,59 +150,65 @@
       "severity": "warning",
       "autoCorrection": "Message recalibration",
       "correctionApplied": true,
-      "timestamp": "2025-12-06T12:27:09.953Z",
+      "timestamp": "2025-12-06T12:38:47.770Z",
       "resolution": "Applied Message recalibration",
       "deltaImpact": -83
     },
     {
       "metric": "dashboard_views",
-      "current": 47,
+      "current": 64,
       "baseline": 50,
-      "dropPercent": 6,
+      "dropPercent": -28.000000000000004,
       "severity": "watch",
-      "autoCorrection": "Monitoring increased frequency",
+      "autoCorrection": "None",
       "correctionApplied": false,
-      "timestamp": "2025-12-06T12:27:09.953Z"
+      "timestamp": "2025-12-06T12:38:47.770Z"
     },
     {
       "metric": "landing_page_ctr",
-      "current": 2.671267723736018,
+      "current": 1.811356795805057,
       "baseline": 2.5,
-      "dropPercent": -6.850708949440723,
-      "severity": "watch",
-      "autoCorrection": "None",
-      "correctionApplied": false,
-      "timestamp": "2025-12-06T12:27:09.953Z"
+      "dropPercent": 27.545728167797723,
+      "severity": "warning",
+      "autoCorrection": "Landing page replacement",
+      "correctionApplied": true,
+      "timestamp": "2025-12-06T12:38:47.770Z",
+      "resolution": "Applied Landing page replacement",
+      "deltaImpact": -138
     },
     {
       "metric": "conversion_rate",
-      "current": 1.9493913697626775,
+      "current": 1.4007275836962894,
       "baseline": 1.5,
-      "dropPercent": -29.95942465084516,
+      "dropPercent": 6.618161086914043,
       "severity": "watch",
-      "autoCorrection": "None",
+      "autoCorrection": "Monitoring increased frequency",
       "correctionApplied": false,
-      "timestamp": "2025-12-06T12:27:09.953Z"
+      "timestamp": "2025-12-06T12:38:47.770Z"
     },
     {
       "metric": "email_open_rate",
-      "current": 21.708897584127712,
+      "current": 20.9527745537848,
       "baseline": 25,
-      "dropPercent": 13.164409663489153,
-      "severity": "watch",
-      "autoCorrection": "Monitoring increased frequency",
-      "correctionApplied": false,
-      "timestamp": "2025-12-06T12:27:09.953Z"
+      "dropPercent": 16.188901784860803,
+      "severity": "warning",
+      "autoCorrection": "Subject line A/B test",
+      "correctionApplied": true,
+      "timestamp": "2025-12-06T12:38:47.770Z",
+      "resolution": "Applied Subject line A/B test",
+      "deltaImpact": -81
     },
     {
       "metric": "email_click_rate",
-      "current": 2.7237483337267654,
+      "current": 2.1077458687520036,
       "baseline": 3,
-      "dropPercent": 9.208388875774487,
-      "severity": "watch",
-      "autoCorrection": "Monitoring increased frequency",
-      "correctionApplied": false,
-      "timestamp": "2025-12-06T12:27:09.953Z"
+      "dropPercent": 29.74180437493321,
+      "severity": "warning",
+      "autoCorrection": "CTA optimization",
+      "correctionApplied": true,
+      "timestamp": "2025-12-06T12:38:47.770Z",
+      "resolution": "Applied CTA optimization",
+      "deltaImpact": -149
     }
   ],
   "retentionSignals": [
@@ -268,20 +274,20 @@
       "renewalPrediction": false
     }
   ],
-  "autoCorrections": 7,
+  "autoCorrections": 8,
   "successScore": 55,
   "governanceViolations": [],
   "stabilityIndices": {
     "demand": {
       "name": "Demand Stability Index",
-      "score": 50,
-      "trend": "stable",
+      "score": 100,
+      "trend": "improving",
       "components": {
-        "healthy_signals": 2,
+        "healthy_signals": 4,
         "total_signals": 4,
         "winning_variants": 1
       },
-      "timestamp": "2025-12-06T12:27:16.008Z"
+      "timestamp": "2025-12-06T12:38:52.237Z"
     },
     "conversion": {
       "name": "Conversion Stability Index",
@@ -292,7 +298,7 @@
         "rejected_assets": 0,
         "sunset_assets": 0
       },
-      "timestamp": "2025-12-06T12:27:16.008Z"
+      "timestamp": "2025-12-06T12:38:52.237Z"
     },
     "revenue": {
       "name": "Revenue Predictability Index",
@@ -303,7 +309,7 @@
         "forecast_7d": 5760,
         "forecast_30d": 6668
       },
-      "timestamp": "2025-12-06T12:27:16.008Z"
+      "timestamp": "2025-12-06T12:38:52.237Z"
     },
     "retention": {
       "name": "Retention Risk Index",
@@ -314,10 +320,10 @@
         "at_risk_users": 3,
         "interventions_active": 4
       },
-      "timestamp": "2025-12-06T12:27:16.008Z"
+      "timestamp": "2025-12-06T12:38:52.237Z"
     }
   },
   "cosOverrideActive": false,
-  "lastDemandSignalAt": "2025-12-06T12:27:08.463Z",
+  "lastDemandSignalAt": "2025-12-06T12:38:46.533Z",
   "weeklyReportGenerated": ""
 }
