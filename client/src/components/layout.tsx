@@ -15,17 +15,9 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
-const PUBLIC_ROUTES = ["/roi-calculator"];
-
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
-  const isPublicRoute = PUBLIC_ROUTES.includes(location);
-  
-  if (isPublicRoute) {
-    return <>{children}</>;
-  }
   
   const { data: activeConflicts = [] } = useQuery<Conflict[]>({
     queryKey: ["/api/conflicts/active"]

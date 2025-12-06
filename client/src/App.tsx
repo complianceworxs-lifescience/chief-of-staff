@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route } from "wouter";
 import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { initGA } from "./lib/analytics";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
+import { PublicLayout } from "@/components/public-layout";
 import Dashboard from "@/pages/dashboard";
 import ExecutiveCommand from "@/pages/executive-command";
 import Goals from "@/pages/goals-fixed";
@@ -23,38 +24,45 @@ import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
 import ROICalculator from "@/pages/roi-calculator";
 
-const PUBLIC_ROUTES = ["/roi-calculator"];
+function PublicROICalculator() {
+  return (
+    <PublicLayout>
+      <ROICalculator />
+    </PublicLayout>
+  );
+}
+
+function AdminRoutes() {
+  return (
+    <Layout>
+      <Switch>
+        <Route path="/" component={ExecutiveCommand} />
+        <Route path="/command" component={ExecutiveCommand} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/goals" component={Goals} />
+        <Route path="/initiatives" component={Initiatives} />
+        <Route path="/directive-center" component={DirectiveCenter} />
+        <Route path="/directives" component={Directives} />
+        <Route path="/analytics" component={AnalyticsPage} />
+        <Route path="/ai-assistant" component={AiAssistant} />
+        <Route path="/governance" component={GovernancePage} />
+        <Route path="/market-intelligence" component={MarketIntelligence} />
+        <Route path="/coo" component={COODashboard} />
+        <Route path="/cro" component={CRODashboard} />
+        <Route path="/governance/dashboard" component={GovernanceDashboard} />
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
+  );
+}
 
 function Router() {
-  const [location] = useLocation();
-  const isPublicRoute = PUBLIC_ROUTES.includes(location);
-
-  const routes = (
+  return (
     <Switch>
-      <Route path="/" component={ExecutiveCommand} />
-      <Route path="/command" component={ExecutiveCommand} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/goals" component={Goals} />
-      <Route path="/initiatives" component={Initiatives} />
-      <Route path="/directive-center" component={DirectiveCenter} />
-      <Route path="/directives" component={Directives} />
-      <Route path="/analytics" component={AnalyticsPage} />
-      <Route path="/ai-assistant" component={AiAssistant} />
-      <Route path="/governance" component={GovernancePage} />
-      <Route path="/market-intelligence" component={MarketIntelligence} />
-      <Route path="/coo" component={COODashboard} />
-      <Route path="/cro" component={CRODashboard} />
-      <Route path="/governance/dashboard" component={GovernanceDashboard} />
-      <Route path="/roi-calculator" component={ROICalculator} />
-      <Route component={NotFound} />
+      <Route path="/roi-calculator" component={PublicROICalculator} />
+      <Route component={AdminRoutes} />
     </Switch>
   );
-
-  if (isPublicRoute) {
-    return routes;
-  }
-
-  return <Layout>{routes}</Layout>;
 }
 
 function App() {

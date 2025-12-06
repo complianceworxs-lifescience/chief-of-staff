@@ -4096,6 +4096,85 @@
       "revenueImpact": 0,
       "confidence": 0.95,
       "agent": "CoS"
+    },
+    {
+      "id": "gse_demand_1765022143837",
+      "timestamp": "2025-12-06T11:55:43.626Z",
+      "process": "DEMAND_SIGNAL_MONITORING",
+      "trigger": "profile_visits dropped to 12",
+      "decision": "Campaign angle recalibration triggered",
+      "outcome": "Redirected to Audit Readiness → ROI → System",
+      "revenueImpact": 0,
+      "confidence": 0.75,
+      "agent": "CMO"
+    },
+    {
+      "id": "gse_demand_1765022143844",
+      "timestamp": "2025-12-06T11:55:43.626Z",
+      "process": "DEMAND_SIGNAL_MONITORING",
+      "trigger": "repeat_visitors dropped to 3",
+      "decision": "Campaign angle recalibration triggered",
+      "outcome": "Redirected to Audit Readiness → ROI → System",
+      "revenueImpact": 0,
+      "confidence": 0.75,
+      "agent": "CMO"
+    },
+    {
+      "id": "gse_forecast_1765022143938",
+      "timestamp": "2025-12-06T11:55:43.935Z",
+      "process": "PREDICTIVE_REVENUE_MODELING",
+      "trigger": "Daily forecast cycle",
+      "decision": "7d: $5760, 14d: $6048, 30d: $6668",
+      "outcome": "Forecasts updated",
+      "revenueImpact": 1182,
+      "confidence": 0.93,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_offer_1765022143943",
+      "timestamp": "2025-12-06T11:55:43.943Z",
+      "process": "CONTINUOUS_OFFER_OPTIMIZATION",
+      "trigger": "Feature correlation analysis",
+      "decision": "Highlight 1, Suppress 1, Needs Delta: 2",
+      "outcome": "Offer optimizations queued",
+      "revenueImpact": 13,
+      "confidence": 0.8,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_failure_1765022145196",
+      "timestamp": "2025-12-06T11:55:44.889Z",
+      "process": "FAILURE_MODE_DETECTION",
+      "trigger": "0 critical, 2 warning modes detected",
+      "decision": "Auto-corrections applied with full logging",
+      "outcome": "Corrections in progress",
+      "revenueImpact": -196,
+      "confidence": 0.85,
+      "agent": "CoS",
+      "resolution": "Applied Message recalibration; Applied Landing page replacement",
+      "deltaImpact": -196
+    },
+    {
+      "id": "gse_retention_1765022145206",
+      "timestamp": "2025-12-06T11:55:45.199Z",
+      "process": "CLOSED_LOOP_RETENTION",
+      "trigger": "2 high-risk users detected",
+      "decision": "4 personalized ROI snapshots triggered",
+      "outcome": "Retention interventions queued",
+      "revenueImpact": 531,
+      "confidence": 0.7,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_oversight_1765022149345",
+      "timestamp": "2025-12-06T11:55:45.209Z",
+      "process": "EXECUTIVE_OVERSIGHT_FEEDBACK",
+      "trigger": "Daily oversight cycle",
+      "decision": "Compiled logs for 8 agents",
+      "outcome": "System self-improvement data collected",
+      "revenueImpact": 0,
+      "confidence": 0.95,
+      "agent": "CoS"
     }
   ]
 }
