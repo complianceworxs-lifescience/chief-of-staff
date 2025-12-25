@@ -1,0 +1,77 @@
+@replit build a static, exportable marketing homepage for ComplianceWorxs that matches the attached screenshot layout and menu.
+
+Goal
+- Output must be a STATIC SITE (HTML/CSS/JS only). No backend, no auth, no database.
+- Must be exportable as a ZIP for upload to SiteGround (public_html).
+- All links and interactions should work as anchors or simple placeholder pages.
+
+Brand + Style
+- Clean, enterprise biotech aesthetic.
+- Palette: Navy #002D62 (headers/nav), Teal #00A3A1 (buttons/accent), Off-white #F9FAFB (background).
+- Executive-grade typography, minimal, no hype.
+
+Header / Navigation (top)
+- Left: ComplianceWorxs logo + wordmark.
+- Menu items: Overview, Pricing, Blog, FAQ, Log in, Sign Up (primary button).
+- Menu behavior: smooth-scroll to sections for Overview + FAQ; Pricing/Blog can link to placeholder pages (/pricing, /blog) with simple “Coming soon” layouts. Log in and Sign Up should link to placeholder routes (/login, /signup) with clean CTA copy and a button that says “Continue” (no real auth).
+
+Hero (above fold)
+- Headline: “FDA & ISO Compliance on Autopilot”
+- Subheadline: short, professional (life sciences, audit readiness).
+- Primary CTA button: “Run Free Assessment” (teal).
+- Right side: Product mock preview area showing:
+  - Risk Score gauge (with example 7.2)
+  - Gap Analysis status tiles (Major Gaps, Moderate Gaps, Compliant)
+  - Audit-ready PDF preview card
+- Include a subtle vertical split label under the preview: “Manual Process | AI Engine”
+
+Proof Pillars (3 small cards under hero)
+- Card 1: “90% Faster Regulatory Reviews”
+- Card 2: “Audit-Ready in 2 Clicks”
+- Card 3: “100% Traceable Evidence Trails”
+- Minimal icons, consistent spacing.
+
+How It Works (process row)
+- Horizontal 4-step flow with icons and arrows:
+  - Upload SOP → AI Gap Analysis → Resolve Actions → Generate Audit-Ready Evidence
+
+Product Preview Visualization band (right-side panel feel as in screenshot)
+- Dark navy section titled “Product Preview Visualisation”
+- Short row or small diagram repeating the 4-step flow
+- Button inside: “Run Free Assessment”
+
+Use-case area (right-side panel feel)
+- Section title: “Use-case”
+- Two small lists:
+  - Product promise (2–3 bullets)
+  - Use-case unlock (2–3 bullets)
+- Keep concise.
+
+Trust bar
+- Dark band with badges: “FDA • EMA • ISO 13485” and “Biotech • Pharma • Medical Device”
+- Add subtle iconography, no external logos required.
+
+FAQ section
+- Accordion with 4 items:
+  - What is ComplianceWorxs?
+  - How is data isolated?
+  - How do we score regulatory impact?
+  - What are the options for audit-ready exports?
+- Accordion must work with lightweight JS.
+
+Final CTA band
+- Dark navy background with CTA copy and teal button “Run Free Assessment”.
+
+Footer
+- Links: FAQ | Terms | Privacy
+- Terms and Privacy should be simple static pages: /terms and /privacy with clean headings and placeholder compliance language (no legal advice).
+- Footer includes small ComplianceWorxs mark on right.
+
+Technical Requirements (static export)
+- Build using a static React website OR plain HTML/CSS/JS, but must be exportable as static assets.
+- Do not use server-only routing. If using React, ensure it builds to static files and routes work via simple pages or hash anchors (so it works on SiteGround without special config).
+- Add smooth-scroll for anchor links.
+- Make fully responsive: desktop matches screenshot layout; mobile stacks cleanly.
+
+Deliverable
+- Provide an exportable static build suitable for uploading to SiteGround.
