@@ -1,0 +1,77 @@
+@replit build a pixel-faithful STATIC marketing homepage for ComplianceWorxs that replicates the attached screenshot. IMPORTANT: optimize for SiteGround where folder uploads and zip extraction are unreliable.
+
+HARD CONSTRAINTS (must follow)
+1) Output a SINGLE self-contained file: /public/index.html (or /index.html) with ALL CSS and JS inlined.
+2) No external assets folders required (no /assets, /css, /js dependencies). All icons must be inline SVG. If you must use images, embed them as data URIs inside the HTML.
+3) No CDN libraries. No external fonts. Use system font stack only.
+4) All interactions (FAQ accordion, smooth-scroll) implemented with minimal inline JS.
+5) Provide a clearly named file in the project root: complianceworxs-homepage-singlefile.html that is identical to index.html.
+
+VISUAL TARGET (match screenshot layout)
+A) Top Nav (white background)
+- Left: ComplianceWorxs wordmark/logo (simple shield icon + text).
+- Center menu: Overview | Pricing | Blog | FAQ
+- Right: Log in (text link) + Sign Up (teal button).
+- Sticky on scroll.
+
+B) Hero (two-column)
+- Left:
+  - Headline: “FDA & ISO Compliance on Autopilot”
+  - Subheadline: concise, professional (life sciences, audit readiness).
+  - Primary CTA button (teal): “Run Free Assessment”
+- Right (hero visual):
+  - A split comparison panel with a thin vertical divider and labels under it: “Manual Process” (left) and “AI Engine” (right).
+  - Manual side: spreadsheet-like mock (simple table).
+  - AI side: dashboard mock with:
+    - Risk score gauge showing ~7.2
+    - Colored gap bars/tiles (red/yellow/green)
+  - Keep this mock entirely HTML/CSS (no images required).
+
+C) Proof Pillars Row (3 cards)
+- Three horizontal cards with small icons + title:
+  1) “90% Faster Regulatory Reviews”
+  2) “Audit-Ready in 2 Clicks”
+  3) “100% Traceable Evidence Trails”
+- Style: light card, subtle shadow, consistent spacing.
+
+D) How It Works (icon flow)
+- Horizontal 4-step flow with icons + arrows:
+  Upload SOP → AI Gap Analysis → Resolve Actions → Generate Audit-Ready Evidence
+
+E) Right-side stacked panels (as in screenshot)
+Create a right column area (or responsive stacked section) with these blocks:
+1) “Product Preview Visualisation” (dark navy panel)
+   - show mini 4-step flow + CTA button “Run Free Assessment”
+2) “Use-case” (dark navy/white panel)
+   - two small bullet lists: Product promise / Use-case unlock (short, readable)
+3) Trust strip (dark navy band)
+   - badges: “FDA • EMA • ISO 13485” and “Biotech • Pharma • Medical Device”
+4) FAQ (accordion)
+   - 4–6 questions; accordion open/close with chevrons
+   - Include at least: “What is ComplianceWorxs?”, “How is data isolated?”, “Can I export reports?”, “Is there a setup fee?”
+5) “CTA” panel (dark navy)
+   - short line + teal “Run Free Assessment” button
+
+F) Footer (minimal)
+- Clean footer with ComplianceWorxs mark and links (can be anchor links): Terms | Privacy | FAQ
+- Terms and Privacy must be included as in-page sections or modal overlays (still single-file).
+
+COLOR + TYPOGRAPHY
+- Navy: #002D62
+- Teal: #00A3A1
+- Background: #F9FAFB
+- Cards: white with subtle border/shadow
+- Font: system stack (e.g., -apple-system, Segoe UI, Roboto, Arial)
+- No hype language. Executive-grade.
+
+RESPONSIVE
+- Desktop matches screenshot proportions.
+- Mobile: stacks sections cleanly, buttons full width, nav collapses to simple hamburger.
+
+DELIVERABLE / DEPLOYMENT NOTE
+- Ensure the final site works by uploading ONLY index.html to SiteGround public_html.
+- Do not require any other files to render correctly.
+
+When finished, confirm in your response:
+- “This homepage renders correctly with only index.html present.”
+- “No external assets are required.”
