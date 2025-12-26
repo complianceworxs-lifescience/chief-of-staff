@@ -78,7 +78,7 @@ export default function SignUpPage() {
     });
 
     setTimeout(() => {
-      setLocation("/compliance");
+      setLocation("/app/dashboard");
     }, 500);
   };
 

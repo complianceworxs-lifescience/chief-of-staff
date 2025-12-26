@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap, ChevronDown, Bot } from "lucide-react";
+import { Bell, MessageSquare, TrendingUp, Lightbulb, Users, BarChart3, Target, Settings, Search, Zap, ChevronDown, Bot, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import chiefOfStaffIcon from "@assets/Screenshot (7)_1756066733450.png";
@@ -26,34 +26,39 @@ export function Layout({ children }: LayoutProps) {
   const notificationCount = activeConflicts.length;
 
   const navigationItems = [
-    { path: "/", label: "Command Center", icon: Zap },
-    { path: "/dashboard", label: "Strategic Cockpit", icon: BarChart3 },
+    { path: "/app", label: "Dashboard", icon: Zap },
+    { path: "/app/command", label: "Command Center", icon: BarChart3 },
     { 
-      path: "/goals", 
+      path: "/app/goals", 
       label: "Strategic Objectives", 
       icon: TrendingUp,
       submenu: [
-        { path: "/initiatives", label: "Initiatives", icon: Lightbulb },
-        { path: "/directive-center", label: "Directive Center", icon: Target },
-        { path: "/directives", label: "Directives", icon: Users },
-        { path: "/governance", label: "Governance", icon: Settings }
+        { path: "/app/initiatives", label: "Initiatives", icon: Lightbulb },
+        { path: "/app/directive-center", label: "Directive Center", icon: Target },
+        { path: "/app/directives", label: "Directives", icon: Users },
+        { path: "/app/governance", label: "Governance", icon: Settings }
       ]
     },
     { 
-      path: "/market-intelligence", 
+      path: "/app/market-intelligence", 
       label: "Market Intelligence", 
       icon: Search,
       submenu: [
-        { path: "/analytics", label: "Predictive Analytics", icon: TrendingUp },
-        { path: "/ai-assistant", label: "AI Assistant", icon: Bot }
+        { path: "/app/analytics", label: "Predictive Analytics", icon: TrendingUp },
+        { path: "/app/ai-assistant", label: "AI Assistant", icon: Bot }
       ]
     }
   ];
 
   const isActive = (path: string) => {
-    if (path === "/" && location === "/") return true;
-    if (path !== "/" && location.startsWith(path)) return true;
+    if (path === "/app" && (location === "/app" || location === "/app/dashboard")) return true;
+    if (path !== "/app" && location.startsWith(path)) return true;
     return false;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("cw_user");
+    window.location.href = "/";
   };
 
   const isParentActive = (item: any) => {
@@ -71,10 +76,12 @@ export function Layout({ children }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <Link href="/">
+              <Link href="/overview">
                 <div className="flex items-center space-x-2 cursor-pointer">
-                  <img src={chiefOfStaffIcon} alt="Chief of Staff" className="h-8 w-8 object-contain" />
-                  <h1 className="text-xl font-bold text-gray-900">Chief of Staff</h1>
+                  <div className="w-8 h-8 rounded-full bg-[#002D62] flex items-center justify-center">
+                    <Shield className="h-4 w-4 text-white" />
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-900">ComplianceWorxs</h1>
                 </div>
               </Link>
             </div>
@@ -158,6 +165,16 @@ export function Layout({ children }: LayoutProps) {
                   </span>
                 )}
               </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-gray-600 hover:text-red-600"
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
             </div>
           </div>
         </div>

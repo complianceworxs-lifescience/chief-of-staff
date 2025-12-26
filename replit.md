@@ -16,6 +16,26 @@ The application employs a full-stack architecture with a React-based SPA fronten
 **UI/UX Decisions:**
 The design prioritizes a clear, comprehensive dashboard and interactive command center, leveraging shadcn/ui with Radix UI primitives and Tailwind CSS.
 
+**Routing Architecture (Decoupled Sites):**
+- **Marketing Site (Public)**: Root-level routes for lead acquisition
+  - `/` and `/overview` → OverviewPage (landing)
+  - `/pricing` → PricingPage (tiers: $299, $899, Custom)
+  - `/blog` and `/blog/:id` → BlogPage, BlogPostPage
+  - `/faq` → FAQPage
+  - `/signup` and `/login` → Authentication (redirects to /app/dashboard)
+  - `/roi-calculator` → ROICalculator (lead magnet)
+- **Operations Portal (Private)**: `/app/*` prefix for authenticated members
+  - `/app` and `/app/dashboard` → ComplianceDashboard
+  - `/app/command` → ExecutiveCommand (Chief of Staff)
+  - `/app/analytics` → AnalyticsPage
+  - `/app/goals`, `/app/initiatives`, `/app/directives` → Strategic management
+  - `/app/governance`, `/app/governance/dashboard` → Governance views
+  - `/app/market-intelligence`, `/app/ai-assistant` → Intelligence tools
+  - `/app/coo`, `/app/cro`, `/app/executive` → Agent dashboards
+- **Session Persistence**: localStorage-based with "cw_user" key
+- **Lead-to-Member Flow**: /signup → auth → /app/dashboard
+- **Portal-to-Public**: Logo links to /overview, Logout clears session and redirects to /
+
 **Technical Implementations:**
 - **State Management**: TanStack Query for server state and local React state for UI components.
 - **Database Interaction**: Drizzle ORM provides type-safe PostgreSQL interactions and migrations.

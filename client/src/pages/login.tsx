@@ -61,7 +61,7 @@ export default function LoginPage() {
     });
 
     setTimeout(() => {
-      setLocation("/compliance");
+      setLocation("/app/dashboard");
     }, 500);
   };
 

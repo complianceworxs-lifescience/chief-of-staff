@@ -35,12 +35,9 @@ import BlogPostPage from "@/pages/blog-post";
 function Router() {
   const [location] = useLocation();
   
-  if (location === "/roi-calculator") {
-    return <ROICalculator />;
-  }
-
-  if (location === "/compliance") {
-    return <ComplianceDashboard />;
+  // Marketing Site (Public) - Root Level
+  if (location === "/" || location === "/overview") {
+    return <OverviewPage />;
   }
 
   if (location === "/pricing") {
@@ -55,10 +52,6 @@ function Router() {
     return <LoginPage />;
   }
 
-  if (location === "/overview") {
-    return <OverviewPage />;
-  }
-
   if (location === "/faq") {
     return <FAQPage />;
   }
@@ -71,27 +64,43 @@ function Router() {
     return <BlogPostPage />;
   }
 
-  return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={ExecutiveCommand} />
-        <Route path="/command" component={ExecutiveCommand} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/goals" component={Goals} />
-        <Route path="/initiatives" component={Initiatives} />
-        <Route path="/directive-center" component={DirectiveCenter} />
-        <Route path="/directives" component={Directives} />
-        <Route path="/analytics" component={AnalyticsPage} />
-        <Route path="/ai-assistant" component={AiAssistant} />
-        <Route path="/governance" component={GovernancePage} />
-        <Route path="/market-intelligence" component={MarketIntelligence} />
-        <Route path="/coo" component={COODashboard} />
-        <Route path="/cro" component={CRODashboard} />
-        <Route path="/governance/dashboard" component={GovernanceDashboard} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
-  );
+  if (location === "/roi-calculator") {
+    return <ROICalculator />;
+  }
+
+  // Operations Portal (Private) - /app prefix
+  if (location.startsWith("/app")) {
+    return (
+      <Layout>
+        <Switch>
+          <Route path="/app" component={ComplianceDashboard} />
+          <Route path="/app/dashboard" component={ComplianceDashboard} />
+          <Route path="/app/command" component={ExecutiveCommand} />
+          <Route path="/app/analytics" component={AnalyticsPage} />
+          <Route path="/app/goals" component={Goals} />
+          <Route path="/app/initiatives" component={Initiatives} />
+          <Route path="/app/directive-center" component={DirectiveCenter} />
+          <Route path="/app/directives" component={Directives} />
+          <Route path="/app/ai-assistant" component={AiAssistant} />
+          <Route path="/app/governance" component={GovernancePage} />
+          <Route path="/app/governance/dashboard" component={GovernanceDashboard} />
+          <Route path="/app/market-intelligence" component={MarketIntelligence} />
+          <Route path="/app/coo" component={COODashboard} />
+          <Route path="/app/cro" component={CRODashboard} />
+          <Route path="/app/executive" component={Dashboard} />
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    );
+  }
+
+  // Legacy routes redirect - maintain backwards compatibility (redirect to /app)
+  if (location === "/compliance" || location === "/dashboard") {
+    window.location.href = "/app/dashboard";
+    return null;
+  }
+
+  return <NotFound />;
 }
 
 function App() {
