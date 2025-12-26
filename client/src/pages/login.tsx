@@ -17,7 +17,8 @@ const colors = {
 const securityFeatures = [
   "21 CFR Part 11 compliant identity verification",
   "Enterprise-grade session management",
-  "Complete audit trail logging"
+  "Complete audit trail logging",
+  "Fully configured with enterprise-grade security"
 ];
 
 export default function LoginPage() {
