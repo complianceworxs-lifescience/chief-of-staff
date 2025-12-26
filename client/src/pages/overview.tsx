@@ -42,6 +42,9 @@ export default function OverviewPage() {
             <Link href="/pricing">
               <span className="text-white/80 hover:text-white cursor-pointer">Pricing</span>
             </Link>
+            <Link href="/blog">
+              <span className="text-white/80 hover:text-white cursor-pointer">Blog</span>
+            </Link>
             <Link href="/faq">
               <span className="text-white/80 hover:text-white cursor-pointer">FAQ</span>
             </Link>

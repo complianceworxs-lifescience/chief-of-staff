@@ -29,6 +29,8 @@ import SignUpPage from "@/pages/signup";
 import LoginPage from "@/pages/login";
 import OverviewPage from "@/pages/overview";
 import FAQPage from "@/pages/faq";
+import BlogPage from "@/pages/blog";
+import BlogPostPage from "@/pages/blog-post";
 
 function Router() {
   const [location] = useLocation();
@@ -59,6 +61,14 @@ function Router() {
 
   if (location === "/faq") {
     return <FAQPage />;
+  }
+
+  if (location === "/blog") {
+    return <BlogPage />;
+  }
+
+  if (location.startsWith("/blog/")) {
+    return <BlogPostPage />;
   }
 
   return (
