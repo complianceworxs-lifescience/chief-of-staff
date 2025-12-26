@@ -27,6 +27,8 @@ import ComplianceDashboard from "@/pages/compliance-dashboard";
 import PricingPage from "@/pages/pricing";
 import SignUpPage from "@/pages/signup";
 import LoginPage from "@/pages/login";
+import OverviewPage from "@/pages/overview";
+import FAQPage from "@/pages/faq";
 
 function Router() {
   const [location] = useLocation();
@@ -49,6 +51,14 @@ function Router() {
 
   if (location === "/login") {
     return <LoginPage />;
+  }
+
+  if (location === "/overview") {
+    return <OverviewPage />;
+  }
+
+  if (location === "/faq") {
+    return <FAQPage />;
   }
 
   return (
