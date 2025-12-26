@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { initGA } from "./lib/analytics";
 import { attachSSE } from "@/state/sseBridge";
 import { Layout } from "@/components/layout";
+import { UserProvider } from "@/contexts/user-context";
 import Dashboard from "@/pages/dashboard";
 import ExecutiveCommand from "@/pages/executive-command";
 import Goals from "@/pages/goals-fixed";
@@ -76,10 +77,12 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <UserProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </UserProvider>
     </QueryClientProvider>
   );
 }

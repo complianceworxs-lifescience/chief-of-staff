@@ -4,13 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, FileText, Search, Shield, Download,
-  Upload, ChevronRight, Calendar, Lightbulb, PlayCircle
+  Upload, ChevronRight, Calendar, Lightbulb, PlayCircle,
+  ClipboardCheck, Brain, CheckCircle, Clock
 } from "lucide-react";
 import { SOPUploadModal } from "@/components/sop-upload-modal";
 import { RemediationModal } from "@/components/remediation-modal";
 import { SmartNotifications } from "@/components/smart-notifications";
 import { RegulatoryFilters, type JurisdictionFilter, type ProductClassFilter } from "@/components/regulatory-filters";
 import { AuditSimulationModal } from "@/components/audit-simulation-modal";
+import { AuditLogModal } from "@/components/audit-log-modal";
+import { UserRoleSelector } from "@/components/user-role-selector";
+import { useUser } from "@/contexts/user-context";
+import { auditLog } from "@/services/audit-log";
+import { rsiLearning } from "@/services/rsi-learning";
 
 // 2025 Pharma Color Palette - Architect-validated specification
 const colors = {
@@ -40,7 +46,7 @@ interface SOPDocument {
   id: string;
   name: string;
   regulatoryStandard: string;
-  status: "major" | "moderate" | "compliant";
+  status: "major" | "moderate" | "compliant" | "review_requested";
   uploadedAt: string;
   gapDetails?: GapDetails;
 }
@@ -203,28 +209,40 @@ function StatusBadge({ status }: { status: SOPDocument["status"] }) {
       label: "Major Gap", 
       bg: "#FEE2E2", 
       text: colors.statusCritical,
-      border: "#FECACA"
+      border: "#FECACA",
+      icon: null
     },
     moderate: { 
       label: "Moderate", 
       bg: "#FEF3C7", 
       text: colors.statusWarning,
-      border: "#FDE68A"
+      border: "#FDE68A",
+      icon: null
     },
     compliant: { 
       label: "Compliant", 
       bg: "#DCFCE7", 
       text: colors.accentWellness,
-      border: "#BBF7D0"
+      border: "#BBF7D0",
+      icon: CheckCircle
+    },
+    review_requested: { 
+      label: "Review Requested", 
+      bg: "#E0F2FE", 
+      text: "#0284C7",
+      border: "#BAE6FD",
+      icon: Clock
     }
   };
 
-  const { label, bg, text, border } = config[status];
+  const { label, bg, text, border, icon: Icon } = config[status];
   return (
     <Badge 
       variant="outline" 
+      className="flex items-center gap-1"
       style={{ backgroundColor: bg, color: text, borderColor: border }}
     >
+      {Icon && <Icon className="w-3 h-3" />}
       {label}
     </Badge>
   );
@@ -377,15 +395,19 @@ function GapAnalysisTable({ documents, onSuggestFix }: { documents: SOPDocument[
 }
 
 export default function ComplianceDashboard() {
+  const { currentUser, hasPermission } = useUser();
   const [activeNav, setActiveNav] = useState("monitor");
   const [documents, setDocuments] = useState<ExtendedSOPDocument[]>(demoDocuments);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [remediationModalOpen, setRemediationModalOpen] = useState(false);
   const [auditSimulationOpen, setAuditSimulationOpen] = useState(false);
+  const [auditLogOpen, setAuditLogOpen] = useState(false);
   const [selectedGap, setSelectedGap] = useState<GapDetails | null>(null);
   
   const [jurisdictionFilter, setJurisdictionFilter] = useState<JurisdictionFilter>("all");
   const [productClassFilter, setProductClassFilter] = useState<ProductClassFilter>("all");
+
+  const learningMetrics = rsiLearning.getLearningMetrics();
 
   const filteredDocuments = useMemo(() => {
     return documents.filter(doc => {
@@ -425,7 +447,15 @@ export default function ComplianceDashboard() {
       productClass: "II"
     };
     setDocuments(prev => [...prev, newDoc]);
-    console.log("SOP classified:", result);
+    
+    auditLog.log(
+      "UPLOAD_SOP",
+      currentUser.id,
+      currentUser.name,
+      currentUser.role,
+      `Uploaded ${result.fileName}`,
+      { documentId: newDoc.id }
+    );
   };
 
   const handleSuggestFix = (gap: GapDetails) => {
@@ -466,18 +496,27 @@ export default function ComplianceDashboard() {
           <SidebarNav activeItem={activeNav} onItemClick={setActiveNav} />
         </div>
 
-        <div className="p-4" style={{ borderTop: `1px solid ${colors.borderLight}` }}>
+        <div className="p-4 space-y-4" style={{ borderTop: `1px solid ${colors.borderLight}` }}>
+          <UserRoleSelector />
+          
           <div 
             className="rounded-lg p-4"
             style={{ backgroundColor: colors.bgMain }}
           >
             <p className="text-xs mb-1" style={{ color: colors.textSecondary }}>Regulatory Engine Status</p>
             <div className="flex items-center gap-2">
-              <span 
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ backgroundColor: colors.accentWellness }}
-              ></span>
-              <span className="text-sm font-medium" style={{ color: colors.textPrimary }}>Active & Monitoring</span>
+              <Brain className="w-4 h-4" style={{ color: "#7C3AED" }} />
+              <span className="text-sm font-medium" style={{ color: colors.textPrimary }}>
+                {learningMetrics.systemStatus}
+              </span>
+            </div>
+            <div className="mt-2 pt-2" style={{ borderTop: `1px solid ${colors.borderLight}` }}>
+              <p className="text-xs" style={{ color: colors.textSecondary }}>
+                Learning Cycles: {learningMetrics.learningCycles}
+              </p>
+              <p className="text-xs" style={{ color: colors.textSecondary }}>
+                Total Overrides: {learningMetrics.totalOverrides}
+              </p>
             </div>
           </div>
         </div>
@@ -496,6 +535,17 @@ export default function ComplianceDashboard() {
               <p className="text-sm" style={{ color: colors.textSecondary }}>Real-time compliance health and regulatory intelligence</p>
             </div>
             <div className="flex items-center gap-3">
+              {hasPermission("export_audit_log") && (
+                <Button 
+                  variant="outline"
+                  onClick={() => setAuditLogOpen(true)}
+                  data-testid="button-audit-log"
+                  style={{ borderColor: colors.accentTrust, color: colors.accentTrust }}
+                >
+                  <ClipboardCheck className="w-4 h-4 mr-2" />
+                  Audit Log
+                </Button>
+              )}
               <Button 
                 variant="outline"
                 onClick={() => setAuditSimulationOpen(true)}
@@ -505,17 +555,19 @@ export default function ComplianceDashboard() {
                 <PlayCircle className="w-4 h-4 mr-2" />
                 Simulate Audit
               </Button>
-              <Button 
-                onClick={handleUpload}
-                data-testid="button-header-upload"
-                className="text-white"
-                style={{ backgroundColor: colors.accentWarm }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accentWarmHover}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accentWarm}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload SOP
-              </Button>
+              {hasPermission("upload_sop") && (
+                <Button 
+                  onClick={handleUpload}
+                  data-testid="button-header-upload"
+                  className="text-white"
+                  style={{ backgroundColor: colors.accentWarm }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accentWarmHover}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accentWarm}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload SOP
+                </Button>
+              )}
             </div>
           </div>
         </header>
@@ -658,6 +710,11 @@ export default function ComplianceDashboard() {
         open={auditSimulationOpen}
         onClose={() => setAuditSimulationOpen(false)}
         documents={filteredDocuments}
+      />
+
+      <AuditLogModal
+        open={auditLogOpen}
+        onClose={() => setAuditLogOpen(false)}
       />
     </div>
   );
