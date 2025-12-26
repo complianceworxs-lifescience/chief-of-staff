@@ -1,0 +1,42 @@
+Phase 2: SOP Upload Interface Logic
+The SOP Upload interface is the ingestion point for the portal’s intelligence engine. To maintain a "zero-touch" flow, the system must automatically classify the document type and select the appropriate regulatory track (FDA or ISO) without user input.
+
+1. Technical Ingestion Logic
+The AI follows a three-step sequence to identify and prepare the document:
+
+Metadata Extraction: The system identifies file properties (e.g., "Quality Manual," "Work Instruction") to set the initial context.
+
+Keyword Classification: The engine scans for regulatory anchors like "21 CFR 820," "ISO 13485," or "Design Control" to determine if the document is US-based or international.
+
+Structure Validation: The AI verifies the presence of standard SOP components (Purpose, Scope, Responsibilities) to ensure the file is a valid QMS document and not an unrelated PDF.
+
+2. Interface Elements
+Drop Zone: A clean, Navy-bordered (#002D62) area for drag-and-drop functionality.
+
+Dynamic Status Indicator: Real-time feedback showing "Identifying Document Type..." followed by a confirmed tag (e.g., Type: Change Control SOP).
+
+Track Selection (Auto-Select): A visual toggle that automatically switches to the "FDA Track" or "ISO Track" based on the document's internal references.
+
+Replit Agent Instruction: SOP Ingestion Logic
+Copy and paste this into your chat to build the upload backend:
+
+@replit Implement the SOP Upload & Classification logic:
+
+File Picker: Create an upload field that accepts .pdf and .docx files.
+
+Classification Engine: Write a function that searches the first 500 words of the document for strings like "820," "13485," or "QMS".
+
+State Management:
+
+If "820" is found → Set RegulatoryTrack to FDA.
+
+If "13485" is found → Set RegulatoryTrack to ISO.
+
+Else → Default to General QMS.
+
+UI Feedback: Display a Teal (#00A3A1) chip on the dashboard showing the identified track and document category.
+
+Why this is the "Architect" Approach
+Eliminates Setup Error: Automating the track selection prevents users from analyzing an ISO-based SOP against FDA laws, ensuring the "Gap Analysis" results are always technically accurate.
+
+Instant Context: By classifying the document type immediately, the AI can prioritize the most relevant "Action Items" for that specific document category.

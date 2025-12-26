@@ -4,8 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, FileText, Search, Shield, Download,
-  Upload, ChevronRight, Calendar, AlertTriangle
+  Upload, ChevronRight, Calendar
 } from "lucide-react";
+
+// 2025 Pharma Color Palette
+const colors = {
+  // Primary palette - balanced and human-centric
+  coral: "#E07A5F",         // Primary CTA - energetic, human-centric
+  coralHover: "#C96A52",
+  teal: "#2A6B6B",          // Structural elements - health/reliability
+  tealLight: "#3D8B8B",
+  sage: "#6B9080",          // Positive states - natural wellness
+  sageLight: "#8FB5A3",
+  
+  // Neutrals with warmth
+  slate: "#374151",         // Primary text
+  slateLight: "#6B7280",    // Secondary text
+  warmWhite: "#FAFAF8",     // Background
+  cream: "#F5F4F0",         // Card backgrounds
+  sand: "#E8E4DC",          // Borders
+  
+  // Status colors
+  alertRed: "#C44536",
+  warningAmber: "#D4A03B",
+  successGreen: "#5A8F7B"
+};
 
 interface SOPDocument {
   id: string;
@@ -48,9 +71,9 @@ function RiskScoreGauge({ score }: { score: number }) {
   const strokeDashoffset = strokeDasharray - (strokeDasharray * percentage) / 100;
   
   const getScoreColor = (s: number) => {
-    if (s <= 3) return "#10B981";
-    if (s <= 6) return "#F59E0B";
-    return "#DC2626";
+    if (s <= 3) return colors.sage;
+    if (s <= 6) return colors.warningAmber;
+    return colors.alertRed;
   };
 
   return (
@@ -60,7 +83,7 @@ function RiskScoreGauge({ score }: { score: number }) {
           <path
             d="M5 50 A 45 45 0 0 1 95 50"
             fill="none"
-            stroke="#E5E7EB"
+            stroke={colors.sand}
             strokeWidth="8"
             strokeLinecap="round"
           />
@@ -76,20 +99,32 @@ function RiskScoreGauge({ score }: { score: number }) {
           />
         </svg>
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-          <span className="text-4xl font-bold text-[#002D62]">{score.toFixed(1)}</span>
+          <span className="text-4xl font-bold" style={{ color: colors.slate }}>{score.toFixed(1)}</span>
         </div>
       </div>
-      <p className="text-sm text-gray-500 mt-2">Executive Impact Score</p>
+      <p className="text-sm mt-2" style={{ color: colors.slateLight }}>Executive Impact Score</p>
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: SOPDocument["status"] }) {
   const config = {
-    major: { label: "Major Gap", className: "bg-red-100 text-red-700 border-red-200" },
-    moderate: { label: "Moderate", className: "bg-yellow-100 text-yellow-700 border-yellow-200" },
-    compliant: { label: "Compliant", className: "bg-green-100 text-green-700 border-green-200" }
+    major: { label: "Major Gap", className: "bg-red-50 text-red-700 border-red-200" },
+    moderate: { label: "Moderate", className: "bg-amber-50 text-amber-700 border-amber-200" },
+    compliant: { label: "Compliant", bg: colors.sage, text: "white" }
   };
+
+  if (status === "compliant") {
+    return (
+      <Badge 
+        variant="outline" 
+        className="border-0"
+        style={{ backgroundColor: `${colors.sage}20`, color: colors.sage }}
+      >
+        Compliant
+      </Badge>
+    );
+  }
 
   const { label, className } = config[status];
   return <Badge variant="outline" className={className}>{label}</Badge>;
@@ -110,16 +145,29 @@ function SidebarNav({ activeItem, onItemClick }: { activeItem: string; onItemCli
           key={item.id}
           onClick={() => onItemClick(item.id)}
           data-testid={`nav-${item.id}`}
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-            activeItem === item.id
-              ? "bg-[#00A3A1] text-white"
-              : "text-gray-300 hover:bg-[#003d7a] hover:text-white"
-          }`}
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all"
+          style={{
+            backgroundColor: activeItem === item.id ? colors.coral : "transparent",
+            color: activeItem === item.id ? "white" : colors.slate,
+          }}
+          onMouseEnter={(e) => {
+            if (activeItem !== item.id) {
+              e.currentTarget.style.backgroundColor = colors.sand;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (activeItem !== item.id) {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }
+          }}
         >
           <item.icon className="w-5 h-5 flex-shrink-0" />
           <div>
             <p className="font-medium text-sm">{item.label}</p>
-            <p className={`text-xs ${activeItem === item.id ? "text-white/70" : "text-gray-500"}`}>
+            <p 
+              className="text-xs"
+              style={{ color: activeItem === item.id ? "rgba(255,255,255,0.7)" : colors.slateLight }}
+            >
               {item.description}
             </p>
           </div>
@@ -132,17 +180,23 @@ function SidebarNav({ activeItem, onItemClick }: { activeItem: string; onItemCli
 function EmptyState({ onUpload }: { onUpload: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-        <FileText className="w-10 h-10 text-gray-400" />
+      <div 
+        className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+        style={{ backgroundColor: colors.cream }}
+      >
+        <FileText className="w-10 h-10" style={{ color: colors.slateLight }} />
       </div>
-      <h3 className="text-xl font-semibold text-[#002D62] mb-2">No SOPs Uploaded</h3>
-      <p className="text-gray-500 text-center max-w-md mb-6">
+      <h3 className="text-xl font-semibold mb-2" style={{ color: colors.slate }}>No SOPs Uploaded</h3>
+      <p className="text-center max-w-md mb-6" style={{ color: colors.slateLight }}>
         Upload your first Standard Operating Procedure to begin the automated gap analysis process.
       </p>
       <Button 
         onClick={onUpload}
         data-testid="button-upload-sop"
-        className="bg-[#00A3A1] hover:bg-[#008B89] text-white px-8 py-6 text-lg"
+        className="px-8 py-6 text-lg text-white"
+        style={{ backgroundColor: colors.coral }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.coralHover}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.coral}
       >
         <Upload className="w-5 h-5 mr-2" />
         Upload First SOP to Begin Assessment
@@ -160,28 +214,37 @@ function GapAnalysisTable({ documents }: { documents: SOPDocument[] }) {
     <div className="overflow-x-auto">
       <table className="w-full" data-testid="table-gap-analysis">
         <thead>
-          <tr className="border-b border-gray-200">
-            <th className="text-left py-3 px-4 font-semibold text-[#002D62]">Document Name</th>
-            <th className="text-left py-3 px-4 font-semibold text-[#002D62]">Regulatory Standard</th>
-            <th className="text-left py-3 px-4 font-semibold text-[#002D62]">Status</th>
-            <th className="text-right py-3 px-4 font-semibold text-[#002D62]">Actions</th>
+          <tr style={{ borderBottom: `1px solid ${colors.sand}` }}>
+            <th className="text-left py-3 px-4 font-semibold" style={{ color: colors.slate }}>Document Name</th>
+            <th className="text-left py-3 px-4 font-semibold" style={{ color: colors.slate }}>Regulatory Standard</th>
+            <th className="text-left py-3 px-4 font-semibold" style={{ color: colors.slate }}>Status</th>
+            <th className="text-right py-3 px-4 font-semibold" style={{ color: colors.slate }}>Actions</th>
           </tr>
         </thead>
         <tbody>
           {documents.map((doc) => (
-            <tr key={doc.id} className="border-b border-gray-100 hover:bg-gray-50" data-testid={`row-document-${doc.id}`}>
+            <tr 
+              key={doc.id} 
+              className="hover:bg-gray-50" 
+              style={{ borderBottom: `1px solid ${colors.cream}` }}
+              data-testid={`row-document-${doc.id}`}
+            >
               <td className="py-3 px-4">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-gray-400" />
-                  <span className="font-medium text-gray-800">{doc.name}</span>
+                  <FileText className="w-4 h-4" style={{ color: colors.slateLight }} />
+                  <span className="font-medium" style={{ color: colors.slate }}>{doc.name}</span>
                 </div>
               </td>
-              <td className="py-3 px-4 text-gray-600">{doc.regulatoryStandard}</td>
+              <td className="py-3 px-4" style={{ color: colors.slateLight }}>{doc.regulatoryStandard}</td>
               <td className="py-3 px-4">
                 <StatusBadge status={doc.status} />
               </td>
               <td className="py-3 px-4 text-right">
-                <Button variant="ghost" size="sm" className="text-[#00A3A1]">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  style={{ color: colors.teal }}
+                >
                   View Details <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </td>
@@ -207,16 +270,29 @@ export default function ComplianceDashboard() {
   const hasDocuments = documents.length > 0;
 
   return (
-    <div className="flex h-screen bg-[#F9FAFB]">
-      <aside className="w-72 bg-[#002D62] text-white flex flex-col">
-        <div className="p-6 border-b border-[#003d7a]">
+    <div className="flex h-screen" style={{ backgroundColor: colors.warmWhite }}>
+      {/* Sidebar - Light warm palette with teal accent strip */}
+      <aside 
+        className="w-72 flex flex-col border-r"
+        style={{ backgroundColor: colors.cream, borderColor: colors.sand }}
+      >
+        {/* Teal accent header */}
+        <div 
+          className="p-6"
+          style={{ 
+            background: `linear-gradient(135deg, ${colors.teal} 0%, ${colors.tealLight} 100%)`,
+          }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#00A3A1] flex items-center justify-center">
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
+            >
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg">ComplianceWorxs</h1>
-              <p className="text-xs text-gray-400">Command Center</p>
+              <h1 className="font-bold text-lg text-white">ComplianceWorxs</h1>
+              <p className="text-xs text-white/70">Command Center</p>
             </div>
           </div>
         </div>
@@ -225,28 +301,40 @@ export default function ComplianceDashboard() {
           <SidebarNav activeItem={activeNav} onItemClick={setActiveNav} />
         </div>
 
-        <div className="p-4 border-t border-[#003d7a]">
-          <div className="bg-[#003d7a] rounded-lg p-4">
-            <p className="text-xs text-gray-400 mb-1">Regulatory Engine Status</p>
+        <div className="p-4" style={{ borderTop: `1px solid ${colors.sand}` }}>
+          <div 
+            className="rounded-lg p-4"
+            style={{ backgroundColor: colors.warmWhite }}
+          >
+            <p className="text-xs mb-1" style={{ color: colors.slateLight }}>Regulatory Engine Status</p>
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium">Active & Monitoring</span>
+              <span 
+                className="w-2 h-2 rounded-full animate-pulse"
+                style={{ backgroundColor: colors.sage }}
+              ></span>
+              <span className="text-sm font-medium" style={{ color: colors.slate }}>Active & Monitoring</span>
             </div>
           </div>
         </div>
       </aside>
 
       <main className="flex-1 overflow-y-auto">
-        <header className="bg-white border-b border-gray-200 px-8 py-4">
+        <header 
+          className="bg-white border-b px-8 py-4"
+          style={{ borderColor: colors.sand }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-[#002D62]">Executive Command Center</h2>
-              <p className="text-gray-500 text-sm">Real-time compliance health and regulatory intelligence</p>
+              <h2 className="text-2xl font-bold" style={{ color: colors.slate }}>Executive Command Center</h2>
+              <p className="text-sm" style={{ color: colors.slateLight }}>Real-time compliance health and regulatory intelligence</p>
             </div>
             <Button 
               onClick={handleUpload}
               data-testid="button-header-upload"
-              className="bg-[#00A3A1] hover:bg-[#008B89] text-white"
+              className="text-white"
+              style={{ backgroundColor: colors.coral }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.coralHover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.coral}
             >
               <Upload className="w-4 h-4 mr-2" />
               Upload SOP
@@ -256,43 +344,52 @@ export default function ComplianceDashboard() {
 
         <div className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <Card className="lg:col-span-1">
+            <Card className="lg:col-span-1 border" style={{ borderColor: colors.sand, backgroundColor: "white" }}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-[#002D62]">Executive Impact Score</CardTitle>
+                <CardTitle className="text-lg" style={{ color: colors.slate }}>Executive Impact Score</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-center pt-4">
                 <RiskScoreGauge score={riskScore} />
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-1">
+            <Card className="lg:col-span-1 border" style={{ borderColor: colors.sand, backgroundColor: "white" }}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-[#002D62]">Active Gaps Summary</CardTitle>
+                <CardTitle className="text-lg" style={{ color: colors.slate }}>Active Gaps Summary</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 pt-4">
-                  <div className="flex-1 text-center p-4 bg-red-50 rounded-lg border border-red-100">
-                    <p className="text-3xl font-bold text-red-600">{gapSummary.major}</p>
-                    <p className="text-xs text-red-600 font-medium">Major</p>
+                  <div 
+                    className="flex-1 text-center p-4 rounded-lg border"
+                    style={{ backgroundColor: "#FEF2F2", borderColor: "#FECACA" }}
+                  >
+                    <p className="text-3xl font-bold" style={{ color: colors.alertRed }}>{gapSummary.major}</p>
+                    <p className="text-xs font-medium" style={{ color: colors.alertRed }}>Major</p>
                   </div>
-                  <div className="flex-1 text-center p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-                    <p className="text-3xl font-bold text-yellow-600">{gapSummary.moderate}</p>
-                    <p className="text-xs text-yellow-600 font-medium">Moderate</p>
+                  <div 
+                    className="flex-1 text-center p-4 rounded-lg border"
+                    style={{ backgroundColor: "#FFFBEB", borderColor: "#FDE68A" }}
+                  >
+                    <p className="text-3xl font-bold" style={{ color: colors.warningAmber }}>{gapSummary.moderate}</p>
+                    <p className="text-xs font-medium" style={{ color: colors.warningAmber }}>Moderate</p>
                   </div>
-                  <div className="flex-1 text-center p-4 bg-green-50 rounded-lg border border-green-100">
-                    <p className="text-3xl font-bold text-green-600">{gapSummary.minor}</p>
-                    <p className="text-xs text-green-600 font-medium">Minor</p>
+                  <div 
+                    className="flex-1 text-center p-4 rounded-lg border"
+                    style={{ backgroundColor: `${colors.sage}15`, borderColor: `${colors.sage}40` }}
+                  >
+                    <p className="text-3xl font-bold" style={{ color: colors.sage }}>{gapSummary.minor}</p>
+                    <p className="text-xs font-medium" style={{ color: colors.sage }}>Minor</p>
                   </div>
                 </div>
                 {totalGaps === 0 && (
-                  <p className="text-center text-gray-400 text-sm mt-4">No gaps detected yet</p>
+                  <p className="text-center text-sm mt-4" style={{ color: colors.slateLight }}>No gaps detected yet</p>
                 )}
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-1">
+            <Card className="lg:col-span-1 border" style={{ borderColor: colors.sand, backgroundColor: "white" }}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-[#002D62] flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2" style={{ color: colors.slate }}>
                   <Calendar className="w-4 h-4" />
                   Regulatory Runway
                 </CardTitle>
@@ -300,7 +397,13 @@ export default function ComplianceDashboard() {
               <CardContent>
                 <div className="space-y-3 pt-2">
                   {mockRegulatoryUpdates.map((update) => (
-                    <div key={update.id} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50">
+                    <div 
+                      key={update.id} 
+                      className="flex items-center gap-3 p-2 rounded transition-colors"
+                      style={{ cursor: "pointer" }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.cream}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                    >
                       <Badge 
                         variant="outline" 
                         className={
@@ -312,8 +415,8 @@ export default function ComplianceDashboard() {
                         {update.type}
                       </Badge>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{update.title}</p>
-                        <p className="text-xs text-gray-500">{update.effectiveDate}</p>
+                        <p className="text-sm font-medium truncate" style={{ color: colors.slate }}>{update.title}</p>
+                        <p className="text-xs" style={{ color: colors.slateLight }}>{update.effectiveDate}</p>
                       </div>
                     </div>
                   ))}
@@ -322,9 +425,9 @@ export default function ComplianceDashboard() {
             </Card>
           </div>
 
-          <Card>
+          <Card className="border" style={{ borderColor: colors.sand, backgroundColor: "white" }}>
             <CardHeader>
-              <CardTitle className="text-lg text-[#002D62] flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2" style={{ color: colors.slate }}>
                 <Search className="w-5 h-5" />
                 Gap Analysis Preview
               </CardTitle>
