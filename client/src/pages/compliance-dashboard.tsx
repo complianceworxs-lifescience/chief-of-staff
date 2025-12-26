@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, FileText, Search, Shield, Download,
-  Upload, ChevronRight, Calendar, Lightbulb
+  Upload, ChevronRight, Calendar, Lightbulb, PlayCircle
 } from "lucide-react";
 import { SOPUploadModal } from "@/components/sop-upload-modal";
 import { RemediationModal } from "@/components/remediation-modal";
+import { SmartNotifications } from "@/components/smart-notifications";
+import { RegulatoryFilters, type JurisdictionFilter, type ProductClassFilter } from "@/components/regulatory-filters";
+import { AuditSimulationModal } from "@/components/audit-simulation-modal";
 
 // 2025 Pharma Color Palette - Architect-validated specification
 const colors = {
@@ -64,13 +67,20 @@ interface RegulatoryUpdate {
   type: "FDA" | "ISO" | "EMA";
 }
 
-const demoDocuments: SOPDocument[] = [
+interface ExtendedSOPDocument extends SOPDocument {
+  jurisdiction: "FDA" | "EMA" | "ISO";
+  productClass: "I" | "II" | "III";
+}
+
+const demoDocuments: ExtendedSOPDocument[] = [
   {
     id: "demo-1",
     name: "Design Control SOP v2.3.pdf",
     regulatoryStandard: "21 CFR 820",
     status: "major",
     uploadedAt: "2025-01-15T10:30:00Z",
+    jurisdiction: "FDA",
+    productClass: "II",
     gapDetails: {
       id: "gap-1",
       sopSection: "Section 4.2 - Design Output Verification",
@@ -90,6 +100,8 @@ Documentation is maintained per company standards.`
     regulatoryStandard: "ISO 13485",
     status: "moderate",
     uploadedAt: "2025-01-14T14:15:00Z",
+    jurisdiction: "ISO",
+    productClass: "II",
     gapDetails: {
       id: "gap-2",
       sopSection: "Section 5.3 - Record Control",
@@ -108,7 +120,18 @@ Retention periods follow company policy.`
     name: "Training Management SOP.pdf",
     regulatoryStandard: "ISO 13485",
     status: "compliant",
-    uploadedAt: "2025-01-13T09:00:00Z"
+    uploadedAt: "2025-01-13T09:00:00Z",
+    jurisdiction: "ISO",
+    productClass: "I"
+  },
+  {
+    id: "demo-4",
+    name: "EU MDR Technical Documentation.pdf",
+    regulatoryStandard: "EU MDR 2017/745",
+    status: "compliant",
+    uploadedAt: "2025-01-12T11:00:00Z",
+    jurisdiction: "EMA",
+    productClass: "III"
   }
 ];
 
@@ -355,24 +378,51 @@ function GapAnalysisTable({ documents, onSuggestFix }: { documents: SOPDocument[
 
 export default function ComplianceDashboard() {
   const [activeNav, setActiveNav] = useState("monitor");
-  const [documents, setDocuments] = useState<SOPDocument[]>(demoDocuments);
-  const [gapSummary] = useState<GapSummary>(demoGapSummary);
-  const [riskScore] = useState(4.2);
+  const [documents, setDocuments] = useState<ExtendedSOPDocument[]>(demoDocuments);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [remediationModalOpen, setRemediationModalOpen] = useState(false);
+  const [auditSimulationOpen, setAuditSimulationOpen] = useState(false);
   const [selectedGap, setSelectedGap] = useState<GapDetails | null>(null);
+  
+  const [jurisdictionFilter, setJurisdictionFilter] = useState<JurisdictionFilter>("all");
+  const [productClassFilter, setProductClassFilter] = useState<ProductClassFilter>("all");
+
+  const filteredDocuments = useMemo(() => {
+    return documents.filter(doc => {
+      const matchesJurisdiction = jurisdictionFilter === "all" || doc.jurisdiction === jurisdictionFilter;
+      const matchesProductClass = productClassFilter === "all" || doc.productClass === productClassFilter;
+      return matchesJurisdiction && matchesProductClass;
+    });
+  }, [documents, jurisdictionFilter, productClassFilter]);
+
+  const filteredGapSummary = useMemo(() => {
+    return {
+      major: filteredDocuments.filter(d => d.status === "major").length,
+      moderate: filteredDocuments.filter(d => d.status === "moderate").length,
+      minor: 0
+    };
+  }, [filteredDocuments]);
+
+  const filteredRiskScore = useMemo(() => {
+    if (filteredDocuments.length === 0) return 0;
+    const majorWeight = filteredGapSummary.major * 3;
+    const moderateWeight = filteredGapSummary.moderate * 1.5;
+    return Math.min(10, (majorWeight + moderateWeight) / filteredDocuments.length * 5);
+  }, [filteredDocuments, filteredGapSummary]);
 
   const handleUpload = () => {
     setUploadModalOpen(true);
   };
 
   const handleUploadComplete = (result: { track: string; documentType: string; fileName: string }) => {
-    const newDoc: SOPDocument = {
+    const newDoc: ExtendedSOPDocument = {
       id: `doc-${Date.now()}`,
       name: result.fileName,
       regulatoryStandard: result.track === "FDA" ? "21 CFR 820" : result.track === "ISO" ? "ISO 13485" : "General QMS",
       status: "compliant",
-      uploadedAt: new Date().toISOString()
+      uploadedAt: new Date().toISOString(),
+      jurisdiction: result.track === "FDA" ? "FDA" : result.track === "ISO" ? "ISO" : "EMA",
+      productClass: "II"
     };
     setDocuments(prev => [...prev, newDoc]);
     console.log("SOP classified:", result);
@@ -383,8 +433,8 @@ export default function ComplianceDashboard() {
     setRemediationModalOpen(true);
   };
 
-  const totalGaps = gapSummary.major + gapSummary.moderate + gapSummary.minor;
-  const hasDocuments = documents.length > 0;
+  const totalGaps = filteredGapSummary.major + filteredGapSummary.moderate + filteredGapSummary.minor;
+  const hasDocuments = filteredDocuments.length > 0;
 
   return (
     <div className="cw-light-theme flex h-screen" style={{ backgroundColor: colors.bgMain }}>
@@ -433,7 +483,9 @@ export default function ComplianceDashboard() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <SmartNotifications jurisdictionFilter={jurisdictionFilter === "all" ? "all" : jurisdictionFilter} />
+        
         <header 
           className="border-b px-8 py-4"
           style={{ backgroundColor: colors.cardBg, borderColor: colors.borderLight }}
@@ -443,21 +495,39 @@ export default function ComplianceDashboard() {
               <h2 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Executive Command Center</h2>
               <p className="text-sm" style={{ color: colors.textSecondary }}>Real-time compliance health and regulatory intelligence</p>
             </div>
-            <Button 
-              onClick={handleUpload}
-              data-testid="button-header-upload"
-              className="text-white"
-              style={{ backgroundColor: colors.accentWarm }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accentWarmHover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accentWarm}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload SOP
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={() => setAuditSimulationOpen(true)}
+                data-testid="button-simulate-audit"
+                style={{ borderColor: "#00A3A1", color: "#00A3A1" }}
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Simulate Audit
+              </Button>
+              <Button 
+                onClick={handleUpload}
+                data-testid="button-header-upload"
+                className="text-white"
+                style={{ backgroundColor: colors.accentWarm }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.accentWarmHover}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.accentWarm}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload SOP
+              </Button>
+            </div>
           </div>
         </header>
 
-        <div className="p-8">
+        <RegulatoryFilters
+          jurisdiction={jurisdictionFilter}
+          productClass={productClassFilter}
+          onJurisdictionChange={setJurisdictionFilter}
+          onProductClassChange={setProductClassFilter}
+        />
+
+        <div className="flex-1 overflow-y-auto p-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <Card 
               className="lg:col-span-1 border shadow-sm" 
@@ -467,7 +537,7 @@ export default function ComplianceDashboard() {
                 <CardTitle className="text-lg" style={{ color: colors.textPrimary }}>Executive Impact Score</CardTitle>
               </CardHeader>
               <CardContent className="flex justify-center pt-4">
-                <RiskScoreGauge score={riskScore} />
+                <RiskScoreGauge score={filteredRiskScore} />
               </CardContent>
             </Card>
 
@@ -484,21 +554,21 @@ export default function ComplianceDashboard() {
                     className="flex-1 text-center p-4 rounded-lg border"
                     style={{ backgroundColor: "#FEE2E2", borderColor: "#FECACA" }}
                   >
-                    <p className="text-3xl font-bold" style={{ color: colors.statusCritical }}>{gapSummary.major}</p>
+                    <p className="text-3xl font-bold" style={{ color: colors.statusCritical }}>{filteredGapSummary.major}</p>
                     <p className="text-xs font-medium" style={{ color: colors.statusCritical }}>Major</p>
                   </div>
                   <div 
                     className="flex-1 text-center p-4 rounded-lg border"
                     style={{ backgroundColor: "#FEF3C7", borderColor: "#FDE68A" }}
                   >
-                    <p className="text-3xl font-bold" style={{ color: colors.statusWarning }}>{gapSummary.moderate}</p>
+                    <p className="text-3xl font-bold" style={{ color: colors.statusWarning }}>{filteredGapSummary.moderate}</p>
                     <p className="text-xs font-medium" style={{ color: colors.statusWarning }}>Moderate</p>
                   </div>
                   <div 
                     className="flex-1 text-center p-4 rounded-lg border"
                     style={{ backgroundColor: "#DCFCE7", borderColor: "#BBF7D0" }}
                   >
-                    <p className="text-3xl font-bold" style={{ color: colors.accentWellness }}>{gapSummary.minor}</p>
+                    <p className="text-3xl font-bold" style={{ color: colors.accentWellness }}>{filteredGapSummary.minor}</p>
                     <p className="text-xs font-medium" style={{ color: colors.accentWellness }}>Minor</p>
                   </div>
                 </div>
@@ -563,7 +633,7 @@ export default function ComplianceDashboard() {
             </CardHeader>
             <CardContent>
               {hasDocuments ? (
-                <GapAnalysisTable documents={documents} onSuggestFix={handleSuggestFix} />
+                <GapAnalysisTable documents={filteredDocuments} onSuggestFix={handleSuggestFix} />
               ) : (
                 <EmptyState onUpload={handleUpload} />
               )}
@@ -582,6 +652,12 @@ export default function ComplianceDashboard() {
         open={remediationModalOpen}
         onClose={() => setRemediationModalOpen(false)}
         gap={selectedGap}
+      />
+
+      <AuditSimulationModal
+        open={auditSimulationOpen}
+        onClose={() => setAuditSimulationOpen(false)}
+        documents={filteredDocuments}
       />
     </div>
   );
