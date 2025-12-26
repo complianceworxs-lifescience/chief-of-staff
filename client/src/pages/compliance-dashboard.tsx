@@ -6,6 +6,7 @@ import {
   Activity, FileText, Search, Shield, Download,
   Upload, ChevronRight, Calendar
 } from "lucide-react";
+import { SOPUploadModal } from "@/components/sop-upload-modal";
 
 // 2025 Pharma Color Palette - Architect-validated specification
 const colors = {
@@ -271,12 +272,25 @@ function GapAnalysisTable({ documents }: { documents: SOPDocument[] }) {
 
 export default function ComplianceDashboard() {
   const [activeNav, setActiveNav] = useState("monitor");
-  const [documents] = useState<SOPDocument[]>(mockDocuments);
+  const [documents, setDocuments] = useState<SOPDocument[]>(mockDocuments);
   const [gapSummary] = useState<GapSummary>(mockGapSummary);
   const [riskScore] = useState(0.0);
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   const handleUpload = () => {
-    console.log("Upload SOP clicked - Phase 3 will implement file upload");
+    setUploadModalOpen(true);
+  };
+
+  const handleUploadComplete = (result: { track: string; documentType: string; fileName: string }) => {
+    const newDoc: SOPDocument = {
+      id: `doc-${Date.now()}`,
+      name: result.fileName,
+      regulatoryStandard: result.track === "FDA" ? "21 CFR 820" : result.track === "ISO" ? "ISO 13485" : "General QMS",
+      status: "compliant",
+      uploadedAt: new Date().toISOString()
+    };
+    setDocuments(prev => [...prev, newDoc]);
+    console.log("SOP classified:", result);
   };
 
   const totalGaps = gapSummary.major + gapSummary.moderate + gapSummary.minor;
@@ -467,6 +481,12 @@ export default function ComplianceDashboard() {
           </Card>
         </div>
       </main>
+
+      <SOPUploadModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUploadComplete={handleUploadComplete}
+      />
     </div>
   );
 }
