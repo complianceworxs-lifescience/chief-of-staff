@@ -75,43 +75,43 @@ export default function FAQPage() {
     <div className="cw-light-theme min-h-screen" style={{ backgroundColor: colors.bgMain }}>
       <header 
         className="border-b sticky top-0 z-50"
-        style={{ backgroundColor: colors.accentTrust, borderColor: colors.borderLight }}
+        style={{ backgroundColor: colors.cardBg, borderColor: colors.borderLight }}
       >
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-3 cursor-pointer">
               <div 
                 className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                style={{ backgroundColor: colors.accentTeal }}
               >
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl" style={{ color: "#FFFFFF" }}>ComplianceWorxs</span>
+              <span className="font-bold text-xl" style={{ color: colors.textPrimary }}>ComplianceWorxs</span>
             </div>
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/overview">
-              <span className="text-white/80 hover:text-white cursor-pointer">Overview</span>
+              <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Overview</span>
             </Link>
             <Link href="/pricing">
-              <span className="text-white/80 hover:text-white cursor-pointer">Pricing</span>
+              <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Pricing</span>
             </Link>
             <Link href="/blog">
-              <span className="text-white/80 hover:text-white cursor-pointer">Blog</span>
+              <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Blog</span>
             </Link>
             <Link href="/faq">
-              <span className="text-white cursor-pointer font-medium">FAQ</span>
+              <span style={{ color: colors.textPrimary }} className="cursor-pointer font-medium">FAQ</span>
             </Link>
             <a href={`${PORTAL_URL}/login`}>
-              <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
+              <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Log in</span>
             </a>
             <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 className="text-white font-semibold"
-                style={{ backgroundColor: colors.accentWarm }}
+                style={{ backgroundColor: colors.accentTeal }}
                 data-testid="button-header-signup"
               >
-                Sign Up Free
+                Sign Up
               </Button>
             </a>
           </nav>
