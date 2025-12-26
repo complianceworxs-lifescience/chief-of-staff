@@ -22,12 +22,17 @@ import { CRODashboard } from "@/components/CRODashboard";
 import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
 import ROICalculator from "@/pages/roi-calculator";
+import ComplianceDashboard from "@/pages/compliance-dashboard";
 
 function Router() {
   const [location] = useLocation();
   
   if (location === "/roi-calculator") {
     return <ROICalculator />;
+  }
+
+  if (location === "/compliance") {
+    return <ComplianceDashboard />;
   }
 
   return (
