@@ -283,7 +283,7 @@ export default function ComplianceDashboard() {
   const hasDocuments = documents.length > 0;
 
   return (
-    <div className="flex h-screen" style={{ backgroundColor: colors.bgMain }}>
+    <div className="cw-light-theme flex h-screen" style={{ backgroundColor: colors.bgMain }}>
       {/* Sidebar - Clean white with Navy strategic anchor */}
       <aside 
         className="w-72 flex flex-col border-r"

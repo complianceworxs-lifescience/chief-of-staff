@@ -2,63 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ComplianceWorxs Brand Styling - HIGH CONTRAST FOR READABILITY */
-:root{
-  --bg:#0b2742;--panel:#1a4d6b;--ink:#ffffff;--muted:#e0e7ff;--accent:#2fb3ff;
-  --ok:#10b981;--warn:#f59e0b;--risk:#ef4444;--chip:#0b3a63;--divider:rgba(255,255,255,.2);
-  --shadow:0 8px 24px rgba(0,0,0,.35);--radius:16px;--font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+/* ComplianceWorxs Brand Styling */
+/* Dark theme variables for legacy dashboards */
+:root {
+  --cw-bg: #0b2742;
+  --cw-panel: #1a4d6b;
+  --cw-ink: #ffffff;
+  --cw-muted: #e0e7ff;
+  --cw-accent: #2fb3ff;
+  --cw-ok: #10b981;
+  --cw-warn: #f59e0b;
+  --cw-risk: #ef4444;
+  --cw-divider: rgba(255,255,255,.2);
+  --cw-shadow: 0 8px 24px rgba(0,0,0,.35);
 }
 
-body{
-  background:
-    radial-gradient(1200px 800px at 15% -10%, #11456f 0%, var(--bg) 50%),
-    linear-gradient(180deg,#0d2e4f 0%, var(--bg) 100%);
-  color: #ffffff !important;
+/* Dark theme - scoped to .cw-dark-theme class */
+.cw-dark-theme {
+  background: radial-gradient(1200px 800px at 15% -10%, #11456f 0%, var(--cw-bg) 50%),
+              linear-gradient(180deg, #0d2e4f 0%, var(--cw-bg) 100%);
+  color: #ffffff;
 }
 
-/* FORCE WHITE TEXT EVERYWHERE */
-* {
-  color: #ffffff !important;
+.cw-dark-theme .cw-card {
+  background: var(--cw-panel);
+  border: 1px solid var(--cw-divider);
+  border-radius: 16px;
+  box-shadow: var(--cw-shadow);
+  color: #ffffff;
 }
 
-h1, h2, h3, h4, h5, h6, p, span, div, a, button, label {
-  color: #ffffff !important;
+/* Light theme for compliance dashboard - 2025 Pharma Palette */
+.cw-light-theme {
+  background: #F9FAFB;
+  color: #1C1C1C;
 }
 
-.text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500 {
-  color: #ffffff !important;
-}
-
-.bg-white {
-  background: var(--panel) !important;
-  color: #ffffff !important;
-}
-
-.border {
-  border-color: var(--divider) !important;
-}
-
-.bg-gradient-to-r {
-  background: var(--panel) !important;
-  border: 1px solid var(--divider) !important;
-}
-
-.cw-card, .bg-white, [class*="bg-"] {
-  background:var(--panel) !important;
-  border:1px solid var(--divider) !important;
-  border-radius:16px;
-  box-shadow:var(--shadow);
-  color: #ffffff !important;
-}
-
-/* FORCE WHITE TEXT IN ALL CARD CONTENT */
-.cw-card *, .bg-white *, [class*="Card"] * {
-  color: #ffffff !important;
-}
-
-/* Secondary text should be slightly dimmed but still visible */
-.text-muted-foreground, .text-xs, [class*="text-gray"] {
-  color: #e0e7ff !important;
+.cw-light-theme * {
+  color: inherit;
 }
 
 .cw-kpi{
