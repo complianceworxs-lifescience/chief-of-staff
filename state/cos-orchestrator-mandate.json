@@ -1,18 +1,46 @@
 {
   "version": "1.1.0",
-  "lastUpdated": "2025-12-26T14:14:55.475Z",
-  "totalActionsAudited": 728,
-  "totalVetoes": 353,
-  "totalWarnings": 341,
+  "lastUpdated": "2025-12-26T14:16:10.186Z",
+  "totalActionsAudited": 732,
+  "totalVetoes": 355,
+  "totalWarnings": 343,
   "constraintViolationCounts": {
     "SC-001": 0,
     "SC-002": 0,
-    "SC-003": 181,
-    "SC-004": 181,
-    "L7-SPEND-CAP": 171,
-    "L7-REVENUE-PROB": 508
+    "SC-003": 182,
+    "SC-004": 182,
+    "L7-SPEND-CAP": 172,
+    "L7-REVENUE-PROB": 511
   },
   "agentFeedbackHistory": [
+    {
+      "id": "RHRm0VOlSuKNyNEKf9tFE",
+      "agentId": "cco",
+      "violatedConstraint": "L7-REVENUE-PROB",
+      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_SPZRFe0hbD2p\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "deliveredAt": "2025-12-26T14:16:10.055Z"
+    },
+    {
+      "id": "BKyEYKiYBkabbXMfX1UEq",
+      "agentId": "cmo",
+      "violatedConstraint": "SC-003, SC-004, L7-REVENUE-PROB",
+      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_fHNoJKMl5SSB\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "deliveredAt": "2025-12-26T14:16:09.927Z"
+    },
+    {
+      "id": "h7BdJ2y9ubk2q9Xwj7rae",
+      "agentId": "cco",
+      "violatedConstraint": "L7-REVENUE-PROB",
+      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action__6PKL1nyl9ra\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "deliveredAt": "2025-12-26T14:16:05.945Z"
+    },
+    {
+      "id": "Z-A1nvvH3UL8MWOOqOqeT",
+      "agentId": "cro",
+      "violatedConstraint": "L7-SPEND-CAP",
+      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CRO\nAction ID: action_IuqtRXlPYT60\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- L7_DAILY_SPEND_CAP_EXCEEDED: L7 Guardrail: Daily spend cap exceeded ($50 > $25)\n\nREQUIRED CORRECTION:\n• L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Increase Monthly Revenue by $50K\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: increase\"\nDESCRIPTION: \"Execute strategic recovery: increase monthly revenue by $50k with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR CRO:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "deliveredAt": "2025-12-26T14:16:05.375Z"
+    },
     {
       "id": "1A7_Bnv1JhJJT2BvT6WG3",
       "agentId": "cco",
@@ -1384,37 +1412,145 @@
       "violatedConstraint": "SC-003, SC-004, L7-REVENUE-PROB",
       "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_j1ozppZvnJxs\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
       "deliveredAt": "2025-12-06T11:58:44.601Z"
-    },
-    {
-      "id": "lyirYdyyh2HvgJIm683d-",
-      "agentId": "cco",
-      "violatedConstraint": "L7-REVENUE-PROB",
-      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_84ZwEjEoHMUM\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "deliveredAt": "2025-12-06T11:58:40.777Z"
-    },
-    {
-      "id": "6Uw3zEawUkbwdUj3tu0Io",
-      "agentId": "cro",
-      "violatedConstraint": "L7-SPEND-CAP",
-      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CRO\nAction ID: action_D8i6ifPZYC4h\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- L7_DAILY_SPEND_CAP_EXCEEDED: L7 Guardrail: Daily spend cap exceeded ($50 > $25)\n\nREQUIRED CORRECTION:\n• L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Increase Monthly Revenue by $50K\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: increase\"\nDESCRIPTION: \"Execute strategic recovery: increase monthly revenue by $50k with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR CRO:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "deliveredAt": "2025-12-06T11:58:40.219Z"
-    },
-    {
-      "id": "OZMfDihJsyLEra2avWA-q",
-      "agentId": "cco",
-      "violatedConstraint": "L7-REVENUE-PROB",
-      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_8JlRnJ5pyIcs\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "deliveredAt": "2025-12-06T11:55:49.519Z"
-    },
-    {
-      "id": "dXLPD6K89s3XT0e2M4Hj8",
-      "agentId": "cmo",
-      "violatedConstraint": "SC-003, SC-004, L7-REVENUE-PROB",
-      "feedback": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_60CD4g1yXJkE\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "deliveredAt": "2025-12-06T11:55:49.451Z"
     }
   ],
   "recentAudits": [
+    {
+      "actionId": "action_SPZRFe0hbD2p",
+      "agentId": "cco",
+      "status": "WARNING",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004",
+        "L7-GUARDRAILS"
+      ],
+      "violations": [
+        {
+          "id": "_7qv8FxYTGeVRhMOWzu5A",
+          "actionId": "action_SPZRFe0hbD2p",
+          "agentId": "cco",
+          "constraintId": "L7-REVENUE-PROB",
+          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
+          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
+          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
+          "severity": "warning",
+          "timestamp": "2025-12-26T14:16:10.055Z",
+          "feedbackDelivered": false
+        }
+      ],
+      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_SPZRFe0hbD2p\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "timestamp": "2025-12-26T14:16:10.186Z"
+    },
+    {
+      "actionId": "action_fHNoJKMl5SSB",
+      "agentId": "cmo",
+      "status": "VETOED",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004",
+        "L7-GUARDRAILS"
+      ],
+      "violations": [
+        {
+          "id": "KjGkI0LH9z0jJeePojEnl",
+          "actionId": "action_fHNoJKMl5SSB",
+          "agentId": "cmo",
+          "constraintId": "SC-003",
+          "constraintName": "OPTIMIZE_FOR_CONVERSION",
+          "violationReason": "Action optimizes for engagement metrics without conversion tie",
+          "violationDetails": "Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.",
+          "severity": "warning",
+          "timestamp": "2025-12-26T14:16:09.927Z",
+          "feedbackDelivered": false
+        },
+        {
+          "id": "oGxOjFfUVfQxxYBduEVv7",
+          "actionId": "action_fHNoJKMl5SSB",
+          "agentId": "cmo",
+          "constraintId": "SC-004",
+          "constraintName": "TIE_TO_REVENUE",
+          "violationReason": "Action does not tie to ARR, MRR, or pipeline value",
+          "violationDetails": "All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.",
+          "severity": "veto",
+          "timestamp": "2025-12-26T14:16:09.927Z",
+          "feedbackDelivered": false
+        },
+        {
+          "id": "UPTYovD_0WrA9C6O9Y-0T",
+          "actionId": "action_fHNoJKMl5SSB",
+          "agentId": "cmo",
+          "constraintId": "L7-REVENUE-PROB",
+          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
+          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
+          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
+          "severity": "warning",
+          "timestamp": "2025-12-26T14:16:09.927Z",
+          "feedbackDelivered": false
+        }
+      ],
+      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_fHNoJKMl5SSB\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "timestamp": "2025-12-26T14:16:10.046Z"
+    },
+    {
+      "actionId": "action__6PKL1nyl9ra",
+      "agentId": "cco",
+      "status": "WARNING",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004",
+        "L7-GUARDRAILS"
+      ],
+      "violations": [
+        {
+          "id": "tbnJV2OImT7Vn6Qk7zZ_w",
+          "actionId": "action__6PKL1nyl9ra",
+          "agentId": "cco",
+          "constraintId": "L7-REVENUE-PROB",
+          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
+          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
+          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
+          "severity": "warning",
+          "timestamp": "2025-12-26T14:16:05.945Z",
+          "feedbackDelivered": false
+        }
+      ],
+      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action__6PKL1nyl9ra\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "timestamp": "2025-12-26T14:16:08.010Z"
+    },
+    {
+      "actionId": "action_IuqtRXlPYT60",
+      "agentId": "cro",
+      "status": "VETOED",
+      "constraintsChecked": [
+        "SC-001",
+        "SC-002",
+        "SC-003",
+        "SC-004",
+        "L7-GUARDRAILS"
+      ],
+      "violations": [
+        {
+          "id": "Jqf257g3CyxfZNTEOt6Iw",
+          "actionId": "action_IuqtRXlPYT60",
+          "agentId": "cro",
+          "constraintId": "L7-SPEND-CAP",
+          "constraintName": "L7_DAILY_SPEND_CAP_EXCEEDED",
+          "violationReason": "L7 Guardrail: Daily spend cap exceeded ($50 > $25)",
+          "violationDetails": "L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%",
+          "severity": "veto",
+          "timestamp": "2025-12-26T14:16:05.375Z",
+          "feedbackDelivered": false
+        }
+      ],
+      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CRO\nAction ID: action_IuqtRXlPYT60\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- L7_DAILY_SPEND_CAP_EXCEEDED: L7 Guardrail: Daily spend cap exceeded ($50 > $25)\n\nREQUIRED CORRECTION:\n• L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Increase Monthly Revenue by $50K\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: increase\"\nDESCRIPTION: \"Execute strategic recovery: increase monthly revenue by $50k with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR CRO:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
+      "timestamp": "2025-12-26T14:16:05.936Z"
+    },
     {
       "actionId": "action_Q7elUoV4yvVv",
       "agentId": "cco",
@@ -4678,142 +4814,6 @@
       ],
       "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_A5F5Z7G9fFwl\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
       "timestamp": "2025-12-26T12:09:02.571Z"
-    },
-    {
-      "actionId": "action_Lmd3FDuLERag",
-      "agentId": "cco",
-      "status": "WARNING",
-      "constraintsChecked": [
-        "SC-001",
-        "SC-002",
-        "SC-003",
-        "SC-004",
-        "L7-GUARDRAILS"
-      ],
-      "violations": [
-        {
-          "id": "QZPphnZgyplJSKbyJXr3j",
-          "actionId": "action_Lmd3FDuLERag",
-          "agentId": "cco",
-          "constraintId": "L7-REVENUE-PROB",
-          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
-          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
-          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
-          "severity": "warning",
-          "timestamp": "2025-12-26T12:09:00.670Z",
-          "feedbackDelivered": false
-        }
-      ],
-      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_Lmd3FDuLERag\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "timestamp": "2025-12-26T12:09:00.875Z"
-    },
-    {
-      "actionId": "action_pL_9k4qsu5dv",
-      "agentId": "cro",
-      "status": "VETOED",
-      "constraintsChecked": [
-        "SC-001",
-        "SC-002",
-        "SC-003",
-        "SC-004",
-        "L7-GUARDRAILS"
-      ],
-      "violations": [
-        {
-          "id": "usQjeQpsZXEBatK1LBakJ",
-          "actionId": "action_pL_9k4qsu5dv",
-          "agentId": "cro",
-          "constraintId": "L7-SPEND-CAP",
-          "constraintName": "L7_DAILY_SPEND_CAP_EXCEEDED",
-          "violationReason": "L7 Guardrail: Daily spend cap exceeded ($50 > $25)",
-          "violationDetails": "L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%",
-          "severity": "veto",
-          "timestamp": "2025-12-26T12:09:00.492Z",
-          "feedbackDelivered": false
-        }
-      ],
-      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CRO\nAction ID: action_pL_9k4qsu5dv\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- L7_DAILY_SPEND_CAP_EXCEEDED: L7 Guardrail: Daily spend cap exceeded ($50 > $25)\n\nREQUIRED CORRECTION:\n• L7 Master Directive enforces a $25/day spend cap. Requested spend: $50. To unlock higher spend: provide revenueImpact with ROI > 3x and confidence >= 70%\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Increase Monthly Revenue by $50K\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: increase\"\nDESCRIPTION: \"Execute strategic recovery: increase monthly revenue by $50k with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR CRO:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "timestamp": "2025-12-26T12:09:00.662Z"
-    },
-    {
-      "actionId": "action_j0Ac_YlUePpj",
-      "agentId": "cco",
-      "status": "WARNING",
-      "constraintsChecked": [
-        "SC-001",
-        "SC-002",
-        "SC-003",
-        "SC-004",
-        "L7-GUARDRAILS"
-      ],
-      "violations": [
-        {
-          "id": "TDJvOW8V-ugArf2iODLo-",
-          "actionId": "action_j0Ac_YlUePpj",
-          "agentId": "cco",
-          "constraintId": "L7-REVENUE-PROB",
-          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
-          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
-          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
-          "severity": "warning",
-          "timestamp": "2025-12-26T11:39:43.482Z",
-          "feedbackDelivered": false
-        }
-      ],
-      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: ContentManager\nAction ID: action_j0Ac_YlUePpj\nStatus: WARNING\n\nCONSTRAINT VIOLATIONS:\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Improve Customer Retention by 15%\"\nREWORD TO:\n\nACTION: \"Drive measurable revenue through strategic recovery: improve\"\nDESCRIPTION: \"Execute strategic recovery: improve customer retention by 15% with explicit focus on converting engaged prospects to revenue-generating customers\"\nEXPECTED OUTCOME: \"Achieve [X]% conversion rate, generating $[Y] in [ARR/MRR/pipeline]\"\nREVENUE IMPACT: { type: \"[ARR/MRR/pipeline]\", estimatedValue: [amount], confidence: [0.5-0.9] }\n\nREQUIRED ELEMENTS:\n• Specific conversion metric (% or count)\n• Dollar value tied to ARR, MRR, or pipeline\n• Confidence level based on historical data\n• Clear path from action to revenue\n\nEXAMPLE FOR ContentManager:\n\"Convert [audience] to [revenue action] generating $[X] in [revenue type]\"\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "timestamp": "2025-12-26T11:39:43.542Z"
-    },
-    {
-      "actionId": "action_yKNZEv4uW6cw",
-      "agentId": "cmo",
-      "status": "VETOED",
-      "constraintsChecked": [
-        "SC-001",
-        "SC-002",
-        "SC-003",
-        "SC-004",
-        "L7-GUARDRAILS"
-      ],
-      "violations": [
-        {
-          "id": "X3RrNUaySDPFlG-dPafER",
-          "actionId": "action_yKNZEv4uW6cw",
-          "agentId": "cmo",
-          "constraintId": "SC-003",
-          "constraintName": "OPTIMIZE_FOR_CONVERSION",
-          "violationReason": "Action optimizes for engagement metrics without conversion tie",
-          "violationDetails": "Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.",
-          "severity": "warning",
-          "timestamp": "2025-12-26T11:39:43.414Z",
-          "feedbackDelivered": false
-        },
-        {
-          "id": "9C7uzxJlbNRnJ_-YHVU4C",
-          "actionId": "action_yKNZEv4uW6cw",
-          "agentId": "cmo",
-          "constraintId": "SC-004",
-          "constraintName": "TIE_TO_REVENUE",
-          "violationReason": "Action does not tie to ARR, MRR, or pipeline value",
-          "violationDetails": "All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.",
-          "severity": "veto",
-          "timestamp": "2025-12-26T11:39:43.414Z",
-          "feedbackDelivered": false
-        },
-        {
-          "id": "wcmovB3r5UTufNULls59M",
-          "actionId": "action_yKNZEv4uW6cw",
-          "agentId": "cmo",
-          "constraintId": "L7-REVENUE-PROB",
-          "constraintName": "L7_MINIMUM_REVENUE_PROBABILITY",
-          "violationReason": "L7 Guardrail: Action lacks minimum revenue probability (15% threshold)",
-          "violationDetails": "L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.",
-          "severity": "warning",
-          "timestamp": "2025-12-26T11:39:43.414Z",
-          "feedbackDelivered": false
-        }
-      ],
-      "feedbackToAgent": "CHIEF OF STAFF FEEDBACK - ACTION AUDIT RESULT\n==============================================\nAgent: CMO\nAction ID: action_yKNZEv4uW6cw\nStatus: VETOED\n\nCONSTRAINT VIOLATIONS:\n- OPTIMIZE_FOR_CONVERSION: Action optimizes for engagement metrics without conversion tie\n- TIE_TO_REVENUE: Action does not tie to ARR, MRR, or pipeline value\n- L7_MINIMUM_REVENUE_PROBABILITY: L7 Guardrail: Action lacks minimum revenue probability (15% threshold)\n\nREQUIRED CORRECTION:\n• Detected focus on engagement metrics (reach) without conversion goals. All actions must optimize for conversion to paid value.\n• All agent actions must have a clear connection to revenue metrics. Add revenueImpact with estimated value, or clearly state ARR/MRR/pipeline impact.\n• L7 Master Directive requires all actions to have a minimum 7-day revenue probability of 15%. Add revenueImpact with confidence >= 0.15.\n\n═══════════════════════════════════════════════\nSUGGESTED REVENUE-ALIGNED REWORD\n═══════════════════════════════════════════════\nORIGINAL: \"STRATEGIC RECOVERY: Expand Content Marketing Reach by 40%\"\nREWORD TO:\n\nACTION: \"Convert content audience to pipeline opportunities\"\nDESCRIPTION: \"Deploy targeted content sequence to convert 40 engaged readers into qualified demo requests, targeting 5% conversion rate\"\nEXPECTED OUTCOME: \"Generate $15,000 in new pipeline value through content-driven lead qualification\"\nREVENUE IMPACT: { type: \"pipeline\", estimatedValue: 15000, confidence: 0.7 }\n\nWHY THIS WORKS:\n• Focuses on conversion (readers → demo requests) not reach\n• Ties directly to pipeline value ($15,000)\n• Measurable outcome with specific conversion target (5%)\n\nRESUBMISSION INSTRUCTIONS:\n1. Use the suggested reword above as your new action\n2. Ensure you include specific revenue targets (ARR/MRR/pipeline $)\n3. Focus on conversion outcomes, not engagement metrics\n4. Resubmit through the standard action flow\n\nThe CoS will automatically approve revenue-aligned actions.",
-      "timestamp": "2025-12-26T11:39:43.474Z"
     }
   ],
   "mandate": {

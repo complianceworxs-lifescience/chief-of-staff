@@ -145,25 +145,29 @@ export default function FAQPage() {
             <AccordionItem 
               key={item.id} 
               value={item.id}
-              className="border rounded-lg overflow-hidden"
+              className="border-2 rounded-lg overflow-hidden"
               style={{ borderColor: colors.borderLight, backgroundColor: colors.cardBg }}
             >
               <AccordionTrigger 
-                className="px-6 py-5 hover:no-underline [&[data-state=open]]:rounded-b-none"
-                style={{ backgroundColor: colors.accentTrust }}
+                className="px-6 py-5 hover:no-underline [&[data-state=open]]:rounded-b-none hover:bg-gray-50"
+                style={{ backgroundColor: colors.cardBg }}
                 data-testid={`accordion-trigger-${item.id}`}
               >
                 <div className="flex items-center gap-4 text-left">
                   <div 
                     className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
+                    style={{ backgroundColor: `${colors.accentWellness}15` }}
                   >
-                    <item.icon className="w-5 h-5 text-white" />
+                    <item.icon className="w-5 h-5" style={{ color: colors.accentWellness }} />
                   </div>
-                  <span className="text-lg font-semibold text-white">{item.question}</span>
+                  <span className="text-lg font-semibold" style={{ color: colors.accentTrust }}>{item.question}</span>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="px-6 py-5" data-testid={`accordion-content-${item.id}`}>
+              <AccordionContent 
+                className="px-6 py-5"
+                style={{ backgroundColor: colors.bgMain, borderTop: `1px solid ${colors.borderLight}` }}
+                data-testid={`accordion-content-${item.id}`}
+              >
                 <p 
                   className="text-base leading-relaxed pl-14"
                   style={{ color: colors.textPrimary }}
