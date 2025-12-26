@@ -60,7 +60,7 @@
     .nav-actions { display: flex; align-items: center; gap: 20px; }
     .nav-login { color: var(--gray-600); text-decoration: none; font-weight: 500; }
     .nav-login:hover { color: var(--navy); }
-    .nav-signup { background: var(--teal); color: var(--white); padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+    .nav-signup { background: var(--teal); color: var(--white); padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; cursor: pointer; border: none; font-size: 15px; }
     .nav-signup:hover { background: var(--teal-hover); }
     .mobile-menu { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
     .mobile-menu svg { width: 24px; height: 24px; color: var(--gray-700); }
@@ -189,7 +189,7 @@
     .footer-brand svg { width: 22px; height: 22px; }
     .footer-copy { text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--gray-700); color: var(--gray-500); font-size: 13px; }
 
-    /* Terms/Privacy Modals */
+    /* All Modals Base */
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 2000; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; padding: 24px; }
     .modal.open { display: flex; }
     .modal-content { background: var(--white); border-radius: 12px; max-width: 700px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 32px; position: relative; }
@@ -200,6 +200,34 @@
     .modal h3 { font-size: 16px; color: var(--navy); margin: 20px 0 10px; }
     .modal p { color: var(--gray-600); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
     .modal ul { margin-left: 20px; color: var(--gray-600); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+
+    /* Lead Capture Modal */
+    .lead-modal .modal-content { max-width: 440px; padding: 0; overflow: hidden; }
+    .lead-modal-header { background: var(--navy); padding: 24px 28px; }
+    .lead-modal-header h2 { color: var(--white); margin: 0 0 6px 0; font-size: 22px; }
+    .lead-modal-header p { color: var(--gray-300); margin: 0; font-size: 14px; }
+    .lead-modal-body { padding: 28px; }
+    .lead-form-group { margin-bottom: 20px; }
+    .lead-form-group label { display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px; }
+    .lead-form-group input,
+    .lead-form-group select {
+      width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid var(--gray-300);
+      border-radius: 8px; background: var(--white); color: var(--gray-800);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .lead-form-group input:focus,
+    .lead-form-group select:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,163,161,0.15); }
+    .lead-form-group input.error { border-color: var(--red); }
+    .lead-form-error { color: var(--red); font-size: 13px; margin-top: 6px; display: none; }
+    .lead-form-error.show { display: block; }
+    .lead-submit { width: 100%; padding: 14px; font-size: 16px; font-weight: 600; background: var(--teal); color: var(--white); border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+    .lead-submit:hover { background: var(--teal-hover); }
+    .lead-success { display: none; text-align: center; padding: 40px 20px; }
+    .lead-success.show { display: block; }
+    .lead-success svg { width: 64px; height: 64px; color: var(--green); margin-bottom: 16px; }
+    .lead-success h3 { font-size: 20px; color: var(--navy); margin-bottom: 8px; }
+    .lead-success p { color: var(--gray-600); font-size: 15px; }
+    .lead-form.hidden { display: none; }
 
     /* Responsive */
     @media (max-width: 1024px) {
@@ -244,7 +272,7 @@
         </ul>
         <div class="nav-actions">
           <a href="#login" class="nav-login">Log in</a>
-          <a href="#signup" class="nav-signup">Sign Up</a>
+          <button class="nav-signup" onclick="openLeadModal()">Sign Up</button>
         </div>
       </nav>
       <button class="mobile-menu" onclick="document.getElementById('nav').classList.toggle('open')">
@@ -260,7 +288,7 @@
         <div class="hero-content">
           <h1 class="hero-title">FDA & ISO Compliance on Autopilot</h1>
           <p class="hero-subtitle">Enterprise-grade regulatory intelligence for life sciences. Audit-ready documentation, real-time gap detection, and quantified compliance ROI.</p>
-          <a href="#signup" class="btn btn-primary btn-lg">Run Free Assessment</a>
+          <button class="btn btn-primary btn-lg" onclick="openLeadModal()">Run Free Assessment</button>
         </div>
         <div class="hero-visual">
           <div class="visual-header">
@@ -404,7 +432,7 @@
               <span class="mini-arrow">→</span>
               <div class="mini-step"><span class="mini-num">4</span><span class="mini-label">Export</span></div>
             </div>
-            <a href="#signup" class="btn btn-primary">Run Free Assessment</a>
+            <button class="btn btn-primary" onclick="openLeadModal()">Run Free Assessment</button>
           </div>
           <!-- Use Case Panel -->
           <div class="usecase-panel">
@@ -495,11 +523,11 @@
   </section>
 
   <!-- CTA -->
-  <section id="signup" class="cta">
+  <section class="cta">
     <div class="container">
       <h2>Ready to Transform Your Compliance Process?</h2>
       <p>Get your free compliance assessment and see exactly where you stand.</p>
-      <a href="#signup" class="btn btn-primary btn-lg">Run Free Assessment</a>
+      <button class="btn btn-primary btn-lg" onclick="openLeadModal()">Run Free Assessment</button>
     </div>
   </section>
 
@@ -520,6 +548,46 @@
       <div class="footer-copy">&copy; 2025 ComplianceWorxs. All rights reserved.</div>
     </div>
   </footer>
+
+  <!-- Lead Capture Modal -->
+  <div id="lead-modal" class="modal lead-modal" onclick="if(event.target===this)closeLeadModal()">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeLeadModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="lead-modal-header">
+        <h2>Start Your Free Assessment</h2>
+        <p>Get your personalized compliance score in minutes.</p>
+      </div>
+      <div class="lead-modal-body">
+        <div id="lead-form" class="lead-form">
+          <div class="lead-form-group">
+            <label for="lead-email">Work Email</label>
+            <input type="email" id="lead-email" placeholder="you@company.com" required>
+            <div id="email-error" class="lead-form-error">Please enter a valid email address.</div>
+          </div>
+          <div class="lead-form-group">
+            <label for="lead-firmtype">Firm Type</label>
+            <select id="lead-firmtype" required>
+              <option value="">Select your firm type</option>
+              <option value="Biotech">Biotech</option>
+              <option value="Pharma">Pharma</option>
+              <option value="MedTech">MedTech</option>
+              <option value="Consultant">Consultant</option>
+              <option value="Other">Other</option>
+            </select>
+            <div id="firmtype-error" class="lead-form-error">Please select a firm type.</div>
+          </div>
+          <button type="button" class="lead-submit" onclick="submitLeadForm()">Start My Assessment</button>
+        </div>
+        <div id="lead-success" class="lead-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+          <h3>Success!</h3>
+          <p>We are preparing your regulatory dashboard...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Terms Modal -->
   <div id="terms-modal" class="modal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -566,6 +634,7 @@
   </div>
 
   <script>
+    // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(function(a){
       a.addEventListener('click',function(e){
         var h=this.getAttribute('href');
@@ -581,6 +650,69 @@
         }
       });
     });
+
+    // Lead Capture Modal Functions
+    function openLeadModal() {
+      document.getElementById('lead-modal').classList.add('open');
+      document.getElementById('lead-form').classList.remove('hidden');
+      document.getElementById('lead-success').classList.remove('show');
+      document.getElementById('lead-email').value = '';
+      document.getElementById('lead-firmtype').value = '';
+      document.getElementById('email-error').classList.remove('show');
+      document.getElementById('firmtype-error').classList.remove('show');
+      document.getElementById('lead-email').classList.remove('error');
+    }
+
+    function closeLeadModal() {
+      document.getElementById('lead-modal').classList.remove('open');
+    }
+
+    function validateEmail(email) {
+      var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function submitLeadForm() {
+      var email = document.getElementById('lead-email').value.trim();
+      var firmType = document.getElementById('lead-firmtype').value;
+      var valid = true;
+
+      // Validate email
+      if (!email || !validateEmail(email)) {
+        document.getElementById('email-error').classList.add('show');
+        document.getElementById('lead-email').classList.add('error');
+        valid = false;
+      } else {
+        document.getElementById('email-error').classList.remove('show');
+        document.getElementById('lead-email').classList.remove('error');
+      }
+
+      // Validate firm type
+      if (!firmType) {
+        document.getElementById('firmtype-error').classList.add('show');
+        valid = false;
+      } else {
+        document.getElementById('firmtype-error').classList.remove('show');
+      }
+
+      if (!valid) return;
+
+      // Log to console for Phase 1 verification
+      console.log('=== LEAD CAPTURED ===');
+      console.log('Email:', email);
+      console.log('Firm Type:', firmType);
+      console.log('Timestamp:', new Date().toISOString());
+      console.log('=====================');
+
+      // Show success state
+      document.getElementById('lead-form').classList.add('hidden');
+      document.getElementById('lead-success').classList.add('show');
+
+      // Auto-close after 3 seconds
+      setTimeout(function() {
+        closeLeadModal();
+      }, 3000);
+    }
   </script>
 </body>
 </html>
