@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import { Shield } from "lucide-react";
 
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "";
+
 const colors = {
   bgMain: "#F9FAFB",
   cardBg: "#FFFFFF",
@@ -63,12 +65,12 @@ export function PublicFooter() {
           <div>
             <h4 className="font-semibold mb-4" style={{ color: colors.textPrimary }}>Account</h4>
             <nav className="space-y-2">
-              <Link href="/login">
+              <a href={`${PORTAL_URL}/login`}>
                 <span className="block text-sm cursor-pointer hover:underline" style={{ color: colors.textSecondary }}>Login</span>
-              </Link>
-              <Link href="/signup">
+              </a>
+              <a href={`${PORTAL_URL}/signup`}>
                 <span className="block text-sm cursor-pointer hover:underline" style={{ color: colors.accentWellness }}>Sign Up Free</span>
-              </Link>
+              </a>
             </nav>
           </div>
         </div>

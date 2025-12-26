@@ -8,6 +8,8 @@ import { Shield, Newspaper, Clock, ArrowRight, Bell, ChevronRight, AlertTriangle
 import { useToast } from "@/hooks/use-toast";
 import { PublicFooter } from "@/components/public-footer";
 
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "";
+
 const colors = {
   bgMain: "#F9FAFB",
   cardBg: "#FFFFFF",
@@ -220,10 +222,10 @@ export default function BlogPage() {
             <Link href="/faq">
               <span className="text-white/80 hover:text-white cursor-pointer">FAQ</span>
             </Link>
-            <Link href="/login">
+            <a href={`${PORTAL_URL}/login`}>
               <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
-            </Link>
-            <Link href="/signup">
+            </a>
+            <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -231,7 +233,7 @@ export default function BlogPage() {
               >
                 Sign Up Free
               </Button>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>

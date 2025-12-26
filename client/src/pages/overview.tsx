@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Brain, Lock, Database, FileCheck, ArrowRight, CheckCircle, Server, Layers, Scale } from "lucide-react";
 import { PublicFooter } from "@/components/public-footer";
 
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "";
+
 const colors = {
   bgMain: "#F9FAFB",
   cardBg: "#FFFFFF",
@@ -49,10 +51,10 @@ export default function OverviewPage() {
             <Link href="/faq">
               <span className="text-white/80 hover:text-white cursor-pointer">FAQ</span>
             </Link>
-            <Link href="/login">
+            <a href={`${PORTAL_URL}/login`}>
               <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
-            </Link>
-            <Link href="/signup">
+            </a>
+            <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -60,7 +62,7 @@ export default function OverviewPage() {
               >
                 Sign Up Free
               </Button>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
@@ -85,7 +87,7 @@ export default function OverviewPage() {
             A purpose-built compliance intelligence platform designed for life science organizations 
             seeking measurable audit readiness and regulatory clarity.
           </p>
-          <Link href="/signup">
+          <a href={`${PORTAL_URL}/signup`}>
             <Button 
               size="lg"
               className="text-white font-semibold px-8"
@@ -95,7 +97,7 @@ export default function OverviewPage() {
               Start Your Assessment
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 
@@ -358,7 +360,7 @@ export default function OverviewPage() {
           >
             Upload your first SOP and get an instant gap analysis with actionable remediation guidance.
           </p>
-          <Link href="/signup">
+          <a href={`${PORTAL_URL}/signup`}>
             <Button 
               size="lg"
               className="text-white font-semibold px-8"
@@ -368,7 +370,7 @@ export default function OverviewPage() {
               Start Free Assessment
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-          </Link>
+          </a>
         </section>
       </main>
 

@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Star, Shield, Zap, Users, FileText, Brain, Lock, ArrowRight } from "lucide-react";
 import { PublicFooter } from "@/components/public-footer";
 
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "";
+
 const colors = {
   bgMain: "#F9FAFB",
   cardBg: "#FFFFFF",
@@ -118,10 +120,10 @@ export default function PricingPage() {
             <Link href="/faq">
               <span className="text-white/80 hover:text-white cursor-pointer">FAQ</span>
             </Link>
-            <Link href="/login">
+            <a href={`${PORTAL_URL}/login`}>
               <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
-            </Link>
-            <Link href="/signup">
+            </a>
+            <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -129,7 +131,7 @@ export default function PricingPage() {
               >
                 Sign Up Free
               </Button>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
@@ -213,7 +215,7 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Link href="/signup" className="w-full">
+                <a href={`${PORTAL_URL}/signup`} className="w-full">
                   <Button 
                     className="w-full text-white font-semibold py-6"
                     style={{ 
@@ -226,7 +228,7 @@ export default function PricingPage() {
                     {tier.cta}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                </Link>
+                </a>
               </CardFooter>
             </Card>
           ))}
@@ -324,7 +326,7 @@ export default function PricingPage() {
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
             Join 50+ life science companies who have reduced audit preparation time by 60% with ComplianceWorxs.
           </p>
-          <Link href="/signup">
+          <a href={`${PORTAL_URL}/signup`}>
             <Button 
               size="lg"
               className="text-white font-semibold px-8 py-6 text-lg"
@@ -334,7 +336,7 @@ export default function PricingPage() {
               Start Your Free Trial
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-          </Link>
+          </a>
         </div>
       </main>
 

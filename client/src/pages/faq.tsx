@@ -5,6 +5,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Shield, HelpCircle, ArrowRight, Scale, Lock, FileText, Users, Brain, Clock, CheckCircle } from "lucide-react";
 import { PublicFooter } from "@/components/public-footer";
 
+const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "";
+
 const colors = {
   bgMain: "#F9FAFB",
   cardBg: "#FFFFFF",
@@ -100,10 +102,10 @@ export default function FAQPage() {
             <Link href="/faq">
               <span className="text-white cursor-pointer font-medium">FAQ</span>
             </Link>
-            <Link href="/login">
+            <a href={`${PORTAL_URL}/login`}>
               <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
-            </Link>
-            <Link href="/signup">
+            </a>
+            <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -111,7 +113,7 @@ export default function FAQPage() {
               >
                 Sign Up Free
               </Button>
-            </Link>
+            </a>
           </nav>
         </div>
       </header>
@@ -191,7 +193,7 @@ export default function FAQPage() {
             Our team is here to help you understand how ComplianceWorxs can transform your regulatory operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
+            <a href={`${PORTAL_URL}/signup`}>
               <Button 
                 size="lg"
                 className="font-semibold px-8"
@@ -201,7 +203,7 @@ export default function FAQPage() {
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </Link>
+            </a>
             <Button 
               size="lg"
               variant="outline"
