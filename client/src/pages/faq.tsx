@@ -183,18 +183,18 @@ export default function FAQPage() {
           className="mt-16 rounded-2xl p-12 text-center"
           style={{ backgroundColor: colors.accentTrust }}
         >
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold mb-4" style={{ color: "#FFFFFF" }}>
             Still Have Questions?
           </h2>
-          <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-lg mb-8 max-w-2xl mx-auto" style={{ color: "rgba(255,255,255,0.9)" }}>
             Our team is here to help you understand how ComplianceWorxs can transform your regulatory operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
               <Button 
                 size="lg"
-                className="text-white font-semibold px-8"
-                style={{ backgroundColor: colors.accentWarm }}
+                className="font-semibold px-8"
+                style={{ backgroundColor: colors.accentWarm, color: "#FFFFFF" }}
                 data-testid="button-cta-signup"
               >
                 Start Free Trial
@@ -205,7 +205,7 @@ export default function FAQPage() {
               size="lg"
               variant="outline"
               className="font-semibold px-8"
-              style={{ borderColor: "rgba(255,255,255,0.3)", color: "#FFFFFF" }}
+              style={{ backgroundColor: "#FFFFFF", borderColor: "#FFFFFF", color: colors.accentTrust }}
               data-testid="button-cta-contact"
             >
               Contact Sales
