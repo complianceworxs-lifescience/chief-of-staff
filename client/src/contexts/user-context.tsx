@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 export type UserRole = "strategic_architect" | "qa_lead" | "operator";
 
@@ -77,7 +77,48 @@ const defaultUser: User = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser, setCurrentUser] = useState<User>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem("cw_user");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.loggedIn) {
+            return {
+              id: "user-session",
+              name: parsed.fullName || "User",
+              email: parsed.email || "user@company.com",
+              role: "strategic_architect" as UserRole,
+              lastLogin: new Date().toISOString()
+            };
+          }
+        } catch {}
+      }
+    }
+    return defaultUser;
+  });
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const stored = localStorage.getItem("cw_user");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.loggedIn) {
+            setCurrentUser({
+              id: "user-session",
+              name: parsed.fullName || "User",
+              email: parsed.email || "user@company.com",
+              role: "strategic_architect" as UserRole,
+              lastLogin: new Date().toISOString()
+            });
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const hasPermission = (permission: Permission): boolean => {
     return rolePermissions[currentUser.role].includes(permission);

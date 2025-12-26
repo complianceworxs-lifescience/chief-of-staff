@@ -66,7 +66,7 @@ interface SOPDocument {
   id: string;
   name: string;
   regulatoryStandard: string;
-  status: "major" | "moderate" | "compliant";
+  status: "major" | "moderate" | "compliant" | "review_requested";
 }
 
 interface AuditSimulationModalProps {

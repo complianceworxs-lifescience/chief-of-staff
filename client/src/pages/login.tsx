@@ -47,13 +47,21 @@ export default function LoginPage() {
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    localStorage.setItem("cw_user", JSON.stringify({
+      email: formData.email,
+      fullName: "User",
+      company: "Your Company",
+      firmType: "biotech",
+      loggedIn: true
+    }));
+
     toast({
       title: "Welcome Back!",
       description: "Redirecting to your Command Center...",
     });
 
     setTimeout(() => {
-      setLocation("/dashboard");
+      setLocation("/compliance");
     }, 500);
   };
 

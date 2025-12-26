@@ -156,12 +156,12 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-8 mb-20">
           {pricingTiers.map((tier, index) => (
             <Card 
               key={tier.name}
               className={`relative border-2 transition-all duration-300 hover:shadow-xl ${
-                tier.highlighted ? "scale-105 shadow-lg" : ""
+                tier.highlighted ? "md:scale-105 shadow-lg" : ""
               }`}
               style={{ 
                 borderColor: tier.highlighted ? tier.color : colors.borderLight,

@@ -490,6 +490,10 @@ export default function ComplianceDashboard() {
               <p className="text-xs" style={{ color: "rgba(255,255,255,0.8)" }}>Command Center</p>
             </div>
           </div>
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.7)" }}>Logged in as</p>
+            <p className="text-sm font-medium truncate" style={{ color: "#FFFFFF" }}>{currentUser.email}</p>
+          </div>
         </div>
         
         <div className="flex-1 p-4">
