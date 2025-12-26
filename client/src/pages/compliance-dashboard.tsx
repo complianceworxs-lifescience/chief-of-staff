@@ -302,8 +302,8 @@ export default function ComplianceDashboard() {
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-lg text-white">ComplianceWorxs</h1>
-              <p className="text-xs text-white/70">Command Center</p>
+              <h1 className="font-bold text-lg" style={{ color: "#FFFFFF" }}>ComplianceWorxs</h1>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.8)" }}>Command Center</p>
             </div>
           </div>
         </div>
