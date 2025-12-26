@@ -227,10 +227,10 @@ export default function BlogPostPage() {
             <Link href="/faq">
               <span className="text-white/80 hover:text-white cursor-pointer">FAQ</span>
             </Link>
-            <a href={`${PORTAL_URL}/login`}>
+            <Link href="/login">
               <span className="text-white/80 hover:text-white cursor-pointer">Login</span>
-            </a>
-            <a href={`${PORTAL_URL}/signup`}>
+            </Link>
+            <Link href="/signup">
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -238,7 +238,7 @@ export default function BlogPostPage() {
               >
                 Sign Up Free
               </Button>
-            </a>
+            </Link>
           </nav>
         </div>
       </header>

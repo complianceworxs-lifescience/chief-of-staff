@@ -102,10 +102,10 @@ export default function FAQPage() {
             <Link href="/faq">
               <span style={{ color: colors.textPrimary }} className="cursor-pointer font-medium">FAQ</span>
             </Link>
-            <a href={`${PORTAL_URL}/login`}>
+            <Link href="/login">
               <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Log in</span>
-            </a>
-            <a href={`${PORTAL_URL}/signup`}>
+            </Link>
+            <Link href="/signup">
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentTeal }}
@@ -113,7 +113,7 @@ export default function FAQPage() {
               >
                 Sign Up
               </Button>
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -193,7 +193,7 @@ export default function FAQPage() {
             Our team is here to help you understand how ComplianceWorxs can transform your regulatory operations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href={`${PORTAL_URL}/signup`}>
+            <Link href="/signup">
               <Button 
                 size="lg"
                 className="font-semibold px-8"
@@ -203,7 +203,7 @@ export default function FAQPage() {
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-            </a>
+            </Link>
             <Button 
               size="lg"
               variant="outline"

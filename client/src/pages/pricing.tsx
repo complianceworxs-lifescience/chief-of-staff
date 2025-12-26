@@ -120,10 +120,10 @@ export default function PricingPage() {
             <Link href="/faq">
               <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">FAQ</span>
             </Link>
-            <a href={`${PORTAL_URL}/login`}>
+            <Link href="/login">
               <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Log in</span>
-            </a>
-            <a href={`${PORTAL_URL}/signup`}>
+            </Link>
+            <Link href="/signup">
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentWarm }}
@@ -131,7 +131,7 @@ export default function PricingPage() {
               >
                 Sign Up Free
               </Button>
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -215,7 +215,7 @@ export default function PricingPage() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <a href={`${PORTAL_URL}/signup`} className="w-full">
+                <Link href="/signup" className="w-full">
                   <Button 
                     className="w-full text-white font-semibold py-6"
                     style={{ 
@@ -228,7 +228,7 @@ export default function PricingPage() {
                     {tier.cta}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                </a>
+                </Link>
               </CardFooter>
             </Card>
           ))}
@@ -326,7 +326,7 @@ export default function PricingPage() {
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
             Join 50+ life science companies who have reduced audit preparation time by 60% with ComplianceWorxs.
           </p>
-          <a href={`${PORTAL_URL}/signup`}>
+          <Link href="/signup">
             <Button 
               size="lg"
               className="text-white font-semibold px-8 py-6 text-lg"
@@ -336,7 +336,7 @@ export default function PricingPage() {
               Start Your Free Trial
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-          </a>
+          </Link>
         </div>
       </main>
 

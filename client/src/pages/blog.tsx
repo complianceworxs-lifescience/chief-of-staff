@@ -222,10 +222,10 @@ export default function BlogPage() {
             <Link href="/faq">
               <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">FAQ</span>
             </Link>
-            <a href={`${PORTAL_URL}/login`}>
+            <Link href="/login">
               <span style={{ color: colors.textSecondary }} className="hover:text-gray-900 cursor-pointer">Log in</span>
-            </a>
-            <a href={`${PORTAL_URL}/signup`}>
+            </Link>
+            <Link href="/signup">
               <Button 
                 className="text-white font-semibold"
                 style={{ backgroundColor: colors.accentTeal }}
@@ -233,7 +233,7 @@ export default function BlogPage() {
               >
                 Sign Up
               </Button>
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
