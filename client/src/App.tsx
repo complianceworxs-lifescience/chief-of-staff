@@ -24,6 +24,9 @@ import GovernanceDashboard from "@/pages/governance-dashboard";
 import NotFound from "@/pages/not-found";
 import ROICalculator from "@/pages/roi-calculator";
 import ComplianceDashboard from "@/pages/compliance-dashboard";
+import PricingPage from "@/pages/pricing";
+import SignUpPage from "@/pages/signup";
+import LoginPage from "@/pages/login";
 
 function Router() {
   const [location] = useLocation();
@@ -34,6 +37,18 @@ function Router() {
 
   if (location === "/compliance") {
     return <ComplianceDashboard />;
+  }
+
+  if (location === "/pricing") {
+    return <PricingPage />;
+  }
+
+  if (location === "/signup") {
+    return <SignUpPage />;
+  }
+
+  if (location === "/login") {
+    return <LoginPage />;
   }
 
   return (
