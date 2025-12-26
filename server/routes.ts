@@ -93,8 +93,13 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { getConfig } from "./config-loader";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup Replit Auth BEFORE all other routes (required for authentication)
+  await setupAuth(app);
+  registerAuthRoutes(app);
+  console.log('🔐 Replit Auth configured - Google OAuth enabled');
   // CLEAN PUBLIC TOOL - Serves standalone HTML without React SPA
   app.get("/public-tool", (req, res) => {
     res.sendFile(path.resolve(import.meta.dirname, "..", "client", "public-tool.html"));
