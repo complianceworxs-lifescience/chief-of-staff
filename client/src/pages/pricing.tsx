@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Star, Shield, Zap, Users, FileText, Brain, Lock, ArrowRight } from "lucide-react";
+import { PublicFooter } from "@/components/public-footer";
 
 const colors = {
   bgMain: "#F9FAFB",
@@ -337,16 +338,7 @@ export default function PricingPage() {
         </div>
       </main>
 
-      <footer 
-        className="border-t py-8 mt-16"
-        style={{ backgroundColor: colors.cardBg, borderColor: colors.borderLight }}
-      >
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p style={{ color: colors.textSecondary }}>
-            © 2025 ComplianceWorxs. All rights reserved. | Life Science Compliance Intelligence
-          </p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

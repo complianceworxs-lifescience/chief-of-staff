@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Shield, HelpCircle, ArrowRight, Scale, Lock, FileText, Users, Brain, Clock, CheckCircle } from "lucide-react";
+import { PublicFooter } from "@/components/public-footer";
 
 const colors = {
   bgMain: "#F9FAFB",
@@ -214,16 +215,7 @@ export default function FAQPage() {
         </section>
       </main>
 
-      <footer 
-        className="border-t py-8 mt-16"
-        style={{ backgroundColor: colors.cardBg, borderColor: colors.borderLight }}
-      >
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p style={{ color: colors.textSecondary }}>
-            © 2025 ComplianceWorxs. All rights reserved. | Life Science Compliance Intelligence
-          </p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
