@@ -1,0 +1,39 @@
+The Remediation Prompts serve as the bridge between gap identification and document resolution. These prompts direct the AI to provide technical, audit-grade instructions to the user on how to rewrite specific SOP sections to satisfy FDA 21 CFR 820 or ISO 13485 requirements.
+
+1. Remediation Logic Structure
+The prompt follows a "Condition-Action-Example" framework to ensure the output is actionable and compliant.
+
+Condition: Identify the specific regulatory clause that is missing or insufficient (e.g., ISO 13485:2016 Clause 7.3.3).
+
+Action: Provide a technical directive on what language or controls must be added (e.g., "Incorporate a formal Design Output verification matrix").
+
+Example: Offer a compliant "boilerplate" paragraph that the user can adapt to their specific process.
+
+2. Standardized Remediation Prompts
+Prompt A: Missing Procedural Control
+"The Gap Analysis identified a deficiency in [SOP Section Name] regarding [Regulatory Requirement]. Rewrite this section to include a step-by-step procedure for [Specific Task]. Ensure the language clearly defines roles, responsibilities, and the required documentation for audit evidence. Reference [FDA/ISO Clause] explicitly."
+
+Prompt B: Vague Record-Keeping Requirements
+"Current language in section [X] uses non-committal terms like 'as needed.' Rewrite this to meet ISO 13485 standards for record control. Replace 'as needed' with specific triggers for documentation and define the retention period and storage location for the resulting quality records."
+
+3. Replit Agent Instruction: Remediation Interface
+Copy and paste this into your chat to build the "Fix" button logic:
+
+@replit Implement the Remediation UI for the Gap Analysis engine:
+
+Trigger: Add a "Suggest Fix" button next to every Red (Major) and Yellow (Moderate) gap row.
+
+Logic: When clicked, pass the specific regulatory gap and the existing SOP text into the Remediation Prompt.
+
+Output Display: Present the suggested rewrite in a side-by-side view (Original vs. Compliant) using the 2025 Pharma Palette:
+
+Original: Red background (#FF6B6B at 10% opacity).
+
+Suggested: Sage Green background (#2D5A27 at 10% opacity).
+
+CTA: Include a "Copy to Clipboard" button to facilitate rapid SOP updating.
+
+Why this is the "Architect" Finish
+Reduces Legal Risk: By providing specific prompts, you prevent the user from making "best guesses" that might fail an actual audit.
+
+Drives L5.5 Autonomy: This feature moves the portal from a diagnostic tool to a remedial agent, approaching the goal of an autonomous compliance operator.

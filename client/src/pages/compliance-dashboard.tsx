@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   Activity, FileText, Search, Shield, Download,
-  Upload, ChevronRight, Calendar
+  Upload, ChevronRight, Calendar, Lightbulb
 } from "lucide-react";
 import { SOPUploadModal } from "@/components/sop-upload-modal";
+import { RemediationModal } from "@/components/remediation-modal";
 
 // 2025 Pharma Color Palette - Architect-validated specification
 const colors = {
@@ -38,6 +39,16 @@ interface SOPDocument {
   regulatoryStandard: string;
   status: "major" | "moderate" | "compliant";
   uploadedAt: string;
+  gapDetails?: GapDetails;
+}
+
+interface GapDetails {
+  id: string;
+  sopSection: string;
+  regulatoryClause: string;
+  gapType: "major" | "moderate";
+  description: string;
+  originalText: string;
 }
 
 interface GapSummary {
@@ -53,11 +64,65 @@ interface RegulatoryUpdate {
   type: "FDA" | "ISO" | "EMA";
 }
 
+const demoDocuments: SOPDocument[] = [
+  {
+    id: "demo-1",
+    name: "Design Control SOP v2.3.pdf",
+    regulatoryStandard: "21 CFR 820",
+    status: "major",
+    uploadedAt: "2025-01-15T10:30:00Z",
+    gapDetails: {
+      id: "gap-1",
+      sopSection: "Section 4.2 - Design Output Verification",
+      regulatoryClause: "FDA 21 CFR 820.30(f)",
+      gapType: "major",
+      description: "Missing formal verification matrix linking design inputs to outputs. Current procedure lacks documented evidence requirements.",
+      originalText: `4.2 Design Output
+
+Design outputs are reviewed by the engineering team as needed. 
+The team ensures outputs meet requirements before release.
+Documentation is maintained per company standards.`
+    }
+  },
+  {
+    id: "demo-2", 
+    name: "Document Control Procedure.docx",
+    regulatoryStandard: "ISO 13485",
+    status: "moderate",
+    uploadedAt: "2025-01-14T14:15:00Z",
+    gapDetails: {
+      id: "gap-2",
+      sopSection: "Section 5.3 - Record Control",
+      regulatoryClause: "ISO 13485:2016 Clause 4.2.5",
+      gapType: "moderate",
+      description: "Uses non-committal language 'as needed' for record retention. Missing specific retention periods and storage requirements.",
+      originalText: `5.3 Record Retention
+
+Quality records shall be maintained as needed.
+Records are stored in appropriate locations.
+Retention periods follow company policy.`
+    }
+  },
+  {
+    id: "demo-3",
+    name: "Training Management SOP.pdf",
+    regulatoryStandard: "ISO 13485",
+    status: "compliant",
+    uploadedAt: "2025-01-13T09:00:00Z"
+  }
+];
+
 const mockDocuments: SOPDocument[] = [];
 
 const mockGapSummary: GapSummary = {
   major: 0,
   moderate: 0,
+  minor: 0
+};
+
+const demoGapSummary: GapSummary = {
+  major: 1,
+  moderate: 1,
   minor: 0
 };
 
@@ -217,7 +282,7 @@ function EmptyState({ onUpload }: { onUpload: () => void }) {
   );
 }
 
-function GapAnalysisTable({ documents }: { documents: SOPDocument[] }) {
+function GapAnalysisTable({ documents, onSuggestFix }: { documents: SOPDocument[]; onSuggestFix: (gap: GapDetails) => void }) {
   if (documents.length === 0) {
     return null;
   }
@@ -254,13 +319,31 @@ function GapAnalysisTable({ documents }: { documents: SOPDocument[] }) {
                 <StatusBadge status={doc.status} />
               </td>
               <td className="py-3 px-4 text-right">
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  style={{ color: colors.accentWarm }}
-                >
-                  View Details <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                <div className="flex items-center justify-end gap-2">
+                  {doc.gapDetails && (doc.status === "major" || doc.status === "moderate") && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onSuggestFix(doc.gapDetails!)}
+                      className="text-xs"
+                      style={{ 
+                        color: "#00A3A1",
+                        borderColor: "#00A3A1"
+                      }}
+                      data-testid={`button-suggest-fix-${doc.id}`}
+                    >
+                      <Lightbulb className="w-3 h-3 mr-1" />
+                      Suggest Fix
+                    </Button>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    style={{ color: colors.accentWarm }}
+                  >
+                    View Details <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}
@@ -272,10 +355,12 @@ function GapAnalysisTable({ documents }: { documents: SOPDocument[] }) {
 
 export default function ComplianceDashboard() {
   const [activeNav, setActiveNav] = useState("monitor");
-  const [documents, setDocuments] = useState<SOPDocument[]>(mockDocuments);
-  const [gapSummary] = useState<GapSummary>(mockGapSummary);
-  const [riskScore] = useState(0.0);
+  const [documents, setDocuments] = useState<SOPDocument[]>(demoDocuments);
+  const [gapSummary] = useState<GapSummary>(demoGapSummary);
+  const [riskScore] = useState(4.2);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [remediationModalOpen, setRemediationModalOpen] = useState(false);
+  const [selectedGap, setSelectedGap] = useState<GapDetails | null>(null);
 
   const handleUpload = () => {
     setUploadModalOpen(true);
@@ -291,6 +376,11 @@ export default function ComplianceDashboard() {
     };
     setDocuments(prev => [...prev, newDoc]);
     console.log("SOP classified:", result);
+  };
+
+  const handleSuggestFix = (gap: GapDetails) => {
+    setSelectedGap(gap);
+    setRemediationModalOpen(true);
   };
 
   const totalGaps = gapSummary.major + gapSummary.moderate + gapSummary.minor;
@@ -473,7 +563,7 @@ export default function ComplianceDashboard() {
             </CardHeader>
             <CardContent>
               {hasDocuments ? (
-                <GapAnalysisTable documents={documents} />
+                <GapAnalysisTable documents={documents} onSuggestFix={handleSuggestFix} />
               ) : (
                 <EmptyState onUpload={handleUpload} />
               )}
@@ -486,6 +576,12 @@ export default function ComplianceDashboard() {
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onUploadComplete={handleUploadComplete}
+      />
+
+      <RemediationModal
+        open={remediationModalOpen}
+        onClose={() => setRemediationModalOpen(false)}
+        gap={selectedGap}
       />
     </div>
   );
