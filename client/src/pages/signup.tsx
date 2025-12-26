@@ -89,7 +89,7 @@ export default function SignUpPage() {
               >
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl text-white">ComplianceWorxs</span>
+              <span className="font-bold text-xl" style={{ color: "#FFFFFF" }}>ComplianceWorxs</span>
             </div>
           </Link>
           <nav className="flex items-center gap-6">
