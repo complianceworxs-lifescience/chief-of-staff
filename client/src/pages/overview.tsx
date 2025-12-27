@@ -57,17 +57,17 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-5 flex items-center justify-between text-left"
+        className="w-full py-6 flex items-center justify-between text-left"
       >
-        <span className="font-medium" style={{ color: colors.textPrimary }}>{question}</span>
+        <span className="font-medium text-lg" style={{ color: colors.textPrimary }}>{question}</span>
         <ChevronDown 
-          className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-6 h-6 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           style={{ color: colors.textSecondary }}
         />
       </button>
       {isOpen && (
-        <div className="pb-5">
-          <p style={{ color: colors.textSecondary }}>{answer}</p>
+        <div className="pb-6">
+          <p className="text-base leading-relaxed" style={{ color: colors.textSecondary }}>{answer}</p>
         </div>
       )}
     </div>
@@ -124,36 +124,36 @@ export default function OverviewPage() {
       </header>
 
       {/* Hero Section - Split Layout */}
-      <section className="py-16" style={{ backgroundColor: colors.bgMain }}>
+      <section className="py-20" style={{ backgroundColor: colors.bgMain }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left - Text Content */}
             <div>
               <h1 
-                className="text-4xl md:text-5xl font-bold mb-6 leading-tight"
+                className="text-5xl md:text-6xl font-bold mb-8 leading-tight"
                 style={{ color: colors.heroNavy }}
               >
                 FDA & ISO Compliance<br />on Autopilot
               </h1>
               <p 
-                className="text-lg mb-8"
+                className="text-xl mb-10"
                 style={{ color: colors.textSecondary }}
               >
                 Enterprise-grade regulatory intelligence for life sciences.<br />
                 Audit-ready documentation, real-time gap detection, and<br />
                 quantified compliance ROI.
               </p>
-              <a href={`${PORTAL_URL}/signup`}>
+              <Link href="/signup">
                 <Button 
                   size="lg"
-                  className="text-white font-semibold px-8"
+                  className="text-white font-semibold px-10 py-6 text-lg"
                   style={{ backgroundColor: colors.accentTeal }}
                   data-testid="button-hero-cta"
                 >
                   Run Free Assessment
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              </a>
+              </Link>
             </div>
 
             {/* Right - Product Visualization */}
@@ -253,48 +253,48 @@ export default function OverviewPage() {
       </section>
 
       {/* Stats Row */}
-      <section className="py-12" style={{ backgroundColor: colors.cardBg }}>
+      <section className="py-16" style={{ backgroundColor: colors.cardBg }}>
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div>
               <div 
-                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
                 style={{ backgroundColor: `${colors.accentTeal}15` }}
               >
-                <Clock className="w-8 h-8" style={{ color: colors.accentTeal }} />
+                <Clock className="w-10 h-10" style={{ color: colors.accentTeal }} />
               </div>
-              <div className="text-3xl font-bold mb-2" style={{ color: colors.heroNavy }}>90% Faster</div>
-              <div style={{ color: colors.textSecondary }}>Regulatory Reviews</div>
+              <div className="text-4xl font-bold mb-2" style={{ color: colors.heroNavy }}>90% Faster</div>
+              <div className="text-lg" style={{ color: colors.textSecondary }}>Regulatory Reviews</div>
             </div>
             <div>
               <div 
-                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
                 style={{ backgroundColor: `${colors.accentTeal}15` }}
               >
-                <FileCheck className="w-8 h-8" style={{ color: colors.accentTeal }} />
+                <FileCheck className="w-10 h-10" style={{ color: colors.accentTeal }} />
               </div>
-              <div className="text-3xl font-bold mb-2" style={{ color: colors.heroNavy }}>Audit-Ready</div>
-              <div style={{ color: colors.textSecondary }}>In 2 Clicks</div>
+              <div className="text-4xl font-bold mb-2" style={{ color: colors.heroNavy }}>Audit-Ready</div>
+              <div className="text-lg" style={{ color: colors.textSecondary }}>In 2 Clicks</div>
             </div>
             <div>
               <div 
-                className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+                className="w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center"
                 style={{ backgroundColor: `${colors.accentTeal}15` }}
               >
-                <Eye className="w-8 h-8" style={{ color: colors.accentTeal }} />
+                <Eye className="w-10 h-10" style={{ color: colors.accentTeal }} />
               </div>
-              <div className="text-3xl font-bold mb-2" style={{ color: colors.heroNavy }}>100% Traceable</div>
-              <div style={{ color: colors.textSecondary }}>Evidence Trails</div>
+              <div className="text-4xl font-bold mb-2" style={{ color: colors.heroNavy }}>100% Traceable</div>
+              <div className="text-lg" style={{ color: colors.textSecondary }}>Evidence Trails</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16" style={{ backgroundColor: colors.bgMain }}>
+      <section className="py-20" style={{ backgroundColor: colors.bgMain }}>
         <div className="max-w-5xl mx-auto px-6">
           <h2 
-            className="text-3xl font-bold text-center mb-12"
+            className="text-4xl font-bold text-center mb-14"
             style={{ color: colors.heroNavy }}
           >
             How It Works
@@ -455,10 +455,10 @@ export default function OverviewPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16" style={{ backgroundColor: colors.cardBg }}>
+      <section className="py-20" style={{ backgroundColor: colors.cardBg }}>
         <div className="max-w-3xl mx-auto px-6">
           <h2 
-            className="text-3xl font-bold text-center mb-12"
+            className="text-4xl font-bold text-center mb-14"
             style={{ color: colors.heroNavy }}
           >
             Frequently Asked Questions
@@ -472,24 +472,24 @@ export default function OverviewPage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-16" style={{ backgroundColor: colors.heroNavy }}>
+      <section className="py-20" style={{ backgroundColor: colors.heroNavy }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold mb-6" style={{ color: "#FFFFFF" }}>
             Ready to Transform Your Compliance Process?
           </h2>
-          <p className="text-white/80 mb-8">
+          <p className="text-xl mb-10" style={{ color: "rgba(255,255,255,0.9)" }}>
             Get your free compliance assessment and see exactly where you stand.
           </p>
-          <a href={`${PORTAL_URL}/signup`}>
+          <Link href="/signup">
             <Button 
               size="lg"
-              className="font-semibold px-8"
-              style={{ backgroundColor: colors.accentWarm, color: "white" }}
+              className="font-semibold px-10 py-6 text-lg"
+              style={{ backgroundColor: colors.accentWarm, color: "#FFFFFF" }}
               data-testid="button-cta-bottom"
             >
               Run Free Assessment
             </Button>
-          </a>
+          </Link>
         </div>
       </section>
 
