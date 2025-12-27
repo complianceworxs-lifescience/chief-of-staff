@@ -10103,6 +10103,63 @@
       "revenueImpact": 0,
       "confidence": 0.95,
       "agent": "CoS"
+    },
+    {
+      "id": "gse_forecast_1766848553603",
+      "timestamp": "2025-12-27T15:15:53.590Z",
+      "process": "PREDICTIVE_REVENUE_MODELING",
+      "trigger": "Daily forecast cycle",
+      "decision": "7d: $5760, 14d: $6048, 30d: $6668",
+      "outcome": "Forecasts updated",
+      "revenueImpact": 1182,
+      "confidence": 0.93,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_offer_1766848553612",
+      "timestamp": "2025-12-27T15:15:53.612Z",
+      "process": "CONTINUOUS_OFFER_OPTIMIZATION",
+      "trigger": "Feature correlation analysis",
+      "decision": "Highlight 1, Suppress 1, Needs Delta: 2",
+      "outcome": "Offer optimizations queued",
+      "revenueImpact": 13,
+      "confidence": 0.8,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_failure_1766848555559",
+      "timestamp": "2025-12-27T15:15:53.693Z",
+      "process": "FAILURE_MODE_DETECTION",
+      "trigger": "0 critical, 2 warning modes detected",
+      "decision": "Auto-corrections applied with full logging",
+      "outcome": "Corrections in progress",
+      "revenueImpact": -162,
+      "confidence": 0.85,
+      "agent": "CoS",
+      "resolution": "Applied Message recalibration; Applied Offer refinement",
+      "deltaImpact": -162
+    },
+    {
+      "id": "gse_retention_1766848555590",
+      "timestamp": "2025-12-27T15:15:55.566Z",
+      "process": "CLOSED_LOOP_RETENTION",
+      "trigger": "5 high-risk users detected",
+      "decision": "5 personalized ROI snapshots triggered",
+      "outcome": "Retention interventions queued",
+      "revenueImpact": 340,
+      "confidence": 0.7,
+      "agent": "CRO"
+    },
+    {
+      "id": "gse_oversight_1766848561305",
+      "timestamp": "2025-12-27T15:15:55.602Z",
+      "process": "EXECUTIVE_OVERSIGHT_FEEDBACK",
+      "trigger": "Daily oversight cycle",
+      "decision": "Compiled logs for 8 agents",
+      "outcome": "System self-improvement data collected",
+      "revenueImpact": 0,
+      "confidence": 0.95,
+      "agent": "CoS"
     }
   ]
 }
