@@ -1,8 +1,10 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Zap, Check, Lock, FileCheck, Clock } from "lucide-react";
+import { Shield, Zap, Check, Lock, FileCheck, Clock, Loader2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { useAuth } from "@/hooks/use-auth";
 
 const colors = {
   bgMain: "#F9FAFB",
@@ -23,8 +25,19 @@ const benefits = [
 ];
 
 export default function SignUpPage() {
-  const handleGoogleSignup = () => {
-    window.location.href = "/api/login";
+  const { login, isLoggingIn } = useAuth();
+  const [, setLocation] = useLocation();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGoogleSignup = async () => {
+    setError(null);
+    try {
+      await login();
+      setLocation("/app/dashboard");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setError("Sign up failed. Please try again.");
+    }
   };
 
   return (
@@ -122,14 +135,30 @@ export default function SignUpPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center">
+                  {error}
+                </div>
+              )}
+              
               <Button
                 onClick={handleGoogleSignup}
+                disabled={isLoggingIn}
                 className="w-full py-6 text-base font-semibold"
                 style={{ backgroundColor: colors.accentTeal, color: "white" }}
                 data-testid="button-google-signup"
               >
-                <SiGoogle className="w-5 h-5 mr-3" />
-                Sign up with Google
+                {isLoggingIn ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  <>
+                    <SiGoogle className="w-5 h-5 mr-3" />
+                    Sign up with Google
+                  </>
+                )}
               </Button>
 
               <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: colors.bgMain }}>

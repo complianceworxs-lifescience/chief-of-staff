@@ -1,8 +1,10 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Lock, CheckCircle } from "lucide-react";
+import { Shield, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
+import { useAuth } from "@/hooks/use-auth";
 
 const colors = {
   bgMain: "#F9FAFB",
@@ -22,8 +24,19 @@ const securityFeatures = [
 ];
 
 export default function LoginPage() {
-  const handleGoogleLogin = () => {
-    window.location.href = "/api/login";
+  const { login, isLoggingIn } = useAuth();
+  const [, setLocation] = useLocation();
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    try {
+      await login();
+      setLocation("/app/dashboard");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError("Login failed. Please try again.");
+    }
   };
 
   return (
@@ -84,14 +97,30 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center">
+                {error}
+              </div>
+            )}
+            
             <Button
               onClick={handleGoogleLogin}
+              disabled={isLoggingIn}
               className="w-full py-6 text-base font-semibold"
               style={{ backgroundColor: colors.accentTeal, color: "white" }}
               data-testid="button-google-login"
             >
-              <SiGoogle className="w-5 h-5 mr-3" />
-              Continue with Google
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <SiGoogle className="w-5 h-5 mr-3" />
+                  Continue with Google
+                </>
+              )}
             </Button>
 
             <div className="pt-4 border-t" style={{ borderColor: colors.borderLight }}>

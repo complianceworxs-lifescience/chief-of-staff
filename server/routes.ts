@@ -93,13 +93,19 @@ import {
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { getConfig } from "./config-loader";
-import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { setupFirebaseAuth, initializeFirebaseAdmin } from "./firebase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup Replit Auth BEFORE all other routes (required for authentication)
-  await setupAuth(app);
-  registerAuthRoutes(app);
-  console.log('🔐 Replit Auth configured - Google OAuth enabled');
+  // Initialize Firebase Admin SDK
+  try {
+    initializeFirebaseAdmin();
+  } catch (error) {
+    console.error('❌ Firebase Admin initialization failed:', error);
+  }
+  
+  // Setup Firebase Auth BEFORE all other routes (required for authentication)
+  await setupFirebaseAuth(app);
+  console.log('🔥 Firebase Auth configured - Google OAuth enabled (100% branded)');
   // CLEAN PUBLIC TOOL - Serves standalone HTML without React SPA
   app.get("/public-tool", (req, res) => {
     res.sendFile(path.resolve(import.meta.dirname, "..", "client", "public-tool.html"));
