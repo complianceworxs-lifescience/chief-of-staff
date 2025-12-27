@@ -131,7 +131,7 @@ export default function SignUpPage() {
                 Create Your Account
               </CardTitle>
               <CardDescription className="text-base" style={{ color: colors.textSecondary }}>
-                Get instant access to your L5.5 Command Center
+                Get instant access to your AI-Powered Audit Readiness Portal
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -164,7 +164,7 @@ export default function SignUpPage() {
               <div className="flex items-center gap-3 p-4 rounded-lg" style={{ backgroundColor: colors.bgMain }}>
                 <Check className="w-5 h-5" style={{ color: colors.accentWellness }} />
                 <span className="text-sm" style={{ color: colors.textSecondary }}>
-                  No credit card required • Free 14-day trial
+                  Immediate Audit Gap Analysis • No credit card required
                 </span>
               </div>
 
